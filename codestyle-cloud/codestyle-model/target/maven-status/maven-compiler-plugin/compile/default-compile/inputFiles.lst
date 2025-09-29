@@ -1,0 +1,9 @@
+E:\kaiyuan\codestyle\codestyle-cloud\codestyle-model\src\main\java\top\codestyle\model\dto\user\UserAddRequest.java
+E:\kaiyuan\codestyle\codestyle-cloud\codestyle-model\src\main\java\top\codestyle\model\dto\user\UserLoginRequest.java
+E:\kaiyuan\codestyle\codestyle-cloud\codestyle-model\src\main\java\top\codestyle\model\dto\user\UserQueryRequest.java
+E:\kaiyuan\codestyle\codestyle-cloud\codestyle-model\src\main\java\top\codestyle\model\dto\user\UserRegisterRequest.java
+E:\kaiyuan\codestyle\codestyle-cloud\codestyle-model\src\main\java\top\codestyle\model\dto\user\UserUpdateRequest.java
+E:\kaiyuan\codestyle\codestyle-cloud\codestyle-model\src\main\java\top\codestyle\model\entity\User.java
+E:\kaiyuan\codestyle\codestyle-cloud\codestyle-model\src\main\java\top\codestyle\model\enums\UserRoleEnum.java
+E:\kaiyuan\codestyle\codestyle-cloud\codestyle-model\src\main\java\top\codestyle\model\vo\LoginUserVO.java
+E:\kaiyuan\codestyle\codestyle-cloud\codestyle-model\src\main\java\top\codestyle\model\vo\UserVO.java

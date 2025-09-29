@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="codestyle-ai" />
+        <module name="codestyle-user" />
+        <module name="codestyle-api" />
+        <module name="codestyle-common" />
+        <module name="codestyle-model" />
+      </profile>
+    </annotationProcessing>
+  </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="codestyle-ai" options="-parameters" />
+      <module name="codestyle-api" options="-parameters" />
+      <module name="codestyle-cloud" options="-parameters" />
+      <module name="codestyle-common" options="-parameters" />
+      <module name="codestyle-model" options="-parameters" />
+      <module name="codestyle-user" options="-parameters" />
+    </option>
+  </component>
+</project>

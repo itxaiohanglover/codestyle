@@ -1,0 +1,54 @@
+spring:
+  application:
+    name: codestyle-user
+  # session
+  session:
+    store-type: redis
+    # 30 days expire
+    timeout: 2592000
+  # mysql
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/codestyle-cloud
+    username: root
+    password: root
+  # redis
+  data:
+    redis:
+      host: localhost
+      port: 6039
+      database: 1
+#      password: qwe123
+  profiles:
+    active: local
+server:
+  port: 8124
+  servlet:
+    context-path: /api
+    # 30 days expire
+    session:
+      cookie:
+        max-age: 2592000
+# springdoc-openapi
+springdoc:
+  group-configs:
+    - group: 'default'
+      packages-to-scan: top.codestyle.controller
+# knife4j
+knife4j:
+  enable: true
+  setting:
+    language: zh_cn
+# Dubbo
+dubbo:
+  registry:
+    address: nacos://127.0.0.1:8848
+    register-mode: instance
+  protocol:
+    name: tri
+    port: 50051
+  consumer:
+    timeout: 60000
+  provider:
+    timeout: 60000
+    metadata-report-enabled: true
