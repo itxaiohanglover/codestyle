@@ -19,7 +19,7 @@ public class MyBatisPlusCodeGenerator {
 
     public static void main(String[] args) {
         // 读取 application.yml 获取数据源配置
-        Dict dict = YamlUtil.loadByPath("application.yml");
+        Dict dict = YamlUtil.loadByPath("application-dev.yml");
         Map<String, Object> ds = dict.getByPath("spring.datasource");
         String url = String.valueOf(ds.get("url"));
         String username = String.valueOf(ds.get("username"));
