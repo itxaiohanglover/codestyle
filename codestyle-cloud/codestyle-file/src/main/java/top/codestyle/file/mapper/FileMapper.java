@@ -1,0 +1,26 @@
+package top.codestyle.file.mapper;
+
+import org.apache.ibatis.annotations.Select;
+import top.codestyle.model.entity.FileDO;
+import top.codestyle.model.vo.FileStatisticsResp;
+import top.continew.starter.data.mp.base.BaseMapper;
+
+
+import java.util.List;
+
+/**
+ * 文件 Mapper
+ *
+ * @author Charles7c
+ * @since 2023/12/23 10:38
+ */
+public interface FileMapper extends BaseMapper<FileDO> {
+
+    /**
+     * 查询文件资源统计信息
+     *
+     * @return 文件资源统计信息
+     */
+    @Select("SELECT type, COUNT(1) number, SUM(size) size FROM sys_file GROUP BY type")
+    List<FileStatisticsResp> statistics();
+}

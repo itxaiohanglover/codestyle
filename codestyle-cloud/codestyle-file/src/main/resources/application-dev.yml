@@ -9,12 +9,9 @@ spring:
   # mysql
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/codestyle_cloud?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
+    url: jdbc:mysql://localhost:3306/codestyle_cloud?allowPublicKeyRetrieval=true&useSSL=false
     username: root
     password: qwe123456
-    hikari:
-      connection-timeout: 20000
-      maximum-pool-size: 10
   # redis
   data:
     redis:
@@ -23,7 +20,7 @@ spring:
       database: 1
 #      password: qwe123
 server:
-  port: 8124
+  port: 8125
   servlet:
     context-path: /api
     # 30 days expire
@@ -34,7 +31,7 @@ server:
 springdoc:
   group-configs:
     - group: 'default'
-      packages-to-scan: top.codestyle.controller
+      packages-to-scan: top.codestyle.file.controller
 # knife4j
 knife4j:
   enable: true
@@ -53,3 +50,12 @@ dubbo:
   provider:
     timeout: 60000
     metadata-report-enabled: true
+
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml
+  type-aliases-package: top.codestyle.file.entity
+  type-enums-package: top.codestyle.model.enums
+  type-handlers-package: com.baomidou.mybatisplus.extension.handlers
+
+  configuration:
+    map-underscore-to-camel-case: true

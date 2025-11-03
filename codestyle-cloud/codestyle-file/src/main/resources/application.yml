@@ -1,0 +1,11 @@
+logging:
+  level:
+    top.codestyle: debug
+spring:
+  profiles:
+    active: dev
+--- ### 项目配置
+project:
+  # 名称
+  name: CodeStyle Cloud
+  profile: ${spring.profiles.active}

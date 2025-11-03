@@ -16,7 +16,7 @@ public class JsonConfig {
      * 添加 Long 转 json 精度丢失的配置
      */
     @Bean
-    public Jackson2ObjectMapperBuilderCustomizer jackson2ObjectMapperBuilderCustomizer() {
+    public Jackson2ObjectMapperBuilderCustomizer jackson2ObjectMapperBuilderCustomizerMaker() {
         return builder -> {
             SimpleModule module = new SimpleModule();
             module.addSerializer(Long.class, ToStringSerializer.instance);

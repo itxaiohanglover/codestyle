@@ -6,3 +6,11 @@ project:
   # 名称
   name: CodeStyle Cloud
   profile: ${spring.profiles.active}
+
+x-file-storage:
+  default-platform: local
+  local:
+    - platform: local
+      enable: true
+      base-path: ./data/file/
+      domain: http://localhost:8080/file/

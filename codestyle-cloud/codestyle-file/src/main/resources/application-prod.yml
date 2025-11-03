@@ -9,17 +9,14 @@ spring:
   # mysql
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/codestyle_cloud?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
+    url: jdbc:mysql://localhost:3306/codestyle-cloud
     username: root
-    password: qwe123456
-    hikari:
-      connection-timeout: 20000
-      maximum-pool-size: 10
+    password: root
   # redis
   data:
     redis:
       host: localhost
-      port: 6379
+      port: 6039
       database: 1
 #      password: qwe123
 server:
