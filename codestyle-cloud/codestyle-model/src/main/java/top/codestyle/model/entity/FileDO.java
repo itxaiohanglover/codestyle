@@ -51,7 +51,7 @@ public class FileDO extends BaseDO {
     /**
      * 类型
      */
-    private FileTypeEnum type;
+    private Integer type;
 
     /**
      * 缩略图大小（字节)

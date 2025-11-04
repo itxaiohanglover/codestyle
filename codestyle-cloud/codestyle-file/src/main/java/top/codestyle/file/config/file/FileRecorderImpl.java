@@ -45,7 +45,7 @@ public class FileRecorderImpl implements FileRecorder {
         file.setUrl(fileInfo.getUrl());
         file.setSize(fileInfo.getSize());
         file.setExtension(fileInfo.getExt());
-        file.setType(FileTypeEnum.getByExtension(file.getExtension()));
+        file.setType(FileTypeEnum.getByExtension(file.getExtension()).getValue());
         file.setThumbnailUrl(fileInfo.getThUrl());
         file.setThumbnailSize(fileInfo.getThSize());
         StorageDO storage = (StorageDO)fileInfo.getAttr().get(ClassUtil.getClassName(StorageDO.class, false));
