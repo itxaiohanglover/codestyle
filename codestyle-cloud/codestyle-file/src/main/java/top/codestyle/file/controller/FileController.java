@@ -2,6 +2,7 @@ package top.codestyle.file.controller;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
@@ -22,8 +23,6 @@ import top.continew.starter.extension.crud.annotation.CrudRequestMapping;
 import top.continew.starter.extension.crud.enums.Api;
 
 
-import java.util.List;
-
 /**
  * 公共 API
  *
@@ -32,16 +31,17 @@ import java.util.List;
  */
 @Tag(name = "文件 API")
 @Validated
-@RestController
 @RequiredArgsConstructor
-@CrudRequestMapping(value = "/system/file", api = {Api.PAGE, Api.UPDATE, Api.DELETE})
-public class FileController  extends BaseController<FileService, FileResp, FileResp, FileQuery, FileReq>{
+@RestController("/file")
+@CrudRequestMapping(value = "/file", api = {Api.PAGE, Api.UPDATE, Api.DELETE})
+public class FileController extends BaseController<FileService, FileResp, FileResp, FileQuery, FileReq>{
 
     private final FileService fileService;
 
     @Operation(summary = "上传文件", description = "上传文件")
     @PostMapping("/upload")
-    public FileUploadResp upload(@NotNull(message = "文件不能为空") MultipartFile file) {
+    public FileUploadResp upload(@NotNull(message = "文件不能为空")
+                                     @RequestBody MultipartFile file) {
         ValidationUtils.throwIf(file::isEmpty, "文件不能为空");
         FileInfo fileInfo = fileService.upload(file);
         return FileUploadResp.builder().url(fileInfo.getUrl()).build();
@@ -49,7 +49,7 @@ public class FileController  extends BaseController<FileService, FileResp, FileR
 
 
     @Operation(summary = "查询文件资源统计", description = "查询文件资源统计")
-    @SaCheckPermission("system:file:list")
+    @SaCheckPermission("file:list")
     @GetMapping("/statistics")
     public FileStatisticsResp statistics() {
         return baseService.statistics();
