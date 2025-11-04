@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.dromara.x.file.storage.core.FileInfo;
 import org.dromara.x.file.storage.core.FileStorageService;
 import org.dromara.x.file.storage.core.ProgressListener;
+import org.dromara.x.file.storage.core.platform.FileStorage;
 import org.dromara.x.file.storage.core.upload.UploadPretreatment;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -49,7 +50,8 @@ import java.util.stream.Collectors;
 public class FileServiceImpl extends BaseServiceImpl<FileMapper, FileDO, FileResp, FileResp, FileQuery, FileReq> implements FileService {
 
     private final FileStorageService fileStorageService;
-    private final StorageService storageService;
+    @Resource
+    StorageService storageService;
 
     @Override
     protected void beforeDelete(List<Long> ids) {
@@ -67,10 +69,8 @@ public class FileServiceImpl extends BaseServiceImpl<FileMapper, FileDO, FileRes
     @Override
     public FileInfo upload(MultipartFile file, String storageCode) {
         StorageDO storage;
-        System.out.println(StrUtil.isBlank(storageCode)+"==========================="+storageCode);
         if (StrUtil.isBlank(storageCode)) {
             storage = storageService.getDefaultStorage();
-            System.out.println( storage +"===========================");
             CheckUtils.throwIfNull(storage, "请先指定默认存储");
         } else {
             storage = storageService.getByCode(storageCode);
@@ -84,6 +84,13 @@ public class FileServiceImpl extends BaseServiceImpl<FileMapper, FileDO, FileRes
             .putAttr(ClassUtil.getClassName(StorageDO.class, false), storage)
             .setPath(path);
         // 图片文件生成缩略图
+        for (FileStorage fileStorage : fileStorageService.getFileStorageList()) {
+            System.out.println("FileStorageList contains" + fileStorage.getPlatform());
+        }
+        System.out.println("uploadPretreatment--platform" + uploadPretreatment.getPlatform());
+        System.out.println("uploadPretreatment--Attr" +  uploadPretreatment.getAttr());
+        System.out.println("uploadPretreatment--path" + uploadPretreatment.getPath());
+
         if (FileTypeEnum.IMAGE.getExtensions().contains(FileNameUtil.extName(file.getOriginalFilename()))) {
             uploadPretreatment.thumbnail(img -> img.size(100, 100));
         }
@@ -105,8 +112,6 @@ public class FileServiceImpl extends BaseServiceImpl<FileMapper, FileDO, FileRes
             }
         });
         // 处理本地存储文件 URL
-        System.out.println(12345);
-        System.out.println(uploadPretreatment);
         FileInfo fileInfo = uploadPretreatment.upload();
         String domain = StrUtil.appendIfMissing(storage.getDomain(), StringConstants.SLASH);
         fileInfo.setUrl(URLUtil.normalize(domain + fileInfo.getPath() + fileInfo.getFilename()));

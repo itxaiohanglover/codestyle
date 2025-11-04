@@ -101,9 +101,7 @@ public class StorageServiceImpl extends BaseServiceImpl<StorageMapper, StorageDO
 
     @Override
     public StorageDO getDefaultStorage() {
-        System.out.println(222);
         StorageDO one = baseMapper.lambdaQuery().eq(StorageDO::getIsDefault, true).one();
-        System.out.println(one);
         return one;
     }
 
