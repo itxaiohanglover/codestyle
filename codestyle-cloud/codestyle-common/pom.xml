@@ -34,5 +34,80 @@
             <groupId>com.zaxxer</groupId>
             <artifactId>HikariCP</artifactId>
         </dependency>
+
+
+        <!-- Amazon S3（Amazon Simple Storage Service，亚马逊简单存储服务，通用存储协议 S3，兼容主流云厂商对象存储） -->
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk-s3</artifactId>
+            <version>1.12.783</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.dromara.x-file-storage</groupId>
+            <artifactId>x-file-storage-core</artifactId>
+            <version>2.2.1</version>
+        </dependency>
+
+        <!-- ContiNew Starter 数据权限模块 - MyBatis Plus -->
+        <dependency>
+            <groupId>top.continew</groupId>
+            <artifactId>continew-starter-extension-datapermission-mp</artifactId>
+            <version>2.7.5</version>
+        </dependency>
+
+        <!-- ContiNew Starter 扩展模块 - CURD（增删改查） -->
+        <dependency>
+            <groupId>top.continew</groupId>
+            <artifactId>continew-starter-extension-crud-mp</artifactId>
+            <version>2.7.5</version>
+        </dependency>
+
+        <dependency>
+            <groupId>cn.dev33</groupId>
+            <artifactId>sa-token-core</artifactId>
+            <version>1.39.0</version>
+        </dependency>
+        <dependency>
+            <groupId>top.continew</groupId>
+            <artifactId>continew-starter-data-mp</artifactId>
+            <version>2.7.5</version>
+        </dependency>
+        <!-- ContiNew Starter 安全模块 - 限流器 -->
+        <dependency>
+            <groupId>top.continew</groupId>
+            <artifactId>continew-starter-security-limiter</artifactId>
+            <version>2.7.5</version>
+        </dependency>
+        <!-- ContiNew Starter 安全模块 - 限流器 -->
+        <dependency>
+            <groupId>top.continew</groupId>
+            <artifactId>continew-starter-security-limiter</artifactId>
+            <version>2.7.5</version>
+        </dependency>
+        <!-- ContiNew Starter 安全模块 - 加密 -->
+        <dependency>
+            <groupId>top.continew</groupId>
+            <artifactId>continew-starter-security-crypto</artifactId>
+            <version>2.7.5</version>
+        </dependency>
+        <!-- ContiNew Starter 安全模块 - 脱敏 -->
+        <dependency>
+            <groupId>top.continew</groupId>
+            <artifactId>continew-starter-security-mask</artifactId>
+            <version>2.7.5</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-crypto</artifactId>
+            <version>6.5.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>2.5.0</version>
+        </dependency>
+
     </dependencies>
 </project>
