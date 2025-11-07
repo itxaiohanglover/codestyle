@@ -1,0 +1,11 @@
+onlyBuiltDependencies:
+  - cwebp-bin
+  - esbuild
+  - gifsicle
+  - jpegtran-bin
+  - mozjpeg
+  - optipng-bin
+  - pngquant-bin
+  - unrs-resolver
+  - vue-demi
+  - vue-echarts
