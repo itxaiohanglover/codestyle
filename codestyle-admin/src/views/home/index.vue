@@ -816,7 +816,10 @@ const truncateComment = (comment: string) => {
         overflow: hidden;
         position: relative;
         width: 100%;
-        height: 520px; /* 增加高度，确保完整显示三行 */
+        /* 原来 520px 未考虑上下 padding(20px x2) 会占用可视区域，
+           导致第三行被部分遮挡。把高度适当增加 40px 以补偿。
+        */
+        height: 560px; /* 修复：确保完整显示三行（包含 padding） */
         padding: 20px 0; /* 添加上下内边距 */
       }
 
@@ -978,7 +981,8 @@ const truncateComment = (comment: string) => {
       /* 响应式调整 */
       @media (max-width: 768px) {
         .users-scroll-wrapper {
-          height: 400px;
+          /* 同样补偿移动端的 padding */
+          height: 440px;
         }
 
         .users-row {
