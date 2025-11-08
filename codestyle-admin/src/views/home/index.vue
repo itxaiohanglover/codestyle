@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="home page">
     <!-- Banner区域 - 黄白主题 -->
     <section class="hero">
@@ -10,7 +10,8 @@
           <br />MCP 驱动的代码风格服务器
         </h1>
         <p class="hero-subtitle">
-          完全掌控、无限扩展，帮助你的开发团队快速响应变化，显著降低成本。
+          {{ displayText }}
+          <span class="typing-cursor">|</span>
         </p>
         <div class="hero-actions">
           <a-button
@@ -96,160 +97,158 @@
       <div class="users-container">
         <h2 class="section-title">他们正在使用 Codestyle</h2>
         <!-- 滚动容器 -->
-        <div
-          class="users-scroll-wrapper"
-        >
+        <div class="users-scroll-wrapper">
           <div class="users-scroll-container">
             <!-- 第一行 - 慢速度滚动 -->
-        <div class="users-row row-1">
-          <div class="users-row-inner">
-            <div
-              v-for="user in users.slice(0, 6)"
-              :key="`row1-${user.id}`"
-              class="user-card card-row-1"
-            >
-              <div class="user-info">
-                <div class="user-avatar">
-                  <img
-                    :src="user.avatar"
-                    :alt="user.name"
-                    @error="handleImageError"
-                  />
+            <div class="users-row row-1">
+              <div class="users-row-inner">
+                <div
+                  v-for="user in users.slice(0, 6)"
+                  :key="`row1-${user.id}`"
+                  class="user-card card-row-1"
+                >
+                  <div class="user-info">
+                    <div class="user-avatar">
+                      <img
+                        :src="user.avatar"
+                        :alt="user.name"
+                        @error="handleImageError"
+                      />
+                    </div>
+                    <div class="user-text">
+                      <div class="user-name">{{ user.name }}</div>
+                      <div class="user-company">{{ user.company }}</div>
+                      <div class="user-comment">{{
+                        truncateComment(user.comment)
+                      }}</div>
+                    </div>
+                  </div>
                 </div>
-                <div class="user-text">
-                  <div class="user-name">{{ user.name }}</div>
-                  <div class="user-company">{{ user.company }}</div>
-                  <div class="user-comment">{{
-                    truncateComment(user.comment)
-                  }}</div>
-                </div>
-              </div>
-            </div>
-            <!-- 复制内容用于无缝滚动 -->
-            <div
-              v-for="user in users.slice(0, 6)"
-              :key="`row1-dup-${user.id}`"
-              class="user-card card-row-1"
-            >
-              <div class="user-info">
-                <div class="user-avatar">
-                  <img
-                    :src="user.avatar"
-                    :alt="user.name"
-                    @error="handleImageError"
-                  />
-                </div>
-                <div class="user-text">
-                  <div class="user-name">{{ user.name }}</div>
-                  <div class="user-company">{{ user.company }}</div>
-                  <div class="user-comment">{{
-                    truncateComment(user.comment)
-                  }}</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <!-- 第二行 - 中速度滚动 -->
-        <div class="users-row row-2">
-          <div class="users-row-inner">
-            <div
-              v-for="user in users.slice(6, 12)"
-              :key="`row2-${user.id}`"
-              class="user-card card-row-2"
-            >
-              <div class="user-info">
-                <div class="user-avatar">
-                  <img
-                    :src="user.avatar"
-                    :alt="user.name"
-                    @error="handleImageError"
-                  />
-                </div>
-                <div class="user-text">
-                  <div class="user-name">{{ user.name }}</div>
-                  <div class="user-company">{{ user.company }}</div>
-                  <div class="user-comment">{{
-                    truncateComment(user.comment)
-                  }}</div>
+                <!-- 复制内容用于无缝滚动 -->
+                <div
+                  v-for="user in users.slice(0, 6)"
+                  :key="`row1-dup-${user.id}`"
+                  class="user-card card-row-1"
+                >
+                  <div class="user-info">
+                    <div class="user-avatar">
+                      <img
+                        :src="user.avatar"
+                        :alt="user.name"
+                        @error="handleImageError"
+                      />
+                    </div>
+                    <div class="user-text">
+                      <div class="user-name">{{ user.name }}</div>
+                      <div class="user-company">{{ user.company }}</div>
+                      <div class="user-comment">{{
+                        truncateComment(user.comment)
+                      }}</div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-            <!-- 复制内容用于无缝滚动 -->
-            <div
-              v-for="user in users.slice(6, 12)"
-              :key="`row2-dup-${user.id}`"
-              class="user-card card-row-2"
-            >
-              <div class="user-info">
-                <div class="user-avatar">
-                  <img
-                    :src="user.avatar"
-                    :alt="user.name"
-                    @error="handleImageError"
-                  />
+            <!-- 第二行 - 中速度滚动 -->
+            <div class="users-row row-2">
+              <div class="users-row-inner">
+                <div
+                  v-for="user in users.slice(6, 12)"
+                  :key="`row2-${user.id}`"
+                  class="user-card card-row-2"
+                >
+                  <div class="user-info">
+                    <div class="user-avatar">
+                      <img
+                        :src="user.avatar"
+                        :alt="user.name"
+                        @error="handleImageError"
+                      />
+                    </div>
+                    <div class="user-text">
+                      <div class="user-name">{{ user.name }}</div>
+                      <div class="user-company">{{ user.company }}</div>
+                      <div class="user-comment">{{
+                        truncateComment(user.comment)
+                      }}</div>
+                    </div>
+                  </div>
                 </div>
-                <div class="user-text">
-                  <div class="user-name">{{ user.name }}</div>
-                  <div class="user-company">{{ user.company }}</div>
-                  <div class="user-comment">{{
-                    truncateComment(user.comment)
-                  }}</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <!-- 第三行 - 快速度滚动 -->
-        <div class="users-row row-3">
-          <div class="users-row-inner">
-            <div
-              v-for="user in users.slice(0, 6)"
-              :key="`row3-${user.id}`"
-              class="user-card card-row-3"
-            >
-              <div class="user-info">
-                <div class="user-avatar">
-                  <img
-                    :src="user.avatar"
-                    :alt="user.name"
-                    @error="handleImageError"
-                  />
-                </div>
-                <div class="user-text">
-                  <div class="user-name">{{ user.name }}</div>
-                  <div class="user-company">{{ user.company }}</div>
-                  <div class="user-comment">{{
-                    truncateComment(user.comment)
-                  }}</div>
-                </div>
-              </div>
-            </div>
-            <!-- 复制内容用于无缝滚动 -->
-            <div
-              v-for="user in users.slice(0, 6)"
-              :key="`row3-dup-${user.id}`"
-              class="user-card card-row-3"
-            >
-              <div class="user-info">
-                <div class="user-avatar">
-                  <img
-                    :src="user.avatar"
-                    :alt="user.name"
-                    @error="handleImageError"
-                  />
-                </div>
-                <div class="user-text">
-                  <div class="user-name">{{ user.name }}</div>
-                  <div class="user-company">{{ user.company }}</div>
-                  <div class="user-comment">{{
-                    truncateComment(user.comment)
-                  }}</div>
+                <!-- 复制内容用于无缝滚动 -->
+                <div
+                  v-for="user in users.slice(6, 12)"
+                  :key="`row2-dup-${user.id}`"
+                  class="user-card card-row-2"
+                >
+                  <div class="user-info">
+                    <div class="user-avatar">
+                      <img
+                        :src="user.avatar"
+                        :alt="user.name"
+                        @error="handleImageError"
+                      />
+                    </div>
+                    <div class="user-text">
+                      <div class="user-name">{{ user.name }}</div>
+                      <div class="user-company">{{ user.company }}</div>
+                      <div class="user-comment">{{
+                        truncateComment(user.comment)
+                      }}</div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
+            <!-- 第三行 - 快速度滚动 -->
+            <div class="users-row row-3">
+              <div class="users-row-inner">
+                <div
+                  v-for="user in users.slice(0, 6)"
+                  :key="`row3-${user.id}`"
+                  class="user-card card-row-3"
+                >
+                  <div class="user-info">
+                    <div class="user-avatar">
+                      <img
+                        :src="user.avatar"
+                        :alt="user.name"
+                        @error="handleImageError"
+                      />
+                    </div>
+                    <div class="user-text">
+                      <div class="user-name">{{ user.name }}</div>
+                      <div class="user-company">{{ user.company }}</div>
+                      <div class="user-comment">{{
+                        truncateComment(user.comment)
+                      }}</div>
+                    </div>
+                  </div>
+                </div>
+                <!-- 复制内容用于无缝滚动 -->
+                <div
+                  v-for="user in users.slice(0, 6)"
+                  :key="`row3-dup-${user.id}`"
+                  class="user-card card-row-3"
+                >
+                  <div class="user-info">
+                    <div class="user-avatar">
+                      <img
+                        :src="user.avatar"
+                        :alt="user.name"
+                        @error="handleImageError"
+                      />
+                    </div>
+                    <div class="user-text">
+                      <div class="user-name">{{ user.name }}</div>
+                      <div class="user-company">{{ user.company }}</div>
+                      <div class="user-comment">{{
+                        truncateComment(user.comment)
+                      }}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -336,166 +335,245 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
-import { useRouter } from 'vue-router';
-import { Input as AInputSearch, Button as AButton } from '@arco-design/web-vue';
+  import { ref, onMounted, onUnmounted } from 'vue';
+  import { useRouter } from 'vue-router';
+  import {
+    Input as AInputSearch,
+    Button as AButton,
+  } from '@arco-design/web-vue';
 
-const router = useRouter();
+  // 打字机效果相关逻辑
+  const textArray = [
+    '前端工程化项目是指使用现代化工具链、规范化流程和组件化架构来构建的前端应用。',
+    '相比传统的 HTML、CSS、JavaScript 三件套。',
+    '它具备模块管理、自动化构建、代码分割、热更新等现代开发特性，能够更轻松地开发复杂网站。',
+    '完全掌控、无限扩展，帮助你的开发团队快速响应变化，显著降低成本。',
+  ];
 
-// 用户数据
-const users = ref([
-  {
-    id: 1,
-    name: '小明同学',
-    company: '腾讯科技',
-    avatar: 'https://picsum.photos/seed/user1/100/100',
-    comment: `使用Codestyle后，我们团队的代码质量提升了50%`,
-  },
-  {
-    id: 2,
-    name: 'Bulubulu',
-    company: '阿里巴巴',
-    avatar: 'https://picsum.photos/seed/user2/100/100',
-    comment: `模板检索功能非常强大，大大提高了开发效率`,
-  },
-  {
-    id: 3,
-    name: '王大锤',
-    company: '字节跳动',
-    avatar: 'https://picsum.photos/seed/user3/100/100',
-    comment: `企业级解决方案，值得信赖`,
-  },
-  {
-    id: 4,
-    name: '小皮球',
-    company: '美团',
-    avatar: 'https://picsum.photos/seed/user4/100/100',
-    comment: `学习成本低，上手很快`,
-  },
-  {
-    id: 5,
-    name: '程序员老王',
-    company: '滴滴出行',
-    avatar: 'https://picsum.photos/seed/user5/100/100',
-    comment: `推荐给所有需要标准化代码的团队`,
-  },
-  {
-    id: 6,
-    name: 'gzhexuan',
-    company: '百度',
-    avatar: 'https://picsum.photos/seed/user6/100/100',
-    comment: `功能强大，文档齐全`,
-  },
-  {
-    id: 7,
-    name: 'pheo',
-    company: '网易',
-    avatar: 'https://picsum.photos/seed/user7/100/100',
-    comment: `帮助我们解决了代码风格不统一的问题`,
-  },
-  {
-    id: 8,
-    name: '新用户A',
-    company: '华为',
-    avatar: 'https://picsum.photos/seed/user8/100/100',
-    comment: `华为团队对Codestyle的评价非常高`,
-  },
-  {
-    id: 9,
-    name: '新用户B',
-    company: '京东',
-    avatar: 'https://picsum.photos/seed/user9/100/100',
-    comment: `京东团队认为Codestyle是不可或缺的工具`,
-  },
-  {
-    id: 10,
-    name: '新用户C',
-    company: '拼多多',
-    avatar: 'https://picsum.photos/seed/user10/100/100',
-    comment: `拼多多团队对Codestyle的功能赞不绝口`,
-  },
-  {
-    id: 11,
-    name: '新用户D',
-    company: '小米',
-    avatar: 'https://picsum.photos/seed/user11/100/100',
-    comment: `小米团队认为Codestyle是提升效率的利器`,
-  },
-  {
-    id: 12,
-    name: '新用户E',
-    company: 'OPPO',
-    avatar: 'https://picsum.photos/seed/user12/100/100',
-    comment: `OPPO团队对Codestyle的评价非常高`,
-  },
-]);
+  const displayText = ref('');
+  const currentIndex = ref(0);
+  const usedIndices = ref<number[]>([]);
+  let typingTimer: number | null = null;
+  let deletionTimer: number | null = null;
+  let switchTimer: number | null = null;
+  const isTyping = ref(true);
+  const charIndex = ref(0);
 
-// 团队成员数据
-const teamMembers = ref([
-  {
-    id: 1,
-    name: '张三',
-    avatar: 'https://picsum.photos/seed/team1/100/100',
-    githubUrl: 'https://github.com',
-  },
-  {
-    id: 2,
-    name: '李四',
-    avatar: 'https://picsum.photos/seed/team2/100/100',
-    githubUrl: 'https://github.com',
-  },
-  {
-    id: 3,
-    name: '王五',
-    avatar: 'https://picsum.photos/seed/team3/100/100',
-    githubUrl: 'https://github.com',
-  },
-  {
-    id: 4,
-    name: '赵六',
-    avatar: 'https://picsum.photos/seed/team4/100/100',
-    githubUrl: 'https://github.com',
-  },
-  {
-    id: 5,
-    name: '钱七',
-    avatar: 'https://picsum.photos/seed/team5/100/100',
-    githubUrl: 'https://github.com',
-  },
-  {
-    id: 6,
-    name: '孙八',
-    avatar: 'https://picsum.photos/seed/team6/100/100',
-    githubUrl: 'https://github.com',
-  },
-]);
+  // 获取不重复的随机索引
+  const getRandomIndex = () => {
+    if (usedIndices.value.length === textArray.length) {
+      usedIndices.value = [];
+    }
 
-// 跳转到规约编程页面
-const goToSpec = () => {
-  router.push('/spec');
-};
+    let randomIndex: number;
+    do {
+      randomIndex = Math.floor(Math.random() * textArray.length);
+    } while (usedIndices.value.includes(randomIndex));
 
-// 显示登录模态框
-const showLoginModal = () => {
-  // 触发导航栏中的登录模态框
-  window.dispatchEvent(new CustomEvent('showLoginModal'));
-};
+    usedIndices.value.push(randomIndex);
+    return randomIndex;
+  };
 
-// 使用CSS动画实现滚动，不再需要JavaScript控制滚动
+  // 打字效果
+  const typeText = () => {
+    const currentText = textArray[currentIndex.value];
 
-const handleImageError = (event: Event) => {
-  (event.target as HTMLImageElement).src =
-    'https://via.placeholder.com/100?text=No+Image';
-};
+    if (charIndex.value < currentText.length) {
+      displayText.value += currentText.charAt(charIndex.value);
+      charIndex.value += 1;
+      typingTimer = window.setTimeout(typeText, 40); // 1秒打20个字符，速度提高一倍
+    } else {
+      // 打字完成后等待5秒
+      switchTimer = window.setTimeout(() => {
+        isTyping.value = false;
+        // eslint-disable-next-line no-use-before-define
+        deleteText();
+      }, 5000);
+    }
+  };
+  // 删除效果
+  // eslint-disable-next-line no-use-before-define
+  function deleteText() {
+    if (displayText.value.length > 0) {
+      displayText.value = displayText.value.slice(0, -1);
+      deletionTimer = window.setTimeout(deleteText, 40); // 快速删除
+    } else {
+      // 删除完成后切换到新文本
+      currentIndex.value = getRandomIndex();
+      charIndex.value = 0;
+      isTyping.value = true;
+      typeText();
+    }
+  }
+  // 初始化打字效果
+  onMounted(() => {
+    currentIndex.value = getRandomIndex();
+    typeText();
+  });
 
-const truncateComment = (comment: string) => {
-  const maxLength = 50;
-  return comment.length > maxLength
-    ? `${comment.slice(0, maxLength)}...`
-    : comment;
-};
+  // 清理定时器
+  onUnmounted(() => {
+    if (typingTimer) clearTimeout(typingTimer);
+    if (deletionTimer) clearTimeout(deletionTimer);
+    if (switchTimer) clearTimeout(switchTimer);
+  });
 
-// 移除钩子，因为使用CSS动画实现滚动
+  const router = useRouter();
+
+  // 用户数据
+  const users = ref([
+    {
+      id: 1,
+      name: '小明同学',
+      company: '腾讯科技',
+      avatar: 'https://picsum.photos/seed/user1/100/100',
+      comment: `使用Codestyle后，我们团队的代码质量提升了50%`,
+    },
+    {
+      id: 2,
+      name: 'Bulubulu',
+      company: '阿里巴巴',
+      avatar: 'https://picsum.photos/seed/user2/100/100',
+      comment: `模板检索功能非常强大，大大提高了开发效率`,
+    },
+    {
+      id: 3,
+      name: '王大锤',
+      company: '字节跳动',
+      avatar: 'https://picsum.photos/seed/user3/100/100',
+      comment: `企业级解决方案，值得信赖`,
+    },
+    {
+      id: 4,
+      name: '小皮球',
+      company: '美团',
+      avatar: 'https://picsum.photos/seed/user4/100/100',
+      comment: `学习成本低，上手很快`,
+    },
+    {
+      id: 5,
+      name: '程序员老王',
+      company: '滴滴出行',
+      avatar: 'https://picsum.photos/seed/user5/100/100',
+      comment: `推荐给所有需要标准化代码的团队`,
+    },
+    {
+      id: 6,
+      name: 'gzhexuan',
+      company: '百度',
+      avatar: 'https://picsum.photos/seed/user6/100/100',
+      comment: `功能强大，文档齐全`,
+    },
+    {
+      id: 7,
+      name: 'pheo',
+      company: '网易',
+      avatar: 'https://picsum.photos/seed/user7/100/100',
+      comment: `帮助我们解决了代码风格不统一的问题`,
+    },
+    {
+      id: 8,
+      name: '新用户A',
+      company: '华为',
+      avatar: 'https://picsum.photos/seed/user8/100/100',
+      comment: `华为团队对Codestyle的评价非常高`,
+    },
+    {
+      id: 9,
+      name: '新用户B',
+      company: '京东',
+      avatar: 'https://picsum.photos/seed/user9/100/100',
+      comment: `京东团队认为Codestyle是不可或缺的工具`,
+    },
+    {
+      id: 10,
+      name: '新用户C',
+      company: '拼多多',
+      avatar: 'https://picsum.photos/seed/user10/100/100',
+      comment: `拼多多团队对Codestyle的功能赞不绝口`,
+    },
+    {
+      id: 11,
+      name: '新用户D',
+      company: '小米',
+      avatar: 'https://picsum.photos/seed/user11/100/100',
+      comment: `小米团队认为Codestyle是提升效率的利器`,
+    },
+    {
+      id: 12,
+      name: '新用户E',
+      company: 'OPPO',
+      avatar: 'https://picsum.photos/seed/user12/100/100',
+      comment: `OPPO团队对Codestyle的评价非常高`,
+    },
+  ]);
+
+  // 团队成员数据
+  const teamMembers = ref([
+    {
+      id: 1,
+      name: '张三',
+      avatar: 'https://picsum.photos/seed/team1/100/100',
+      githubUrl: 'https://github.com',
+    },
+    {
+      id: 2,
+      name: '李四',
+      avatar: 'https://picsum.photos/seed/team2/100/100',
+      githubUrl: 'https://github.com',
+    },
+    {
+      id: 3,
+      name: '王五',
+      avatar: 'https://picsum.photos/seed/team3/100/100',
+      githubUrl: 'https://github.com',
+    },
+    {
+      id: 4,
+      name: '赵六',
+      avatar: 'https://picsum.photos/seed/team4/100/100',
+      githubUrl: 'https://github.com',
+    },
+    {
+      id: 5,
+      name: '钱七',
+      avatar: 'https://picsum.photos/seed/team5/100/100',
+      githubUrl: 'https://github.com',
+    },
+    {
+      id: 6,
+      name: '孙八',
+      avatar: 'https://picsum.photos/seed/team6/100/100',
+      githubUrl: 'https://github.com',
+    },
+  ]);
+
+  // 跳转到规约编程页面
+  const goToSpec = () => {
+    router.push('/spec');
+  };
+
+  // 显示登录模态框
+  const showLoginModal = () => {
+    // 触发导航栏中的登录模态框
+    window.dispatchEvent(new CustomEvent('showLoginModal'));
+  };
+
+  // 使用CSS动画实现滚动，不再需要JavaScript控制滚动
+
+  const handleImageError = (event: Event) => {
+    (event.target as HTMLImageElement).src =
+      'https://via.placeholder.com/100?text=No+Image';
+  };
+
+  const truncateComment = (comment: string) => {
+    const maxLength = 50;
+    return comment.length > maxLength
+      ? `${comment.slice(0, maxLength)}...`
+      : comment;
+  };
+
+  // 移除钩子，因为使用CSS动画实现滚动
 </script>
 
 <style lang="less" scoped>
@@ -585,6 +663,25 @@ const truncateComment = (comment: string) => {
       max-width: 700px;
       margin-left: auto;
       margin-right: auto;
+      min-height: 60px; /* 保持高度稳定 */
+      display: block;
+      text-align: center;
+    }
+
+    .typing-cursor {
+      animation: blink 1s infinite;
+      color: var(--primary-orange);
+      font-weight: bold;
+    }
+
+    @keyframes blink {
+      0%,
+      100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0;
+      }
     }
 
     .hero-actions {
