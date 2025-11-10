@@ -12,7 +12,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.dromara.x.file.storage.core.FileInfo;
 import org.dromara.x.file.storage.core.FileStorageService;
 import org.dromara.x.file.storage.core.ProgressListener;
-import org.dromara.x.file.storage.core.platform.FileStorage;
 import org.dromara.x.file.storage.core.upload.UploadPretreatment;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -34,8 +33,6 @@ import top.continew.starter.extension.crud.service.BaseServiceImpl;
 
 
 import java.io.*;
-import java.net.URL;
-import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -142,44 +139,6 @@ public class FileServiceImpl extends BaseServiceImpl<FileMapper, FileDO, FileRes
     }
 
     @Override
-    public byte[] load(FileQuery query) {
-        List<String> paths = query.getPaths();
-        // 创建内存输出流用于存储zip数据
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-
-        try (ZipOutputStream zos = new ZipOutputStream(baos)) {
-            for (String filePath : paths) {
-                Path path = Paths.get(filePath);
-                // 检查文件是否存在
-                if (!Files.exists(path)) {
-                    throw new FileNotFoundException("文件不存在: " + filePath);
-                }
-                // 创建zip条目
-                String fileName = path.getFileName().toString();
-                ZipEntry entry = new ZipEntry(fileName);
-                zos.putNextEntry(entry);
-
-                // 读取文件内容并写入zip
-                try (InputStream fis = Files.newInputStream(path)) {
-                    byte[] buffer = new byte[1024];
-                    int length;
-                    while ((length = fis.read(buffer)) > 0) {
-                        zos.write(buffer, 0, length);
-                    }
-                } catch (IOException e) {
-                    log.error("文件读取失败", e);
-                    throw new RuntimeException(e);
-                }
-                zos.closeEntry();
-            }
-        } catch (IOException e) {
-            log.error("zip文件创建失败", e);
-        }
-
-        return baos.toByteArray();
-    }
-
-    @Override
     protected void fill(Object obj) {
         super.fill(obj);
         if (obj instanceof FileResp fileResp && !URLUtils.isHttpUrl(fileResp.getUrl())) {
@@ -193,4 +152,126 @@ public class FileServiceImpl extends BaseServiceImpl<FileMapper, FileDO, FileRes
             fileResp.setStorageName("%s (%s)".formatted(storage.getName(), storage.getCode()));
         }
     }
+
+//    @Override
+//    public byte[] load(FileQuery query) {
+//        List<String> paths = query.getPaths();
+//        // 创建内存输出流用于存储zip数据
+//        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+//
+//        try (ZipOutputStream zos = new ZipOutputStream(baos)) {
+//            for (String filePath : paths) {
+//                Path path = Paths.get(filePath);
+//                // 检查文件是否存在
+//                if (!Files.exists(path)) {
+//                    throw new FileNotFoundException("文件不存在: " + filePath);
+//                }
+//                // 创建zip条目
+//                String fileName = path.getFileName().toString();
+//                ZipEntry entry = new ZipEntry(fileName);
+//                zos.putNextEntry(entry);
+//
+//                // 读取文件内容并写入zip
+//                try (InputStream fis = Files.newInputStream(path)) {
+//                    byte[] buffer = new byte[1024];
+//                    int length;
+//                    while ((length = fis.read(buffer)) > 0) {
+//                        zos.write(buffer, 0, length);
+//                    }
+//                } catch (IOException e) {
+//                    log.error("文件读取失败", e);
+//                    throw new RuntimeException(e);
+//                }
+//                zos.closeEntry();
+//            }
+//        } catch (IOException e) {
+//            log.error("zip文件创建失败", e);
+//        }
+//
+//        return baos.toByteArray();
+//    }
+
+    @Override
+    public byte[] load(FileQuery query) {
+        List<String> paths = query.getPaths();
+        // 创建内存输出流用于存储zip数据
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+        try (ZipOutputStream zos = new ZipOutputStream(baos)) {
+            for (String pathStr : paths) {
+                Path path = Paths.get(pathStr);
+                // 检查路径是否存在
+                if (!Files.exists(path)) {
+                    throw new FileNotFoundException("路径不存在: " + pathStr);
+                }
+                // 根据路径类型分别处理
+                if (Files.isDirectory(path)) {
+                    addDirectoryToZip(zos, path, path.getFileName().toString());
+                } else {
+                    addFileToZip(zos, path, path.getFileName().toString());
+                }
+            }
+        } catch (IOException e) {
+            log.error("zip文件创建失败", e);
+            throw new RuntimeException("文件打包失败", e);
+        }
+
+        return baos.toByteArray();
+    }
+
+    /**
+     * 将文件添加到zip输出流中
+     *
+     * @param zos      zip输出流
+     * @param file     要添加的文件
+     * @param fileName 在zip中的文件名
+     * @throws IOException IO异常
+     */
+    private void addFileToZip(ZipOutputStream zos, Path file, String fileName) throws IOException {
+        ZipEntry entry = new ZipEntry(fileName);
+        zos.putNextEntry(entry);
+
+        try (InputStream fis = Files.newInputStream(file)) {
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = fis.read(buffer)) > 0) {
+                zos.write(buffer, 0, length);
+            }
+        } catch (IOException e) {
+            log.error("文件读取失败: {}", file.toString(), e);
+            throw e;
+        }
+        zos.closeEntry();
+    }
+
+    /**
+     * 递归将目录及其内容添加到zip输出流中
+     *
+     * @param zos      zip输出流
+     * @param dir      要添加的目录
+     * @param basePath 在zip中的基础路径
+     * @throws IOException IO异常
+     */
+    private void addDirectoryToZip(ZipOutputStream zos, Path dir, String basePath) throws IOException {
+        Files.walk(dir)
+                .filter(path -> !path.equals(dir)) // 排除目录本身
+                .forEach(path -> {
+                    try {
+                        String entryName = basePath + "/" + dir.relativize(path).toString().replace("\\", "/");
+                        if (Files.isDirectory(path)) {
+                            // 创建目录条目
+                            ZipEntry dirEntry = new ZipEntry(entryName + "/");
+                            zos.putNextEntry(dirEntry);
+                            zos.closeEntry();
+                        } else {
+                            // 添加文件
+                            addFileToZip(zos, path, entryName);
+                        }
+                    } catch (IOException e) {
+                        log.error("添加文件到zip失败: {}", path.toString(), e);
+                        throw new RuntimeException(e);
+                    }
+                });
+    }
+
 }

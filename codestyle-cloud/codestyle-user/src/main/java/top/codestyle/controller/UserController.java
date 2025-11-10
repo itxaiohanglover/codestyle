@@ -78,7 +78,7 @@ public class UserController {
      * 用户注销
      *
      * @param request 请求对象
-     * @return
+     * @return 注销结果
      */
     @PostMapping("/logout")
     public BaseResponse<Boolean> userLogout(HttpServletRequest request) {
