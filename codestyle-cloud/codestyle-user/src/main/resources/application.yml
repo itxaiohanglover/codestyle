@@ -1,4 +1,6 @@
 spring:
+  main:
+    allow-bean-definition-overriding: true
   profiles:
     active: dev
 --- ### 项目配置
@@ -6,11 +8,6 @@ project:
   # 名称
   name: CodeStyle Cloud
   profile: ${spring.profiles.active}
-
-x-file-storage:
-  default-platform: local
-  local:
-    - platform: local
-      enable: true
-      base-path: ./data/file/
-      domain: http://localhost:8080/file/
+continew:
+  data-permission:
+    enabled: false

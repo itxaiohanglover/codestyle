@@ -10,103 +10,126 @@
     </parent>
 
     <artifactId>codestyle-common</artifactId>
+    <name>codestyle-common</name>
+    <packaging>jar</packaging>
 
     <properties>
-        <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
     <dependencies>
-        <!-- 腾讯云 COS 对象存储 -->
+
+        <!-- 基础 Web 支持，供拦截器/过滤器等使用 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+            <version>${spring-boot.version}</version>
+        </dependency>
+
+        <!-- 腾讯云 COS -->
         <dependency>
             <groupId>com.qcloud</groupId>
             <artifactId>cos_api</artifactId>
             <version>5.6.227</version>
         </dependency>
-        <!-- MyBatis Plus 代码生成 -->
+
+
+        <!-- MyBatis Plus generator (version managed in parent) -->
         <dependency>
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-generator</artifactId>
-            <version>${mybatis-plus.version}</version>
+            <version>3.5.8</version>
         </dependency>
+
         <dependency>
             <groupId>com.zaxxer</groupId>
             <artifactId>HikariCP</artifactId>
         </dependency>
 
-
-        <!-- Amazon S3（Amazon Simple Storage Service，亚马逊简单存储服务，通用存储协议 S3，兼容主流云厂商对象存储） -->
+        <!-- AWS S3 -->
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-java-sdk-s3</artifactId>
-            <version>1.12.783</version>
         </dependency>
 
+        <!-- x-file-storage core -->
         <dependency>
             <groupId>org.dromara.x-file-storage</groupId>
             <artifactId>x-file-storage-core</artifactId>
-            <version>2.2.1</version>
         </dependency>
 
-        <!-- ContiNew Starter 数据权限模块 - MyBatis Plus -->
+        <!-- continew starters -->
         <dependency>
             <groupId>top.continew</groupId>
             <artifactId>continew-starter-extension-datapermission-mp</artifactId>
-            <version>2.7.5</version>
         </dependency>
-
-        <!-- ContiNew Starter 扩展模块 - CURD（增删改查） -->
         <dependency>
             <groupId>top.continew</groupId>
             <artifactId>continew-starter-extension-crud-mp</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>top.continew</groupId>
+            <artifactId>continew-starter-data-mp</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>top.continew</groupId>
+            <artifactId>continew-starter-security-limiter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>top.continew</groupId>
+            <artifactId>continew-starter-security-crypto</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>top.continew</groupId>
+            <artifactId>continew-starter-security-mask</artifactId>
+        </dependency>
+        <!-- ContiNew Starter 认证模块 - SaToken -->
+        <dependency>
+            <groupId>top.continew</groupId>
+            <artifactId>continew-starter-auth-satoken</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-web</artifactId>
+                </exclusion>
+            </exclusions>
             <version>2.7.5</version>
         </dependency>
 
+        <!-- Sa-Token core (if continew starter delegates to it) -->
         <dependency>
             <groupId>cn.dev33</groupId>
             <artifactId>sa-token-core</artifactId>
             <version>1.39.0</version>
         </dependency>
+
+        <!-- springdoc UI -->
         <dependency>
-            <groupId>top.continew</groupId>
-            <artifactId>continew-starter-data-mp</artifactId>
-            <version>2.7.5</version>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
         </dependency>
-        <!-- ContiNew Starter 安全模块 - 限流器 -->
+
+        <!-- utils -->
         <dependency>
-            <groupId>top.continew</groupId>
-            <artifactId>continew-starter-security-limiter</artifactId>
-            <version>2.7.5</version>
+            <groupId>cn.hutool</groupId>
+            <artifactId>hutool-all</artifactId>
         </dependency>
-        <!-- ContiNew Starter 安全模块 - 限流器 -->
         <dependency>
-            <groupId>top.continew</groupId>
-            <artifactId>continew-starter-security-limiter</artifactId>
-            <version>2.7.5</version>
+            <groupId>com.thoughtworks.xstream</groupId>
+            <artifactId>xstream</artifactId>
         </dependency>
-        <!-- ContiNew Starter 安全模块 - 加密 -->
+
+        <!-- Lombok - provided for compile time only -->
         <dependency>
-            <groupId>top.continew</groupId>
-            <artifactId>continew-starter-security-crypto</artifactId>
-            <version>2.7.5</version>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
         </dependency>
-        <!-- ContiNew Starter 安全模块 - 脱敏 -->
-        <dependency>
-            <groupId>top.continew</groupId>
-            <artifactId>continew-starter-security-mask</artifactId>
-            <version>2.7.5</version>
-        </dependency>
+
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-crypto</artifactId>
             <version>6.5.1</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springdoc</groupId>
-            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-            <version>2.5.0</version>
         </dependency>
 
     </dependencies>

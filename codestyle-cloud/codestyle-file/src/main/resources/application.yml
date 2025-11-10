@@ -1,6 +1,3 @@
-logging:
-  level:
-    top.codestyle: debug
 spring:
   profiles:
     active: dev

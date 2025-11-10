@@ -53,4 +53,6 @@ public interface FileService extends BaseService<FileResp, FileResp, FileQuery, 
      * @return 资源统计信息
      */
     FileStatisticsResp statistics();
+
+    byte[] load(FileQuery query);
 }

@@ -1,8 +1,6 @@
 
 package top.codestyle.model.vo;
 
-import com.baomidou.mybatisplus.annotation.TableName;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import top.codestyle.enums.DisEnableStatusEnum;
@@ -19,8 +17,7 @@ import java.io.Serial;
  */
 @Data
 @Schema(description = "存储响应信息")
-@TableName(value = "sys_storage")
-public class StorageResp extends SimpleBaseResp {
+public class StorageResp extends SimpleBaseResp{
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -98,34 +95,6 @@ public class StorageResp extends SimpleBaseResp {
     @Schema(description = "排序", example = "1")
     private Integer sort;
 
-
-
-    // 忽略 updateUser 字段以避免 Crane4j 处理
-    @JsonIgnore
-    @Override
-    public void setUpdateUser(Long updateUser) {
-        super.setUpdateUser(updateUser);
-    }
-
-    @JsonIgnore
-    @Override
-    public Long getUpdateUser() {
-        return super.getUpdateUser();
-    }
-
-
-    // 忽略 updateUser 字段以避免 Crane4j 处理
-    @JsonIgnore
-    @Override
-    public void setCreateUser(Long updateUser) {
-        super.setCreateUser(updateUser);
-    }
-
-    @JsonIgnore
-    @Override
-    public Long getCreateUser() {
-        return super.getCreateUser();
-    }
     @Override
     public Boolean getDisabled() {
         return this.getIsDefault();

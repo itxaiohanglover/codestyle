@@ -6,7 +6,6 @@ import lombok.Data;
 import top.codestyle.model.enums.FileTypeEnum;
 import top.continew.starter.extension.crud.model.resp.BaseDetailResp;
 
-
 import java.io.Serial;
 
 /**

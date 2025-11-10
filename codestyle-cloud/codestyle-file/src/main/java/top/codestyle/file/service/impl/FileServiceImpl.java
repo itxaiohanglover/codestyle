@@ -33,10 +33,18 @@ import top.continew.starter.core.validation.CheckUtils;
 import top.continew.starter.extension.crud.service.BaseServiceImpl;
 
 
+import java.io.*;
+import java.net.URL;
+import java.net.URLConnection;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 /**
  * 文件业务实现
@@ -78,19 +86,16 @@ public class FileServiceImpl extends BaseServiceImpl<FileMapper, FileDO, FileRes
         }
         LocalDate today = LocalDate.now();
         String path = today.getYear() + StringConstants.SLASH + today.getMonthValue() + StringConstants.SLASH + today
-            .getDayOfMonth() + StringConstants.SLASH;
+                .getDayOfMonth() + StringConstants.SLASH;
+        System.out.println(file.getOriginalFilename());
         UploadPretreatment uploadPretreatment = fileStorageService.of(file)
-            .setPlatform(storage.getCode())
-            .putAttr(ClassUtil.getClassName(StorageDO.class, false), storage)
-            .setPath(path);
-        // 图片文件生成缩略图
-        for (FileStorage fileStorage : fileStorageService.getFileStorageList()) {
-            System.out.println("FileStorageList contains" + fileStorage.getPlatform());
-        }
-        System.out.println("uploadPretreatment--platform" + uploadPretreatment.getPlatform());
-        System.out.println("uploadPretreatment--Attr" +  uploadPretreatment.getAttr());
-        System.out.println("uploadPretreatment--path" + uploadPretreatment.getPath());
+                .setPlatform(storage.getCode())
+                .putAttr(ClassUtil.getClassName(StorageDO.class, false), storage)
+                .setPath(path)
+                .setSaveFilename(file.getOriginalFilename())
+                .setSaveThFilename(file.getOriginalFilename());
 
+        // 图片文件生成缩略图
         if (FileTypeEnum.IMAGE.getExtensions().contains(FileNameUtil.extName(file.getOriginalFilename()))) {
             uploadPretreatment.thumbnail(img -> img.size(100, 100));
         }
@@ -137,6 +142,44 @@ public class FileServiceImpl extends BaseServiceImpl<FileMapper, FileDO, FileRes
     }
 
     @Override
+    public byte[] load(FileQuery query) {
+        List<String> paths = query.getPaths();
+        // 创建内存输出流用于存储zip数据
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+        try (ZipOutputStream zos = new ZipOutputStream(baos)) {
+            for (String filePath : paths) {
+                Path path = Paths.get(filePath);
+                // 检查文件是否存在
+                if (!Files.exists(path)) {
+                    throw new FileNotFoundException("文件不存在: " + filePath);
+                }
+                // 创建zip条目
+                String fileName = path.getFileName().toString();
+                ZipEntry entry = new ZipEntry(fileName);
+                zos.putNextEntry(entry);
+
+                // 读取文件内容并写入zip
+                try (InputStream fis = Files.newInputStream(path)) {
+                    byte[] buffer = new byte[1024];
+                    int length;
+                    while ((length = fis.read(buffer)) > 0) {
+                        zos.write(buffer, 0, length);
+                    }
+                } catch (IOException e) {
+                    log.error("文件读取失败", e);
+                    throw new RuntimeException(e);
+                }
+                zos.closeEntry();
+            }
+        } catch (IOException e) {
+            log.error("zip文件创建失败", e);
+        }
+
+        return baos.toByteArray();
+    }
+
+    @Override
     protected void fill(Object obj) {
         super.fill(obj);
         if (obj instanceof FileResp fileResp && !URLUtils.isHttpUrl(fileResp.getUrl())) {
@@ -145,7 +188,7 @@ public class FileServiceImpl extends BaseServiceImpl<FileMapper, FileDO, FileRes
             String url = URLUtil.normalize(prefix + fileResp.getUrl());
             fileResp.setUrl(url);
             String thumbnailUrl = StrUtils.blankToDefault(fileResp.getThumbnailUrl(), url, thUrl -> URLUtil
-                .normalize(prefix + thUrl));
+                    .normalize(prefix + thUrl));
             fileResp.setThumbnailUrl(thumbnailUrl);
             fileResp.setStorageName("%s (%s)".formatted(storage.getName(), storage.getCode()));
         }

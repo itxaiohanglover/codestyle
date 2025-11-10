@@ -10,11 +10,12 @@
     </parent>
 
     <artifactId>codestyle-ai</artifactId>
+    <name>codestyle-ai</name>
+    <packaging>jar</packaging>
 
     <properties>
-        <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
+    <!-- 目前无额外依赖 -->
 </project>

@@ -54,8 +54,5 @@ dubbo:
 mybatis-plus:
   mapper-locations: classpath*:/mapper/**/*.xml
   type-aliases-package: top.codestyle.file.entity
-  type-enums-package: top.codestyle.model.enums
-  type-handlers-package: com.baomidou.mybatisplus.extension.handlers
-
   configuration:
     map-underscore-to-camel-case: true

@@ -7,6 +7,7 @@ import top.continew.starter.data.core.annotation.Query;
 import top.continew.starter.data.core.enums.QueryType;
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * 文件查询条件
@@ -33,4 +34,10 @@ public class FileQuery implements Serializable {
      */
     @Schema(description = "类型", example = "2")
     private FileTypeEnum type;
+
+    /**
+     * 存储路径数组
+     */
+    @Schema(description = "存储路径数组" , example = "/2023/12/,/2024/01/")
+    private List<String> paths;
 }
