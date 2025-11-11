@@ -1,5 +1,5 @@
 
-package top.codestyle.file.config.file;
+package top.codestyle.config.file;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
@@ -10,7 +10,7 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import top.codestyle.enums.DisEnableStatusEnum;
-import top.codestyle.file.service.StorageService;
+import top.codestyle.service.StorageService;
 import top.codestyle.model.dto.file.StorageReq;
 import top.codestyle.model.query.StorageQuery;
 import top.codestyle.model.vo.StorageResp;

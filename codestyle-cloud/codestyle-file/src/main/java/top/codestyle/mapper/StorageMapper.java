@@ -1,4 +1,4 @@
-package top.codestyle.file.mapper;
+package top.codestyle.mapper;
 
 import top.codestyle.model.entity.StorageDO;
 import top.continew.starter.data.mp.base.BaseMapper;

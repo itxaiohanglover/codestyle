@@ -1,4 +1,4 @@
-package top.codestyle.file.mapper;
+package top.codestyle.mapper;
 
 import org.apache.ibatis.annotations.Select;
 import top.codestyle.model.entity.FileDO;

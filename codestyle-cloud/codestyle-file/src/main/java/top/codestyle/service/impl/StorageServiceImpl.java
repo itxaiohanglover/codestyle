@@ -1,5 +1,5 @@
 
-package top.codestyle.file.service.impl;
+package top.codestyle.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.map.MapUtil;
@@ -13,9 +13,9 @@ import org.dromara.x.file.storage.core.FileStorageServiceBuilder;
 import org.dromara.x.file.storage.core.platform.FileStorage;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-import top.codestyle.file.mapper.StorageMapper;
-import top.codestyle.file.service.FileService;
-import top.codestyle.file.service.StorageService;
+import top.codestyle.mapper.StorageMapper;
+import top.codestyle.service.FileService;
+import top.codestyle.service.StorageService;
 import top.codestyle.model.dto.file.StorageReq;
 import top.codestyle.model.entity.StorageDO;
 import top.codestyle.enums.DisEnableStatusEnum;

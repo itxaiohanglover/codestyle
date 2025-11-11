@@ -1,4 +1,4 @@
-package top.codestyle.file.controller;
+package top.codestyle.controller;
 
 import cn.dev33.satoken.annotation.SaIgnore;
 import cn.dev33.satoken.context.SaHolder;

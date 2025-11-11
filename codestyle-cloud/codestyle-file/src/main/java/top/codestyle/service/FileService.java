@@ -1,4 +1,4 @@
-package top.codestyle.file.service;
+package top.codestyle.service;
 
 import org.dromara.x.file.storage.core.FileInfo;
 import org.springframework.web.multipart.MultipartFile;

@@ -1,4 +1,4 @@
-package top.codestyle.file;
+package top.codestyle;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.net.NetUtil;
@@ -17,7 +17,7 @@ import org.springframework.boot.autoconfigure.web.ServerProperties;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.web.bind.annotation.RestController;
 import top.codestyle.enums.DisEnableStatusEnum;
-import top.codestyle.file.service.StorageService;
+import top.codestyle.service.StorageService;
 import top.codestyle.model.dto.file.StorageReq;
 import top.codestyle.model.query.StorageQuery;
 import top.codestyle.model.vo.StorageResp;
@@ -28,8 +28,8 @@ import top.continew.starter.extension.crud.annotation.EnableCrudRestController;
 import java.util.List;
 
 @SpringBootApplication
-@MapperScan("top.codestyle.file.mapper")
-@ComponentScan("top.codestyle")
+@MapperScan("top.codestyle.mapper")
+@ComponentScan("top")
 @Slf4j
 @RequiredArgsConstructor
 @EnableFileStorage
@@ -50,9 +50,6 @@ public class CodestyleFileApplication implements ApplicationRunner {
         StorageQuery query = new StorageQuery();
         query.setStatus(DisEnableStatusEnum.ENABLE);
         List<StorageResp> storageList = storageService.list(query, null);
-        if (storageList.isEmpty()) {
-            return;
-        }
         storageList.forEach(s -> storageService.load(BeanUtil.copyProperties(s, StorageReq.class)));
         String hostAddress = NetUtil.getLocalhostStr();
         Integer port = serverProperties.getPort();

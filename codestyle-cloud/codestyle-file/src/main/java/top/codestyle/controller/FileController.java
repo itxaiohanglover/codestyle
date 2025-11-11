@@ -1,4 +1,4 @@
-package top.codestyle.file.controller;
+package top.codestyle.controller;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
 import io.swagger.v3.oas.annotations.Operation;
@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-import top.codestyle.file.service.FileService;
+import top.codestyle.service.FileService;
 import top.codestyle.model.dto.file.FileReq;
 import top.codestyle.model.query.FileQuery;
 import top.codestyle.model.vo.FileResp;

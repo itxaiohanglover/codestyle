@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package top.codestyle.file.controller;
+package top.codestyle.controller;
 
-import cn.dev33.satoken.annotation.SaIgnore;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RestController;
-import top.codestyle.file.service.StorageService;
+import top.codestyle.service.StorageService;
 import top.codestyle.model.dto.file.StorageReq;
 import top.codestyle.model.query.StorageQuery;
 import top.codestyle.model.vo.StorageResp;

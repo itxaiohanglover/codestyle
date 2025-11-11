@@ -1,5 +1,5 @@
 
-package top.codestyle.file.service;
+package top.codestyle.service;
 
 import top.codestyle.model.dto.file.StorageReq;
 import top.codestyle.model.entity.StorageDO;

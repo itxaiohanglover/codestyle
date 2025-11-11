@@ -1,5 +1,5 @@
 
-package top.codestyle.file.service.impl;
+package top.codestyle.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.io.file.FileNameUtil;
@@ -15,9 +15,10 @@ import org.dromara.x.file.storage.core.ProgressListener;
 import org.dromara.x.file.storage.core.upload.UploadPretreatment;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import top.codestyle.file.mapper.FileMapper;
-import top.codestyle.file.service.FileService;
-import top.codestyle.file.service.StorageService;
+import top.codestyle.contant.FileStatusContant;
+import top.codestyle.mapper.FileMapper;
+import top.codestyle.service.FileService;
+import top.codestyle.service.StorageService;
 import top.codestyle.model.dto.file.FileReq;
 import top.codestyle.model.entity.FileDO;
 import top.codestyle.model.entity.StorageDO;
@@ -39,6 +40,7 @@ import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -76,7 +78,7 @@ public class FileServiceImpl extends BaseServiceImpl<FileMapper, FileDO, FileRes
         StorageDO storage;
         if (StrUtil.isBlank(storageCode)) {
             storage = storageService.getDefaultStorage();
-            CheckUtils.throwIfNull(storage, "请先指定默认存储");
+            CheckUtils.throwIfNull(storage, FileStatusContant.DEFAULT_STORAGE_NOT_EXIST);
         } else {
             storage = storageService.getByCode(storageCode);
             CheckUtils.throwIfNotExists(storage, "StorageDO", "Code", storageCode);
@@ -100,7 +102,7 @@ public class FileServiceImpl extends BaseServiceImpl<FileMapper, FileDO, FileRes
         uploadPretreatment.setProgressMonitor(new ProgressListener() {
             @Override
             public void start() {
-                log.info("开始上传");
+                log.info(FileStatusContant.UPLOAD_START);
             }
 
             @Override
@@ -110,7 +112,7 @@ public class FileServiceImpl extends BaseServiceImpl<FileMapper, FileDO, FileRes
 
             @Override
             public void finish() {
-                log.info("上传结束");
+                log.info(FileStatusContant.UPLOAD_END);
             }
         });
         // 处理本地存储文件 URL
@@ -153,56 +155,21 @@ public class FileServiceImpl extends BaseServiceImpl<FileMapper, FileDO, FileRes
         }
     }
 
-//    @Override
-//    public byte[] load(FileQuery query) {
-//        List<String> paths = query.getPaths();
-//        // 创建内存输出流用于存储zip数据
-//        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-//
-//        try (ZipOutputStream zos = new ZipOutputStream(baos)) {
-//            for (String filePath : paths) {
-//                Path path = Paths.get(filePath);
-//                // 检查文件是否存在
-//                if (!Files.exists(path)) {
-//                    throw new FileNotFoundException("文件不存在: " + filePath);
-//                }
-//                // 创建zip条目
-//                String fileName = path.getFileName().toString();
-//                ZipEntry entry = new ZipEntry(fileName);
-//                zos.putNextEntry(entry);
-//
-//                // 读取文件内容并写入zip
-//                try (InputStream fis = Files.newInputStream(path)) {
-//                    byte[] buffer = new byte[1024];
-//                    int length;
-//                    while ((length = fis.read(buffer)) > 0) {
-//                        zos.write(buffer, 0, length);
-//                    }
-//                } catch (IOException e) {
-//                    log.error("文件读取失败", e);
-//                    throw new RuntimeException(e);
-//                }
-//                zos.closeEntry();
-//            }
-//        } catch (IOException e) {
-//            log.error("zip文件创建失败", e);
-//        }
-//
-//        return baos.toByteArray();
-//    }
-
     @Override
     public byte[] load(FileQuery query) {
         List<String> paths = query.getPaths();
         // 创建内存输出流用于存储zip数据
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-
+        StorageDO storage = storageService.getDefaultStorage();
         try (ZipOutputStream zos = new ZipOutputStream(baos)) {
             for (String pathStr : paths) {
+                if(Objects.equals(storage.getCode(), FileStatusContant.LOCAL_STORAGE) && pathStr.startsWith("/")){
+                    pathStr = storage.getBucketName() + pathStr;
+                }
                 Path path = Paths.get(pathStr);
                 // 检查路径是否存在
                 if (!Files.exists(path)) {
-                    throw new FileNotFoundException("路径不存在: " + pathStr);
+                    throw new FileNotFoundException(FileStatusContant.PATH_NOT_EXIST + pathStr);
                 }
                 // 根据路径类型分别处理
                 if (Files.isDirectory(path)) {
@@ -212,8 +179,8 @@ public class FileServiceImpl extends BaseServiceImpl<FileMapper, FileDO, FileRes
                 }
             }
         } catch (IOException e) {
-            log.error("zip文件创建失败", e);
-            throw new RuntimeException("文件打包失败", e);
+            log.error(FileStatusContant.ZIP_CREATE_FAIL, e);
+            throw new RuntimeException(FileStatusContant.ZIP_MAKE_FAIL, e);
         }
 
         return baos.toByteArray();
@@ -238,7 +205,7 @@ public class FileServiceImpl extends BaseServiceImpl<FileMapper, FileDO, FileRes
                 zos.write(buffer, 0, length);
             }
         } catch (IOException e) {
-            log.error("文件读取失败: {}", file.toString(), e);
+            log.error("{}: {}", FileStatusContant.FILE_READ_FAIL,file.toString(),e);
             throw e;
         }
         zos.closeEntry();
@@ -268,7 +235,7 @@ public class FileServiceImpl extends BaseServiceImpl<FileMapper, FileDO, FileRes
                             addFileToZip(zos, path, entryName);
                         }
                     } catch (IOException e) {
-                        log.error("添加文件到zip失败: {}", path.toString(), e);
+                        log.error("{}: {}",FileStatusContant.ZIP_ADD_FAIL , path.toString(), e);
                         throw new RuntimeException(e);
                     }
                 });

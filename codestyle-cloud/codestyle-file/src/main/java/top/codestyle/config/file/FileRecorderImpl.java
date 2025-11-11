@@ -1,5 +1,4 @@
-
-package top.codestyle.file.config.file;
+package top.codestyle.config.file;
 
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.ClassUtil;
@@ -12,8 +11,8 @@ import org.dromara.x.file.storage.core.recorder.FileRecorder;
 import org.dromara.x.file.storage.core.upload.FilePartInfo;
 import org.springframework.stereotype.Component;
 import top.codestyle.context.UserContextHolder;
-import top.codestyle.file.mapper.FileMapper;
-import top.codestyle.file.mapper.StorageMapper;
+import top.codestyle.mapper.FileMapper;
+import top.codestyle.mapper.StorageMapper;
 import top.codestyle.model.entity.FileDO;
 import top.codestyle.model.entity.StorageDO;
 import top.codestyle.model.enums.FileTypeEnum;
