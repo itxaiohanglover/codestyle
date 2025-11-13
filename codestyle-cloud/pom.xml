@@ -41,6 +41,7 @@
         <module>codestyle-user</module>
         <module>codestyle-file</module>
         <module>codestyle-ai</module>
+        <module>codestyle-search</module>
     </modules>
 
     <dependencyManagement>
