@@ -11,7 +11,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import top.codestyle.entity.es.CodeStyleTemplate;
+import top.codestyle.entity.es.pojo.CodeStyleTemplateDO;
+import top.codestyle.entity.es.vo.HomePageSearchResultVO;
 import top.codestyle.service.AsyncSearchService;
 import top.codestyle.service.HomePageSearchService;
 
@@ -42,12 +43,12 @@ public class CodeStyleSearchController {
      * @return Simplified template list
      */
     @GetMapping("/search")
-    public ResponseEntity<Page<CodeStyleTemplate>> codestyleSearch(
+    public ResponseEntity<Page<HomePageSearchResultVO>> codestyleSearch(
             @RequestParam String keyword,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         
-        Page<CodeStyleTemplate> result = homePageSearchService.searchHomePage(keyword, page, size);
+        Page<HomePageSearchResultVO> result = homePageSearchService.searchHomePage(keyword, page, size);
         return ResponseEntity.ok(result);
     }
 
@@ -61,7 +62,7 @@ public class CodeStyleSearchController {
      *  @return Simplified template list in CompletableFuture
      */
     @GetMapping("/async_search")
-    public CompletableFuture<ResponseEntity<Page<CodeStyleTemplate>>> searchAsync(
+    public CompletableFuture<ResponseEntity<Page<HomePageSearchResultVO>>> searchAsync(
             @RequestParam String keyword,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {

@@ -44,32 +44,30 @@ elasticsearch:
       # 搜索相关性配置
       minimum-should-match: "75%"  # 从75%调整为90%
       timeout-ms: 400 # 单位是毫秒
-      terminate-after: 5000
       track-total-hits: false
-
-
-
       # 字段权重配置
-
       boost-factors:
-
-        file-name-boost-factor: 2.0
-
-        file-description-boost-factor: 3.0
-        project-description-boost-factor: 2.0
-
-      # 短语匹配配置
+        name-ch-boost: 3.0
+        name-en-boost: 2.0
+        description-boost: 2.5
+        search-tags-boost: 1.5
       phrase-slops:
-        filename-slop: 2
-        file-description-slop: 2
-        project-description-slop: 2
-      source-includes:
-        - "fileName"
-        - "description"
-        - "projectDescription"
-        - "filePath"
-        - "version"
-        - "fileId"
-        - "groupId"
-        - "artifactId"
+          name-ch-slop: 2
+          name-en-slop: 2
+          description-slop: 2
+          search-tags-slop: 1
+      # 用户行为排序权重（用于 totalLikeCount、totalFavoriteCount 排序）
+      user-action-sort:
+          total-like-count-weight: 1.0
+          total-favorite-count-weight: 1.0
+      hotScoreWeight: 10 # 人为控分的权重大小
+#      source-includes: # 按照需求返回的字段 已经弃用
+#        - "fileName"
+#        - "description"
+#        - "projectDescription"
+#        - "filePath"
+#        - "version"
+#        - "fileId"
+#        - "groupId"
+#        - "artifactId"
 

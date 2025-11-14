@@ -1,207 +1,189 @@
 package top.codestyle.repository;
 
+import co.elastic.clients.elasticsearch._types.ScriptSortType;
+import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.query_dsl.*;
 import jakarta.annotation.PostConstruct;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.*;
 import org.springframework.data.elasticsearch.client.elc.ElasticsearchTemplate;
 import org.springframework.data.elasticsearch.client.elc.NativeQuery;
 import org.springframework.data.elasticsearch.client.elc.NativeQueryBuilder;
 import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
-import org.springframework.data.elasticsearch.core.query.FetchSourceFilter;
 import org.springframework.stereotype.Component;
-import top.codestyle.entity.es.CodeStyleTemplate;
+import top.codestyle.entity.es.pojo.CodeStyleTemplateDO;
+import top.codestyle.entity.es.vo.HomePageSearchResultVO;
+import top.codestyle.properties.ElasticsearchSearchProperties;
 
 import java.time.Duration;
+import java.util.List;
+import java.util.stream.Collectors;
 
-
-import top.codestyle.utils.SearchUtils;
-
-/**
- * @author ChonghaoGao
- * @date 2025/11/9 19:58
- * Code Style Template Repository
- * 搜索的 原始es-sql语句 相当于数据库的DAO层
- */
 @Slf4j
 @Component
+@AllArgsConstructor
 public class CodeStyleTemplateRepository {
 
+    private final ElasticsearchTemplate elasticsearchTemplate;
 
+    private final ElasticsearchSearchProperties properties;
 
-    @Autowired
-    private ElasticsearchTemplate elasticsearchTemplate;
-
-    public Page<CodeStyleTemplate> searchByKeywordWithParams(
-            String keyword,
-            String minimumShouldMatch,
-            Integer filenameSlop,
-            Integer fileDescriptionSlop,
-            Integer projectDescriptionSlop,
-            Double filenameBoost,
-            Double fileDescriptionBoost,
-            Double projectDescriptionBoost,
-            Long timeoutMs,
-            Boolean trackTotalHits,
-            String[] sourceIncludes,
-            Pageable pageable) {
-
+    /**
+     * 搜索方法，返回分页 VO
+     */
+    public Page<HomePageSearchResultVO> searchByKeywordWithParams(String keyword, Pageable pageable) {
         try {
-            // 构建完整的查询
-            NativeQuery nativeQuery = createCompleteNativeQuery(
-                    keyword, minimumShouldMatch, filenameSlop,
-                    fileDescriptionSlop, projectDescriptionSlop,
-                    filenameBoost, fileDescriptionBoost, projectDescriptionBoost,
-                    timeoutMs, trackTotalHits, sourceIncludes, pageable
-            );
+            NativeQuery nativeQuery = createCompleteNativeQuery(keyword, pageable);
 
-            // 执行查询
-            SearchHits<CodeStyleTemplate> searchHits = elasticsearchTemplate.search(
+            SearchHits<CodeStyleTemplateDO> hits = elasticsearchTemplate.search(
                     nativeQuery,
-                    CodeStyleTemplate.class,
-                    IndexCoordinates.of("template_index") // 指定索引名
+                    CodeStyleTemplateDO.class,
+                    IndexCoordinates.of("template_index")
             );
 
-            // 手动转换为普通 Page 对象
-            return SearchUtils.convertToPage(searchHits, pageable);
+            List<HomePageSearchResultVO> voList = hits.getSearchHits()
+                    .stream()
+                    .map(hit -> convertToVO(hit.getContent()))
+                    .collect(Collectors.toList());
 
+            return new PageImpl<>(voList, pageable, hits.getTotalHits());
         } catch (Exception e) {
             throw new RuntimeException("搜索失败: " + e.getMessage(), e);
         }
     }
 
+    /**
+     * 构建 NativeQuery，含脚本排序
+     */
+    private NativeQuery createCompleteNativeQuery(String keyword, Pageable pageable) {
 
+        Query baseQuery = buildBoolQuery(keyword);
 
-    private NativeQuery createCompleteNativeQuery(
-            String keyword,
-            String minimumShouldMatch,
-            Integer filenameSlop,
-            Integer fileDescriptionSlop,
-            Integer projectDescriptionSlop,
-            Double filenameBoost,
-            Double fileDescriptionBoost,
-            Double projectDescriptionBoost,
-            Long timeoutMs,
-            Boolean trackTotalHits,
-            String[] sourceIncludes,
-            Pageable pageable) {
+        // 权重参数
+        double hotScoreWeight = properties.getHotScoreWeight() != null
+                ? properties.getHotScoreWeight() : 1.0;
+        double likeWeight = properties.getUserActionSort().getTotalLikeCountWeight() != null
+                ? properties.getUserActionSort().getTotalLikeCountWeight() : 1.0;
+        double favoriteWeight = properties.getUserActionSort().getTotalFavoriteCountWeight() != null
+                ? properties.getUserActionSort().getTotalFavoriteCountWeight() : 1.0;
 
-        // 1. 构建查询条件
-        Query query = createQueryBuilder(
-                keyword, minimumShouldMatch, filenameSlop,projectDescriptionSlop,
-                fileDescriptionSlop,filenameBoost, fileDescriptionBoost, projectDescriptionBoost
-        );
-
-        // 2. 构建 NativeQuery
-        NativeQueryBuilder nativeQueryBuilder = NativeQuery.builder()
-                .withQuery(query)
+        NativeQueryBuilder builder = NativeQuery.builder()
+                .withQuery(baseQuery)
                 .withPageable(pageable)
-                .withSort(Sort.by(Sort.Order.desc("_score")));
+                .withSort(s -> s
+                        .script(scr -> scr
+                                .type(ScriptSortType.Number)
+                                .script(scriptBuilder -> scriptBuilder
+                                        .inline(inline -> inline
+                                                .source(
+                                                        "doc['hotScoreWeight'].value * " + hotScoreWeight +
+                                                                " + doc['totalLikeCount'].value * " + likeWeight +
+                                                                " + doc['totalFavoriteCount'].value * " + favoriteWeight
+                                                )
+                                        )
+                                )
+                                .order(SortOrder.Desc)
+                        )
+                );
 
-        // 3. 添加超时设置
-        if (timeoutMs != null) {
-            nativeQueryBuilder.withTimeout(Duration.ofMillis(timeoutMs));
+        if (properties.getTimeoutMs() != null) {
+            builder.withTimeout(Duration.ofMillis(properties.getTimeoutMs()));
         }
 
-        // 4. 添加总命中数跟踪
-        if (trackTotalHits != null) {
-            nativeQueryBuilder.withTrackTotalHits(trackTotalHits);
+        if (properties.getTrackTotalHits() != null) {
+            builder.withTrackTotalHits(properties.getTrackTotalHits());
         }
 
-        // 5. 添加源过滤
-        if (sourceIncludes != null && sourceIncludes.length > 0) {
-            nativeQueryBuilder.withSourceFilter(new FetchSourceFilter(sourceIncludes, null));
-        }
-
-        return nativeQueryBuilder.build();
+        return builder.build();
     }
 
-    private Query createQueryBuilder(
-            String keyword,
-            String minimumShouldMatch,
-            Integer filenameSlop,
-            Integer fileDescriptionSlop,
-            Integer projectDescriptionSlop,
-            Double filenameBoost,
-            Double fileDescriptionBoost,
-            Double projectDescriptionBoost) {
+    /**
+     * 构建 BoolQuery，包括多字段匹配、短语提升、私有空间过滤
+     */
+    private Query buildBoolQuery(String keyword) {
 
-        // 创建BoolQuery构建器
-        BoolQuery.Builder boolQueryBuilder = QueryBuilders.bool();
+        BoolQuery.Builder boolBuilder = new BoolQuery.Builder();
 
-        // 主要匹配条件 - 多字段匹配
-        MultiMatchQuery.Builder multiMatchBuilder = QueryBuilders.multiMatch()
+        // 私有空间过滤
+        boolBuilder.filter(TermQuery.of(t -> t.field("isPrivate").value(1))._toQuery());
+
+        // 多字段匹配
+        MultiMatchQuery.Builder multiBuilder = new MultiMatchQuery.Builder()
                 .query(keyword)
-                .fields("projectDescription", "description", "fileName");
+                .fields("nameCh", "nameEn", "description", "searchTags");
 
-        if (minimumShouldMatch != null) {
-            multiMatchBuilder.minimumShouldMatch(minimumShouldMatch);
+        if (properties.getMinimumShouldMatch() != null) {
+            multiBuilder.minimumShouldMatch(properties.getMinimumShouldMatch());
         }
 
-        boolQueryBuilder.must(multiMatchBuilder.build()._toQuery());
+        boolBuilder.must(multiBuilder.build()._toQuery());
 
-        // 短语匹配提升 - 文件名
-        if (filenameBoost != null && filenameBoost > 0) {
-            MatchPhraseQuery.Builder fileNamePhraseBuilder = QueryBuilders.matchPhrase()
-                    .field("fileName")
-                    .query(keyword);
+        // 短语提升
+        applyPhraseBoost(boolBuilder, "nameCh",
+                properties.getPhraseSlops().getNameChSlop(),
+                properties.getBoostFactors().getNameChBoost(),
+                keyword);
+        applyPhraseBoost(boolBuilder, "nameEn",
+                properties.getPhraseSlops().getNameEnSlop(),
+                properties.getBoostFactors().getNameEnBoost(),
+                keyword);
+        applyPhraseBoost(boolBuilder, "description",
+                properties.getPhraseSlops().getDescriptionSlop(),
+                properties.getBoostFactors().getDescriptionBoost(),
+                keyword);
+        applyPhraseBoost(boolBuilder, "searchTags",
+                properties.getPhraseSlops().getSearchTagsSlop(),
+                properties.getBoostFactors().getSearchTagsBoost(),
+                keyword);
 
-            if (filenameSlop != null) {
-                fileNamePhraseBuilder.slop(filenameSlop);
-            }
-
-            boolQueryBuilder.should(fileNamePhraseBuilder.boost(filenameBoost.floatValue()).build()._toQuery());
-        }
-
-        // 短语匹配提升 - 文件描述
-        if (fileDescriptionBoost != null && fileDescriptionBoost > 0) {
-            MatchPhraseQuery.Builder fileDescPhraseBuilder = QueryBuilders.matchPhrase()
-                    .field("description")
-                    .query(keyword);
-
-            if (fileDescriptionSlop != null) {
-                fileDescPhraseBuilder.slop(fileDescriptionSlop);
-            }
-
-            boolQueryBuilder.should(fileDescPhraseBuilder.boost(fileDescriptionBoost.floatValue()).build()._toQuery());
-        }
-
-        // 短语匹配提升 - 项目描述
-        if (projectDescriptionBoost != null && projectDescriptionBoost > 0) {
-            MatchPhraseQuery.Builder projectDescPhraseBuilder = QueryBuilders.matchPhrase()
-                    .field("projectDescription")
-                    .query(keyword)
-                    .boost(projectDescriptionBoost.floatValue());
-
-            if(projectDescriptionSlop != null) {
-                projectDescPhraseBuilder.slop(projectDescriptionSlop);
-            }
-
-            boolQueryBuilder.should(projectDescPhraseBuilder.build()._toQuery());
-        }
-
-        return boolQueryBuilder.build()._toQuery();
+        return boolBuilder.build()._toQuery();
     }
 
+    private void applyPhraseBoost(BoolQuery.Builder boolBuilder, String field, Integer slop, Double boost, String keyword) {
+        if (boost != null && boost > 0) {
+            boolBuilder.should(MatchPhraseQuery.of(mp -> {
+                mp.field(field)
+                        .query(keyword)
+                        .slop(slop != null ? slop : 0)
+                        .boost(boost.floatValue());
+                return mp;
+            })._toQuery());
+        }
+    }
+
+    private HomePageSearchResultVO convertToVO(CodeStyleTemplateDO doObj) {
+        HomePageSearchResultVO vo = new HomePageSearchResultVO();
+        // TODO: 映射字段
+        vo.setId(doObj.getId());
+        vo.setNameCh(doObj.getNameCh());
+        vo.setNameEn(doObj.getNameEn());
+        vo.setMemberName(doObj.getMemberNames());
+        vo.setMemberAvatarUrls(doObj.getMemberAvatarUrls());
+        vo.setCreatorName(doObj.getCreatorName());
+        vo.setCreateTime(doObj.getCreateTime());
+        vo.setUpdateTime(doObj.getUpdateTime());
+        vo.setEditTime(doObj.getEditTime());
+        vo.setDescription(doObj.getDescription());
+        vo.setTotalLikeCount(doObj.getTotalLikeCount());
+        vo.setTotalFavoriteCount(doObj.getTotalFavoriteCount());
+        vo.setTags(doObj.getSearchTags());
+        vo.setTemplateAvatar(doObj.getAvatar());
+        vo.setVersion(doObj.getVersion());
+        return vo;
+    }
 
     @PostConstruct
     public void logNumOfAllDoc() {
         try {
-            // 执行计数查询统计总文档数
-            NativeQuery countQuery = new NativeQueryBuilder()
-                    .withQuery(qb -> qb.matchAll(m -> m))  // 匹配所有文档
+            NativeQuery countQuery = NativeQuery.builder()
+                    .withQuery(qb -> qb.matchAll(m -> m))
                     .build();
-
-            long totalCount = elasticsearchTemplate.count(countQuery, CodeStyleTemplate.class);
-            log.info("索引 {} 中的总文档条目: {}", CodeStyleTemplate.class.getSimpleName(), totalCount);
-
+            long totalCount = elasticsearchTemplate.count(countQuery, CodeStyleTemplateDO.class);
+            log.info("索引 {} 中的总文档条目: {}", CodeStyleTemplateDO.class.getSimpleName(), totalCount);
         } catch (Exception e) {
-            // 这里可以记录日志，但不阻止应用启动
-            log.info("ES初始化查询失败 异常原因:{}",e.getMessage());
+            log.info("ES初始化查询失败 异常原因: {}", e.getMessage());
         }
     }
-
 }
