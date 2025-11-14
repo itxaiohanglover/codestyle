@@ -120,3 +120,75 @@ CREATE TABLE IF NOT EXISTS `sys_file` (
 #     NOW()
 #     );
 #
+-- 模板库表
+create table if not exists library_info
+(
+    id           bigint auto_increment comment 'id' primary key,
+    nameEn  varchar(256)     not null comment '模板库英文名',
+    nameCh  varchar(256)     not null comment '模板库中文名',
+    description   text    not  null  comment '模板库描述',
+    avatar  varchar(1024)    not null comment '模板库图片介绍',
+    status  tinyint default 0   not null comment '状态：0：私有；1：公有',
+    maxFileSize    bigint   default 0    null comment '模版库的最大总大小 单位是字节(B)',
+    maxFileCount   bigint   default 0    null comment '模版库文件的最大数量',
+    maxMemberCount bigint   default 10   null comment '模版库成员的最大数量',
+
+    totalFileSize  bigint   default 0    null comment '模版库当前的总大小 单位是字节(B)',
+    totalFileCount bigint   default 0    null comment '模版库当前的文件数量',
+    totalMemberCount bigint   default 0   null comment '模版库当前的成员数量',
+    totalLikeCount bigint default 0 not null comment '模板库当前的点赞数',
+    totalFavoriteCount bigint default 0 not null comment '模板库当前的收藏数',
+    editTime     datetime     default CURRENT_TIMESTAMP not null comment '编辑时间',
+    createTime   datetime     default CURRENT_TIMESTAMP not null comment '创建时间',
+    updateTime   datetime     default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '更新时间',
+    isDelete     tinyint      default 0                 not null comment '是否删除'
+) comment '模板库表' collate = utf8mb4_unicode_ci;
+
+-- 模板人员关系表
+CREATE TABLE library_member
+(
+    id          BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '主键',
+    library_id  BIGINT NOT NULL COMMENT '模板库ID',
+    user_id     BIGINT NOT NULL COMMENT '用户ID',
+    role        TINYINT DEFAULT 3 NOT NULL COMMENT '角色：1=owner 2=admin 3=normal',
+    joined_at   DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL COMMENT '加入时间',
+    /* 业务唯一：一个用户在一个库只能有一条记录 */
+    UNIQUE KEY uk_lib_user (library_id, user_id),
+    /* 反向查询：某用户加入了哪些库 */
+    KEY idx_user_id (user_id),
+    CONSTRAINT fk_member_lib  FOREIGN KEY (library_id) REFERENCES library_info(id)  ON DELETE CASCADE,
+    CONSTRAINT fk_member_user FOREIGN KEY (user_id)     REFERENCES user(id)             ON DELETE CASCADE
+) comment '模板人员关系表' collate = utf8mb4_unicode_ci;
+
+-- 模板点赞表
+CREATE TABLE library_like
+(
+    library_id  BIGINT NOT NULL COMMENT '模板库ID',
+    user_id     BIGINT NOT NULL COMMENT '用户ID',
+    created_at  DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL COMMENT '点赞时间',
+    UNIQUE KEY uk_like (library_id, user_id),
+    KEY idx_user_like (user_id),
+    CONSTRAINT fk_like_lib  FOREIGN KEY (library_id) REFERENCES library_info(id) ON DELETE CASCADE,
+    CONSTRAINT fk_like_user FOREIGN KEY (user_id)     REFERENCES user(id)            ON DELETE CASCADE
+) comment '用户点赞模板库' collate = utf8mb4_unicode_ci;
+
+-- 模板收藏表
+CREATE TABLE library_favorite
+(
+    library_id  BIGINT NOT NULL COMMENT '模板库ID',
+    user_id     BIGINT NOT NULL COMMENT '用户ID',
+    created_at  DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL COMMENT '收藏时间',
+    UNIQUE KEY uk_favorite (library_id, user_id),
+    KEY idx_user_fav (user_id),
+    CONSTRAINT fk_fav_lib  FOREIGN KEY (library_id) REFERENCES library_info(id) ON DELETE CASCADE,
+    CONSTRAINT fk_fav_user FOREIGN KEY (user_id)     REFERENCES user(id)            ON DELETE CASCADE
+) comment '用户收藏模板库' collate = utf8mb4_unicode_ci;
+
+-- VIP表
+CREATE TABLE vip_user
+(
+    id           BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT 'id',
+    `vip_user` bigint NULL DEFAULT NULL COMMENT 'vip用户ID',
+    `expired_time` datetime NULL DEFAULT NULL COMMENT '到期时间（续费累加）',
+    UNIQUE KEY uk_userId (vip_user)
+)

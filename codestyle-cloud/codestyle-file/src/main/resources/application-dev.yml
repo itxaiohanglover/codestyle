@@ -11,7 +11,7 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/codestyle_cloud?allowPublicKeyRetrieval=true&useSSL=false
     username: root
-    password: qwe123456
+    password: james2017
   # redis
   data:
     redis:

@@ -2,7 +2,7 @@ spring:
   main:
     allow-bean-definition-overriding: true
   profiles:
-    active: dev
+    active: local
 --- ### 项目配置
 project:
   # 名称
