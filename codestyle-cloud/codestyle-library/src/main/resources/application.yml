@@ -1,0 +1,52 @@
+spring:
+  application:
+    name: codestyle-library
+  #  main:
+  #    allow-bean-definition-overriding: true
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/codestyle_cloud?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    username: root
+    password: james2017
+
+
+
+# MyBatis-Plus配置
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      logic-delete-field: isDelete
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+  mapper-locations: classpath*:/mapper/**/*.xml
+  type-aliases-package: top.codestyle.library.entity
+
+# Continew Starter 配置
+continew:
+  # 禁用数据权限功能
+  data-permission:
+    enabled: false
+
+# 空间权限配置
+space:
+  permission:
+    # 普通用户限制
+    normal:
+      max-library-count: 3
+      max-repository-size: 10485760 # 10MB (字节)
+      max-single-file-size: 1048576 # 1MB (字节)
+      max-member-count: 10
+      restrict-file-type: true
+    # VIP用户限制
+    vip:
+      max-library-count: 50
+      max-repository-size: 104857600 # 100MB (字节)
+      max-single-file-size: 9223372036854775807 # Long.MAX_VALUE (无限制)
+      max-member-count: 2147483647 # Integer.MAX_VALUE (无限制)
+      restrict-file-type: false
+
+server:
+  port: 8083
