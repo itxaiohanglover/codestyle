@@ -1,23 +1,41 @@
+/*
+ * Copyright (c) 2022-present Charles7c Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package top.codestyle.model.vo;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import top.codestyle.base.model.resp.BaseDetailResp;
 import top.codestyle.enums.DisEnableStatusEnum;
 import top.codestyle.model.enums.StorageTypeEnum;
-import top.continew.starter.security.mask.annotation.JsonMask;
 
 import java.io.Serial;
 
 /**
- * 存储响应信息
+ * 存储响应参数
  *
  * @author Charles7c
  * @since 2023/12/26 22:09
  */
+@EqualsAndHashCode(callSuper = true)
 @Data
-@Schema(description = "存储响应信息")
-public class StorageResp extends SimpleBaseResp{
+@Schema(description = "存储响应参数")
+public class StorageResp extends SimpleBaseResp {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -44,35 +62,28 @@ public class StorageResp extends SimpleBaseResp{
      * 类型
      */
     @Schema(description = "类型", example = "2")
-    private StorageTypeEnum type;
+    private Integer type;
 
     /**
-     * 访问密钥
+     * Access Key
      */
-    @Schema(description = "访问密钥", example = "")
+    @Schema(description = "Access Key", example = "")
     private String accessKey;
 
     /**
-     * 私有密钥
+     * Endpoint
      */
-    @Schema(description = "私有密钥", example = "")
-    @JsonMask(left = 4, right = 3)
-    private String secretKey;
-
-    /**
-     * 终端节点
-     */
-    @Schema(description = "终端节点", example = "")
+    @Schema(description = "Endpoint", example = "")
     private String endpoint;
 
     /**
-     * 桶名称
+     * Bucket/存储路径
      */
-    @Schema(description = "桶名称", example = "C:/continew-admin/data/file/")
+    @Schema(description = "Bucket/存储路径", example = "C:/continew-admin/data/file/")
     private String bucketName;
 
     /**
-     * 域名
+     * 域名/访问路径
      */
     @Schema(description = "域名", example = "http://localhost:8000/file")
     private String domain;
@@ -100,4 +111,32 @@ public class StorageResp extends SimpleBaseResp{
         return this.getIsDefault();
     }
 
+
+
+    // 忽略 updateUser 字段以避免 Crane4j 处理
+    @JsonIgnore
+    @Override
+    public void setUpdateUser(Long updateUser) {
+        super.setUpdateUser(updateUser);
+    }
+
+    @JsonIgnore
+    @Override
+    public Long getUpdateUser() {
+        return super.getUpdateUser();
+    }
+
+
+    // 忽略 updateUser 字段以避免 Crane4j 处理
+    @JsonIgnore
+    @Override
+    public void setCreateUser(Long updateUser) {
+        super.setCreateUser(updateUser);
+    }
+
+    @JsonIgnore
+    @Override
+    public Long getCreateUser() {
+        return super.getCreateUser();
+    }
 }

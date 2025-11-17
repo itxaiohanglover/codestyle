@@ -1,5 +1,22 @@
+/*
+ * Copyright (c) 2022-present Charles7c Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package top.codestyle.model.dto.file;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -10,20 +27,19 @@ import top.codestyle.constant.RegexConstants;
 import top.codestyle.enums.DisEnableStatusEnum;
 import top.codestyle.model.enums.StorageTypeEnum;
 import top.codestyle.validation.ValidationGroup;
-import top.continew.starter.extension.crud.model.req.BaseReq;
-
 
 import java.io.Serial;
+import java.io.Serializable;
 
 /**
- * 存储请求参数
+ * 存储创建或修改请求参数
  *
  * @author Charles7c
  * @since 2023/12/26 22:09
  */
 @Data
-@Schema(description = "存储请求参数")
-public class StorageReq extends BaseReq {
+@Schema(description = "存储创建或修改请求参数")
+public class StorageReq implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -31,7 +47,7 @@ public class StorageReq extends BaseReq {
     /**
      * 名称
      */
-    @Schema(description = "名称", example = "存储1")
+    @Schema(description = "名称", example = "S3对象存储")
     @NotBlank(message = "名称不能为空")
     @Length(max = 100, message = "名称长度不能超过 {max} 个字符")
     private String name;
@@ -39,7 +55,7 @@ public class StorageReq extends BaseReq {
     /**
      * 编码
      */
-    @Schema(description = "编码", example = "local")
+    @Schema(description = "编码", example = "s3_aliyun")
     @NotBlank(message = "编码不能为空")
     @Pattern(regexp = RegexConstants.GENERAL_CODE, message = "编码长度为 2-30 个字符，支持大小写字母、数字、下划线，以字母开头")
     private String code;
@@ -48,47 +64,49 @@ public class StorageReq extends BaseReq {
      * 类型
      */
     @Schema(description = "类型", example = "2")
-    @NotNull(message = "类型非法")
+    @NotNull(message = "类型无效")
     private StorageTypeEnum type;
 
     /**
-     * 访问密钥
+     * Access Key
      */
-    @Schema(description = "访问密钥", example = "")
-    @Length(max = 255, message = "访问密钥长度不能超过 {max} 个字符")
-    @NotBlank(message = "访问密钥不能为空", groups = ValidationGroup.Storage.S3.class)
+    @Schema(description = "Access Key", example = "LBAI4Fp4dXYcZamU5EXTBdTa")
+    @Length(max = 255, message = "Access Key长度不能超过 {max} 个字符")
+    @NotBlank(message = "Access Key不能为空", groups = ValidationGroup.Storage.OSS.class)
     private String accessKey;
 
     /**
-     * 私有密钥
+     * Secret Key
      */
-    @Schema(description = "私有密钥", example = "")
-    @NotBlank(message = "私有密钥不能为空", groups = ValidationGroup.Storage.S3.class)
+    @Schema(description = "Secret Key", example = "RSA 公钥加密的 Secret Key")
     private String secretKey;
 
     /**
-     * 终端节点
+     * Endpoint
      */
-    @Schema(description = "终端节点", example = "")
-    @Length(max = 255, message = "终端节点长度不能超过 {max} 个字符")
-    @NotBlank(message = "终端节点不能为空", groups = ValidationGroup.Storage.S3.class)
+    @Schema(description = "Endpoint", example = "http://oss-cn-shanghai.aliyuncs.com")
+    @Length(max = 255, message = "Endpoint长度不能超过 {max} 个字符")
+    @NotBlank(message = "Endpoint不能为空", groups = ValidationGroup.Storage.OSS.class)
+    @Pattern(regexp = RegexConstants.URL_HTTP, message = "Endpoint格式不正确", groups = ValidationGroup.Storage.OSS.class)
     private String endpoint;
 
     /**
-     * 桶名称
+     * Bucket/存储路径
      */
-    @Schema(description = "桶名称", example = "C:/continew-admin/data/file/")
-    @Length(max = 255, message = "桶名称长度不能超过 {max} 个字符")
-    @NotBlank(message = "桶名称不能为空", groups = ValidationGroup.Storage.S3.class)
+    @Schema(description = "Bucket/存储路径", example = "continew-admin")
+    @Length(max = 255, message = "Bucket长度不能超过 {max} 个字符", groups = ValidationGroup.Storage.OSS.class)
+    @Length(max = 255, message = "存储路径长度不能超过 {max} 个字符", groups = ValidationGroup.Storage.Local.class)
+    @NotBlank(message = "Bucket不能为空", groups = ValidationGroup.Storage.OSS.class)
     @NotBlank(message = "存储路径不能为空", groups = ValidationGroup.Storage.Local.class)
     private String bucketName;
 
     /**
-     * 域名
+     * 域名/访问路径
      */
-    @Schema(description = "域名", example = "http://localhost:8000/file")
-    @Length(max = 255, message = "域名长度不能超过 {max} 个字符")
-    @NotBlank(message = "域名不能为空")
+    @Schema(description = "域名/访问路径", example = "https://continew-admin.file.continew.top/")
+    @Length(max = 255, message = "域名长度不能超过 {max} 个字符", groups = ValidationGroup.Storage.OSS.class)
+    @Length(max = 255, message = "访问路径长度不能超过 {max} 个字符", groups = ValidationGroup.Storage.Local.class)
+    @NotBlank(message = "访问路径不能为空", groups = ValidationGroup.Storage.Local.class)
     private String domain;
 
     /**
@@ -105,15 +123,14 @@ public class StorageReq extends BaseReq {
     private String description;
 
     /**
-     * 是否为默认存储
-     */
-    @Schema(description = "是否为默认存储", example = "true")
-    @NotNull(message = "是否为默认存储不能为空")
-    private Boolean isDefault;
-
-    /**
      * 状态
      */
     @Schema(description = "状态", example = "1")
     private DisEnableStatusEnum status;
+
+    /**
+     * 是否为默认存储
+     */
+    @JsonIgnore
+    private Boolean isDefault;
 }

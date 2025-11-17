@@ -1,6 +1,6 @@
 package top.codestyle.model.vo;
 
-import com.alibaba.excel.annotation.ExcelProperty;
+import cn.idev.excel.annotation.ExcelProperty;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 public class SimpleBaseResp implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
-    
+
     private Long id;
     /**
      * 修改人

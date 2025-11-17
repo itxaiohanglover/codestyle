@@ -4,7 +4,6 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import top.codestyle.exception.BusinessException;
 import top.codestyle.exception.ErrorCode;
 import top.codestyle.model.dto.user.UserQueryRequest;
@@ -17,6 +16,7 @@ import top.codestyle.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
+import top.continew.starter.data.service.impl.ServiceImpl;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;

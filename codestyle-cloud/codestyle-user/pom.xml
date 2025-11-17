@@ -25,22 +25,21 @@
         <dependency>
             <groupId>top.codestyle</groupId>
             <artifactId>codestyle-api</artifactId>
-            <version>1.0-SNAPSHOT</version>
-
+            <version>${project.version}</version>
         </dependency>
 
         <!-- 需要 model 中的 VO/DTO -->
         <dependency>
             <groupId>top.codestyle</groupId>
             <artifactId>codestyle-model</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>${project.version}</version>
         </dependency>
 
         <!-- 公共模块 -->
         <dependency>
             <groupId>top.codestyle</groupId>
             <artifactId>codestyle-common</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>${project.version}</version>
         </dependency>
 
         <!-- Web starter (module provides runtime) -->

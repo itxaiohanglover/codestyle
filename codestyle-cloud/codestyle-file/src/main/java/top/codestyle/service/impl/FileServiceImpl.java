@@ -1,3 +1,18 @@
+/*
+ * Copyright (c) 2022-present Charles7c Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package top.codestyle.service.impl;
 
@@ -13,34 +28,33 @@ import org.dromara.x.file.storage.core.FileInfo;
 import org.dromara.x.file.storage.core.FileStorageService;
 import org.dromara.x.file.storage.core.ProgressListener;
 import org.dromara.x.file.storage.core.upload.UploadPretreatment;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import top.codestyle.contant.FileStatusContant;
+import top.codestyle.base.service.BaseServiceImpl;
+import top.codestyle.enums.DisEnableStatusEnum;
 import top.codestyle.mapper.FileMapper;
-import top.codestyle.service.FileService;
-import top.codestyle.service.StorageService;
 import top.codestyle.model.dto.file.FileReq;
 import top.codestyle.model.entity.FileDO;
 import top.codestyle.model.entity.StorageDO;
 import top.codestyle.model.enums.FileTypeEnum;
 import top.codestyle.model.query.FileQuery;
-import top.codestyle.model.vo.FileResp;
-import top.codestyle.model.vo.FileStatisticsResp;
+import top.codestyle.model.vo.file.FileResp;
+import top.codestyle.model.vo.file.FileStatisticsResp;
+import top.codestyle.service.FileService;
+import top.codestyle.service.StorageService;
+import top.continew.starter.cache.redisson.util.RedisLockUtils;
 import top.continew.starter.core.constant.StringConstants;
 import top.continew.starter.core.util.StrUtils;
-import top.continew.starter.core.util.URLUtils;
-import top.continew.starter.core.validation.CheckUtils;
-import top.continew.starter.extension.crud.service.BaseServiceImpl;
-
+import top.continew.starter.core.util.validation.CheckUtils;
+import top.continew.starter.core.util.validation.ValidationUtils;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -57,74 +71,71 @@ import java.util.zip.ZipOutputStream;
 public class FileServiceImpl extends BaseServiceImpl<FileMapper, FileDO, FileResp, FileResp, FileQuery, FileReq> implements FileService {
 
     private final FileStorageService fileStorageService;
+    @Lazy
     @Resource
-    StorageService storageService;
+    private StorageService storageService;
 
     @Override
-    protected void beforeDelete(List<Long> ids) {
+    public void beforeDelete(List<Long> ids) {
         List<FileDO> fileList = baseMapper.lambdaQuery().in(FileDO::getId, ids).list();
         Map<Long, List<FileDO>> fileListGroup = fileList.stream().collect(Collectors.groupingBy(FileDO::getStorageId));
         for (Map.Entry<Long, List<FileDO>> entry : fileListGroup.entrySet()) {
             StorageDO storage = storageService.getById(entry.getKey());
             for (FileDO file : entry.getValue()) {
-                FileInfo fileInfo = file.toFileInfo(storage);
-                fileStorageService.delete(fileInfo);
+                if (!FileTypeEnum.DIR.equals(file.getType())) {
+                    FileInfo fileInfo = file.toFileInfo(storage);
+                    fileStorageService.delete(fileInfo);
+                } else {
+                    // 不允许删除非空文件夹
+                    boolean exists = baseMapper.lambdaQuery()
+                        .eq(FileDO::getParentPath, file.getPath())
+                        .eq(FileDO::getStorageId, entry.getKey())
+                        .exists();
+                    CheckUtils.throwIf(exists, "文件夹 [{}] 不为空，请先删除文件夹下的内容", file.getName());
+                }
             }
         }
     }
 
     @Override
-    public FileInfo upload(MultipartFile file, String storageCode) {
-        StorageDO storage;
-        if (StrUtil.isBlank(storageCode)) {
-            storage = storageService.getDefaultStorage();
-            CheckUtils.throwIfNull(storage, FileStatusContant.DEFAULT_STORAGE_NOT_EXIST);
-        } else {
-            storage = storageService.getByCode(storageCode);
-            CheckUtils.throwIfNotExists(storage, "StorageDO", "Code", storageCode);
-        }
-        LocalDate today = LocalDate.now();
-        String path = today.getYear() + StringConstants.SLASH + today.getMonthValue() + StringConstants.SLASH + today
-                .getDayOfMonth() + StringConstants.SLASH;
-        System.out.println(file.getOriginalFilename());
-        UploadPretreatment uploadPretreatment = fileStorageService.of(file)
-                .setPlatform(storage.getCode())
-                .putAttr(ClassUtil.getClassName(StorageDO.class, false), storage)
-                .setPath(path)
-                .setSaveFilename(file.getOriginalFilename())
-                .setSaveThFilename(file.getOriginalFilename());
-
-        // 图片文件生成缩略图
-        if (FileTypeEnum.IMAGE.getExtensions().contains(FileNameUtil.extName(file.getOriginalFilename()))) {
-            uploadPretreatment.thumbnail(img -> img.size(100, 100));
-        }
-        log.info("Storage code: {}", storage.getCode());
-        uploadPretreatment.setProgressMonitor(new ProgressListener() {
-            @Override
-            public void start() {
-                log.info(FileStatusContant.UPLOAD_START);
-            }
-
-            @Override
-            public void progress(long progressSize, Long allSize) {
-                log.info("已上传 [{}]，总大小 [{}]", progressSize, allSize);
-            }
-
-            @Override
-            public void finish() {
-                log.info(FileStatusContant.UPLOAD_END);
-            }
-        });
-        // 处理本地存储文件 URL
-        FileInfo fileInfo = uploadPretreatment.upload();
-        String domain = StrUtil.appendIfMissing(storage.getDomain(), StringConstants.SLASH);
-        fileInfo.setUrl(URLUtil.normalize(domain + fileInfo.getPath() + fileInfo.getFilename()));
-        return fileInfo;
+    public FileInfo upload(MultipartFile file, String parentPath, String storageCode) {
+        return this.upload(file, parentPath, storageCode, FileNameUtil.extName(file.getOriginalFilename()));
     }
 
     @Override
-    public Long countByStorageIds(List<Long> storageIds) {
-        return baseMapper.lambdaQuery().in(FileDO::getStorageId, storageIds).count();
+    public FileInfo upload(File file, String parentPath, String storageCode) {
+        return this.upload(file, parentPath, storageCode, FileNameUtil.extName(file.getName()));
+    }
+
+    @Override
+    public Long createDir(FileReq req) {
+        String parentPath = req.getParentPath();
+        FileDO file = baseMapper.lambdaQuery()
+            .eq(FileDO::getParentPath, parentPath)
+            .eq(FileDO::getName, req.getOriginalName())
+            .eq(FileDO::getType, FileTypeEnum.DIR)
+            .one();
+        CheckUtils.throwIfNotNull(file, "文件夹已存在");
+        // 存储引擎需要一致
+        StorageDO storage = storageService.getDefaultStorage();
+        if (!StringConstants.SLASH.equals(parentPath)) {
+            FileDO parentFile = baseMapper.lambdaQuery()
+                .eq(FileDO::getPath, parentPath)
+                .eq(FileDO::getType, FileTypeEnum.DIR)
+                .one();
+            CheckUtils.throwIfNull(parentFile, "父级文件夹不存在");
+            CheckUtils.throwIfNotEqual(parentFile.getStorageId(), storage.getId(), "文件夹和父级文件夹存储引擎不一致");
+        }
+        // 创建文件夹
+        FileDO dirFile = new FileDO();
+        String originalName = req.getOriginalName();
+        dirFile.setName(originalName);
+        dirFile.setOriginalName(originalName);
+        dirFile.setParentPath(parentPath);
+        dirFile.setType(FileTypeEnum.DIR.getValue());
+        dirFile.setStorageId(storage.getId());
+        baseMapper.insert(dirFile);
+        return dirFile.getId();
     }
 
     @Override
@@ -141,17 +152,181 @@ public class FileServiceImpl extends BaseServiceImpl<FileMapper, FileDO, FileRes
     }
 
     @Override
+    public FileResp check(String fileHash) {
+        FileDO file = baseMapper.lambdaQuery().eq(FileDO::getSha256, fileHash).one();
+        if (file != null) {
+            return get(file.getId());
+        }
+        return null;
+    }
+
+    @Override
+    public Long calcDirSize(Long id) {
+        FileDO dirFile = super.getById(id);
+        ValidationUtils.throwIfNotEqual(dirFile.getType(), FileTypeEnum.DIR, "ID 为 [{}] 的不是文件夹，不支持计算大小", id);
+        // 查询当前文件夹下的所有子文件和子文件夹
+        List<FileDO> children = baseMapper.lambdaQuery().eq(FileDO::getParentPath, dirFile.getPath()).list();
+        if (CollUtil.isEmpty(children)) {
+            return 0L;
+        }
+        // 累加子文件大小和递归计算子文件夹大小
+        return children.stream().mapToLong(child -> {
+            if (FileTypeEnum.DIR.equals(child.getType())) {
+                // 递归计算子文件夹大小
+                return calcDirSize(child.getId());
+            } else {
+                return child.getSize();
+            }
+        }).sum();
+    }
+
+    @Override
+    public Long countByStorageIds(List<Long> storageIds) {
+        if (CollUtil.isEmpty(storageIds)) {
+            return 0L;
+        }
+        return baseMapper.lambdaQuery().in(FileDO::getStorageId, storageIds).count();
+    }
+
+    @Override
     protected void fill(Object obj) {
         super.fill(obj);
-        if (obj instanceof FileResp fileResp && !URLUtils.isHttpUrl(fileResp.getUrl())) {
+        if (obj instanceof FileResp fileResp) {
             StorageDO storage = storageService.getById(fileResp.getStorageId());
-            String prefix = StrUtil.appendIfMissing(storage.getDomain(), StringConstants.SLASH);
-            String url = URLUtil.normalize(prefix + fileResp.getUrl());
+            String prefix = storage.getUrlPrefix();
+            String url = URLUtil.normalize(prefix + fileResp.getPath(), false, true);
             fileResp.setUrl(url);
-            String thumbnailUrl = StrUtils.blankToDefault(fileResp.getThumbnailUrl(), url, thUrl -> URLUtil
-                    .normalize(prefix + thUrl));
+            String parentPath = StringConstants.SLASH.equals(fileResp.getParentPath())
+                ? StringConstants.EMPTY
+                : fileResp.getParentPath();
+            String thumbnailUrl = StrUtils.blankToDefault(fileResp.getThumbnailName(), url, thName -> URLUtil
+                .normalize(prefix + parentPath + StringConstants.SLASH + thName, false, true));
             fileResp.setThumbnailUrl(thumbnailUrl);
             fileResp.setStorageName("%s (%s)".formatted(storage.getName(), storage.getCode()));
+        }
+    }
+
+    /**
+     * 上传文件并返回上传后的文件信息
+     *
+     * @param file        文件
+     * @param parentPath  上级目录
+     * @param storageCode 存储引擎编码
+     * @param extName     文件扩展名
+     * @return 文件信息
+     */
+    private FileInfo upload(Object file, String parentPath, String storageCode, String extName) {
+        List<String> allExtensions = FileTypeEnum.getAllExtensions();
+        CheckUtils.throwIf(!allExtensions.contains(extName), "不支持的文件类型，仅支持 {} 格式的文件", String
+            .join(StringConstants.COMMA, allExtensions));
+        // 构建上传预处理对象
+        StorageDO storage = storageService.getByCode(storageCode);
+        CheckUtils.throwIf(DisEnableStatusEnum.DISABLE.equals(storage.getStatus()), "请先启用存储 [{}]", storage.getCode());
+        UploadPretreatment uploadPretreatment = fileStorageService.of(file)
+            .setPlatform(storage.getCode())
+            .setHashCalculatorSha256(true)
+            .putAttr(ClassUtil.getClassName(StorageDO.class, false), storage)
+            .setPath(this.pretreatmentPath(parentPath))
+            .setSaveFilename(extName)
+            .setSaveThFilename(extName);;
+        // 图片文件生成缩略图
+        if (FileTypeEnum.IMAGE.getExtensions().contains(extName)) {
+            uploadPretreatment.setIgnoreThumbnailException(true, true);
+            uploadPretreatment.thumbnail(img -> img.size(100, 100));
+        }
+        uploadPretreatment.setProgressMonitor(new ProgressListener() {
+            @Override
+            public void start() {
+                log.info("开始上传");
+            }
+
+            @Override
+            public void progress(long progressSize, Long allSize) {
+                log.info("已上传 [{}]，总大小 [{}]", progressSize, allSize);
+            }
+
+            @Override
+            public void finish() {
+                log.info("上传结束");
+            }
+        });
+        // 创建父级目录
+        this.createParentDir(parentPath, storage);
+        // 上传
+        return uploadPretreatment.upload();
+    }
+
+    /**
+     * 处理路径
+     *
+     * <p>
+     * 1.如果 path 为 {@code /}，则设置为空 <br />
+     * 2.如果 path 不以 {@code /} 结尾，则添加后缀 {@code /} <br />
+     * 3.如果 path 以 {@code /} 开头，则移除前缀 {@code /} <br />
+     * 示例：yyyy/MM/dd/
+     * </p>
+     *
+     * @param path 路径
+     * @return 处理路径
+     */
+    private String pretreatmentPath(String path) {
+        if (StringConstants.SLASH.equals(path)) {
+            return StringConstants.EMPTY;
+        }
+        return StrUtil.appendIfMissing(StrUtil.removePrefix(path, StringConstants.SLASH), StringConstants.SLASH);
+    }
+
+    /**
+     * 创建上级文件夹（支持多级）
+     *
+     * <p>
+     * user/avatar/ => user（path：/user）、avatar（path：/user/avatar）
+     * </p>
+     *
+     * @param parentPath 上级目录
+     * @param storage    存储配置
+     */
+    @Override
+    public void createParentDir(String parentPath, StorageDO storage) {
+        String lockKey = StrUtil.format("Lock:{}:{}", storage.getCode(), parentPath);
+        try (RedisLockUtils lock = RedisLockUtils.tryLock(lockKey)) {
+            if (!lock.isLocked()) {
+                return; // 获取锁失败，直接返回
+            }
+            if (StrUtil.isBlank(parentPath) || StringConstants.SLASH.equals(parentPath)) {
+                return;
+            }
+            // user/avatar/ => user、avatar
+            String[] parentPathParts = StrUtil.split(parentPath, StringConstants.SLASH, false, true)
+                .toArray(String[]::new);
+            String lastPath = StringConstants.SLASH;
+            StringBuilder currentPathBuilder = new StringBuilder();
+            for (int i = 0; i < parentPathParts.length; i++) {
+                String parentPathPart = parentPathParts[i];
+                if (i > 0) {
+                    lastPath = currentPathBuilder.toString();
+                }
+                // /user、/user/avatar
+                currentPathBuilder.append(StringConstants.SLASH).append(parentPathPart);
+                String currentPath = currentPathBuilder.toString();
+                // 文件夹和文件存储引擎需要一致
+                FileDO dirFile = baseMapper.lambdaQuery()
+                    .eq(FileDO::getPath, currentPath)
+                    .eq(FileDO::getType, FileTypeEnum.DIR.getValue())
+                    .one();
+                if (dirFile != null) {
+                    CheckUtils.throwIfNotEqual(dirFile.getStorageId(), storage.getId(), "文件夹和上传文件存储引擎不一致");
+                    continue;
+                }
+                FileDO file = new FileDO();
+                file.setName(parentPathPart);
+                file.setOriginalName(parentPathPart);
+                file.setPath(currentPath);
+                file.setParentPath(lastPath);
+                file.setType(FileTypeEnum.DIR.getValue());
+                file.setStorageId(storage.getId());
+                baseMapper.insert(file);
+            }
         }
     }
 
@@ -163,13 +338,11 @@ public class FileServiceImpl extends BaseServiceImpl<FileMapper, FileDO, FileRes
         StorageDO storage = storageService.getDefaultStorage();
         try (ZipOutputStream zos = new ZipOutputStream(baos)) {
             for (String pathStr : paths) {
-                if(Objects.equals(storage.getCode(), FileStatusContant.LOCAL_STORAGE) && pathStr.startsWith("/")){
-                    pathStr = storage.getBucketName() + pathStr;
-                }
+                pathStr =storage.getBucketName() + pathStr;
                 Path path = Paths.get(pathStr);
                 // 检查路径是否存在
                 if (!Files.exists(path)) {
-                    throw new FileNotFoundException(FileStatusContant.PATH_NOT_EXIST + pathStr);
+                    throw new FileNotFoundException("路径不存在: " + pathStr);
                 }
                 // 根据路径类型分别处理
                 if (Files.isDirectory(path)) {
@@ -179,8 +352,8 @@ public class FileServiceImpl extends BaseServiceImpl<FileMapper, FileDO, FileRes
                 }
             }
         } catch (IOException e) {
-            log.error(FileStatusContant.ZIP_CREATE_FAIL, e);
-            throw new RuntimeException(FileStatusContant.ZIP_MAKE_FAIL, e);
+            log.error("zip文件创建失败", e);
+            throw new RuntimeException("文件打包失败", e);
         }
 
         return baos.toByteArray();
@@ -205,7 +378,7 @@ public class FileServiceImpl extends BaseServiceImpl<FileMapper, FileDO, FileRes
                 zos.write(buffer, 0, length);
             }
         } catch (IOException e) {
-            log.error("{}: {}", FileStatusContant.FILE_READ_FAIL,file.toString(),e);
+            log.error("文件读取失败: {}", file.toString(), e);
             throw e;
         }
         zos.closeEntry();
@@ -235,10 +408,9 @@ public class FileServiceImpl extends BaseServiceImpl<FileMapper, FileDO, FileRes
                             addFileToZip(zos, path, entryName);
                         }
                     } catch (IOException e) {
-                        log.error("{}: {}",FileStatusContant.ZIP_ADD_FAIL , path.toString(), e);
+                        log.error("添加文件到zip失败: {}", path.toString(), e);
                         throw new RuntimeException(e);
                     }
                 });
     }
-
 }

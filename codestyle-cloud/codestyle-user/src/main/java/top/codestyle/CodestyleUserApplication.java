@@ -14,13 +14,13 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.web.ServerProperties;
 import org.springframework.context.annotation.ComponentScan;
-import top.codestyle.config.ProjectProperties;
+import top.codestyle.properties.EnvironmentProperties;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Objects;
 
-@SpringBootApplication
+@SpringBootApplication()
 @EnableDubbo
 @MapperScan("top.codestyle.mapper")
 @ComponentScan("top")
@@ -28,7 +28,7 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class CodestyleUserApplication implements ApplicationRunner {
 
-    private final ProjectProperties projectProperties;
+    private final EnvironmentProperties environmentProperties;
     private final ServerProperties serverProperties;
 
 
@@ -38,13 +38,13 @@ public class CodestyleUserApplication implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) throws URISyntaxException, IOException {
-        if (Objects.equals(projectProperties.getProfile(), "dev")) {
+        if (Objects.equals(environmentProperties.getProfile(), "dev")) {
             String hostAddress = NetUtil.getLocalhostStr();
             Integer port = serverProperties.getPort();
             String contextPath = serverProperties.getServlet().getContextPath();
             String baseUrl = URLUtil.normalize("%s:%s%s".formatted(hostAddress, port, contextPath));
             log.info("----------------------------------------------");
-            log.info("{} service started successfully.", projectProperties.getName());
+            log.info("{} service started successfully.", environmentProperties.getName());
             log.info("API地址：{}", baseUrl);
             Knife4jProperties knife4jProperties = SpringUtil.getBean(Knife4jProperties.class);
             if (!knife4jProperties.isProduction()) {

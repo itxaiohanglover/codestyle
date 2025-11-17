@@ -1,17 +1,38 @@
+/*
+ * Copyright (c) 2022-present Charles7c Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package top.codestyle.model.entity;
 
+import cn.hutool.core.lang.RegexPool;
+import cn.hutool.core.util.ReUtil;
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.util.URLUtil;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.baomidou.mybatisplus.core.handlers.MybatisEnumTypeHandler;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.apache.ibatis.type.EnumOrdinalTypeHandler;
+import top.codestyle.base.model.entity.BaseDO;
 import top.codestyle.enums.DisEnableStatusEnum;
 import top.codestyle.model.enums.StorageTypeEnum;
-import top.continew.starter.extension.crud.model.entity.BaseDO;
-import top.continew.starter.security.crypto.annotation.FieldEncrypt;
-
+import top.continew.starter.core.constant.StringConstants;
+import top.continew.starter.encrypt.field.annotation.FieldEncrypt;
 
 import java.io.Serial;
+import java.net.URL;
 
 /**
  * 存储实体
@@ -19,6 +40,7 @@ import java.io.Serial;
  * @author Charles7c
  * @since 2023/12/26 22:09
  */
+@EqualsAndHashCode(callSuper = true)
 @Data
 @TableName("sys_storage")
 public class StorageDO extends BaseDO {
@@ -39,28 +61,29 @@ public class StorageDO extends BaseDO {
     /**
      * 类型
      */
-    @TableField(typeHandler = EnumOrdinalTypeHandler.class)
-    private StorageTypeEnum type;
+//    @TableField(typeHandler = EnumOrdinalTypeHandler.class)
+//    private StorageTypeEnum type;
+    private  Integer type;
 
     /**
-     * Access Key（访问密钥）
+     * Access Key
      */
     @FieldEncrypt
     private String accessKey;
 
     /**
-     * Secret Key（私有密钥）
+     * Secret Key
      */
     @FieldEncrypt
     private String secretKey;
 
     /**
-     * Endpoint（终端节点）
+     * Endpoint
      */
     private String endpoint;
 
     /**
-     * 桶名称
+     * Bucket
      */
     private String bucketName;
 
@@ -88,4 +111,28 @@ public class StorageDO extends BaseDO {
      * 状态
      */
     private DisEnableStatusEnum status;
+
+    /**
+     * 获取 URL 前缀
+     * <p>
+     * LOCAL：{@link #domain}/ <br />
+     * OSS：域名不为空：{@link #domain}/；Endpoint 不是
+     * IP：http(s)://{@link #bucketName}.{@link #endpoint}/；否则：{@link #endpoint}/{@link #bucketName}/
+     * </p>
+     *
+     * @return URL 前缀
+     */
+    public String getUrlPrefix() {
+        if (StrUtil.isNotBlank(this.domain) || StorageTypeEnum.LOCAL.equals(this.type)) {
+            return StrUtil.appendIfMissing(this.domain, StringConstants.SLASH);
+        }
+        URL url = URLUtil.url(this.endpoint);
+        String host = url.getHost();
+        // IP（MinIO） 则拼接 BucketName
+        if (ReUtil.isMatch(RegexPool.IPV4, host) || ReUtil.isMatch(RegexPool.IPV6, host)) {
+            return StrUtil
+                .appendIfMissing(this.endpoint, StringConstants.SLASH) + this.bucketName + StringConstants.SLASH;
+        }
+        return "%s://%s.%s/".formatted(url.getProtocol(), this.bucketName, host);
+    }
 }

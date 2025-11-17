@@ -1,13 +1,71 @@
 spring:
-  main:
-    allow-bean-definition-overriding: true
   profiles:
-    active: dev
+    active: prod
 --- ### 项目配置
 project:
   # 名称
   name: CodeStyle Cloud
   profile: ${spring.profiles.active}
-continew:
-  data-permission:
-    enabled: false
+continew-starter:
+  security:
+    crypto:
+      public-key: MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCriJGzJTrTzYkrWYfjYNQJOIjz0+a9J6uN/1zrmsFp+3m4sDlMJFqj8IGaQzi40DnKj8ZY4PSk5FgpsVEz+MSvZl6GJJYK256cG3mTiExSAgVGvYQH9G/olY79WEDxqUqovdDVwXR7XYOLQl9C8br0TnLiZTE+YK3P9q9VD0e/uwIDAQAB
+      private-key : MIICdQIBADANBgkqhkiG9w0BAQEFAASCAl8wggJbAgEAAoGBAKuIkbMlOtPNiStZh+Ng1Ak4iPPT5r0nq43/XOuawWn7ebiwOUwkWqPwgZpDOLjQOcqPxljg9KTkWCmxUTP4xK9mXoYklgrbnpwbeZOITFICBUa9hAf0b+iVjv1YQPGpSqi90NXBdHtdg4tCX0LxuvROcuJlMT5grc/2r1UPR7+7AgMBAAECgYAP8R3awJjdNWrMU2z8gLPEIEkjdsFTjsZ0EynEyyRdoAhkgJrv932luIT7Bsip7c7pLf/jo73o6JXvA11GJMEhWvU2mY3HMgfb21Vlqsk3lWzh2YEmP0BJfunF5bSxqBCMY1QO7RoMX+Z2q3dCVI2F9jqw91a1OECFTsFGrOzHuQJBAONoQhGmQMpYNaL84WW/xz+RHUwIYGTsvHnzCjtcnk0s0rKEMe0xk6azpkyc27hWTO5ho+VloNH6i/aZE/4pbUMCQQDBGdswoRdK1VRMZou5uugxshFtfXx9myPnTE9gnrjb/D+zHWpGnPEzfOxoyuGDMM8IyOwz1QjpZEYnP6vH0cApAkAHiyfV6gvwKmjtFTJs66WyaB/uq8B22JuP+A341iOyL7B1l4kIc0KQnxj/JZzsSoCWz8peC7cAAC2waneNUNZ9AkBCRLhXUQFoWhvK+Go9PCqRW3XlqGn/xS0mJKcdFnuEa2YE9zRQtW2FaPrM38tStX5nmmSNSS/8wL/emlg+g/o5AkADhZp68G21C5ZMSWSdjIqSZYhVhEJJg8ADeRkaNYWwsH+sZsGM9ACZNjn2J5kLoJFTogLuykwEvJ9BQbsDPB6I
+
+--- ### 验证码配置
+continew-starter.captcha:
+  ## 行为验证码
+  behavior:
+    enabled: true
+    cache-type: REDIS
+    water-mark:
+    # 一分钟内接口请求次数限制开关（默认：0，关闭，开启后下方失败锁定配置才会生效）
+    req-frequency-limit-enable: 0
+    # 一分钟内验证码最多失败次数限制（默认：5次）
+    req-get-lock-limit: 5
+    # 一分钟内验证码最多失败次数限制达标后锁定时间（默认：300秒）
+    req-get-lock-seconds: 300
+  ## 图形验证码
+  graphic:
+    # 类型
+    type: SPEC
+    # 内容长度
+    length: 4
+    # 过期时间
+    expirationInMinutes: 2
+## 其他验证码配置
+captcha:
+  ## 邮箱验证码配置
+  mail:
+    # 内容长度
+    length: 6
+    # 过期时间
+    expirationInMinutes: 5
+    # 模板路径
+    templatePath: mail/captcha.ftl
+  ## 短信验证码配置
+  sms:
+    # 内容长度
+    length: 6
+    # 过期时间
+    expirationInMinutes: 5
+
+--- ### 短信配置
+## 提示：配置文件方式和 [系统管理/系统配置/短信配置] 功能可任选其一方式使用，也可共同使用，但实际开发时建议选择一种，注释或删除另一方
+sms:
+  http-log: true
+  is-print: true
+
+  mybatis-plus:
+    configuration:
+      default-enum-type-handler: com.baomidou.mybatisplus.core.handlers.MybatisEnumTypeHandler
+mybatis-plus:
+  global-config:
+    db-config:
+      schema-update: DISABLED  # 禁用自动建表
+
+# Continew Starter DDL 功能（如果存在）
+continew-starter:
+  plugin:
+    ddl:
+      enabled: false
