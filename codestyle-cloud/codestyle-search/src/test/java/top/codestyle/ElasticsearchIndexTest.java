@@ -3,7 +3,6 @@ package top.codestyle;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.BulkRequest;
 import co.elastic.clients.elasticsearch.core.BulkResponse;
-import co.elastic.clients.elasticsearch.core.DeleteByQueryRequest;
 import co.elastic.clients.elasticsearch.indices.CreateIndexRequest;
 import co.elastic.clients.elasticsearch.indices.DeleteIndexRequest;
 import co.elastic.clients.elasticsearch.indices.ExistsRequest;
@@ -15,18 +14,17 @@ import org.elasticsearch.client.RestClient;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import top.codestyle.entity.es.CodeStyleTemplate;
+import top.codestyle.entity.es.pojo.CodeStyleTemplateDO;
 import top.codestyle.generator.MockDataGenerator;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Elasticsearch测试工具类，用于创建索引、插入测试数据和清理数据
+ * Elasticsearch测试工具类（更新版）
  */
 @Slf4j
 public class ElasticsearchIndexTest {
@@ -37,7 +35,6 @@ public class ElasticsearchIndexTest {
 
     @BeforeAll
     public static void setUp() {
-        // 创建Elasticsearch客户端
         RestClient restClient = RestClient.builder(
                 new HttpHost("localhost", 9200, "http")
         ).build();
@@ -66,28 +63,14 @@ public class ElasticsearchIndexTest {
      * 创建索引
      */
     public static void createIndex() throws IOException {
-        // 检查索引是否已存在
         boolean exists = client.indices().exists(new ExistsRequest.Builder()
                 .index(INDEX_NAME)
                 .build()).value();
 
         if (!exists) {
-            // 创建索引
             client.indices().create(new CreateIndexRequest.Builder()
                     .index(INDEX_NAME)
-                    .settings(builder -> builder.numberOfShards(String.valueOf(10)).numberOfReplicas(String.valueOf(1))
-                            .refreshInterval(refresh -> refresh.time("1s"))
-                    )
-                    .mappings(m -> m
-                            .properties("groupId", p -> p.keyword(k -> k.store(true)))
-                            .properties("artifactId", p -> p.keyword(k -> k.store(true)))
-                            .properties("filePath", p -> p.keyword(k -> k))
-                            .properties("version", p -> p.keyword(k -> k))
-                            .properties("fileName", p -> p.text(t -> t.analyzer("ik_max_word")))
-                            .properties("projectDescription", p -> p.text(t -> t.analyzer("ik_max_word")))
-                            .properties("description", p -> p.text(t -> t.analyzer("ik_max_word")))
-                            .properties("fileId", p -> p.keyword(k -> k))
-                    )
+                    .withJson(new FileInputStream("src/main/resources/elasticsearch/template-settings.json"))
                     .build());
             log.info("索引 {} 创建成功", INDEX_NAME);
         } else {
@@ -96,27 +79,19 @@ public class ElasticsearchIndexTest {
     }
 
     /**
-     * 插入测试数据
-     * @param count 要插入的数据条数
+     * 单线程批量插入
      */
     public static void insertTestData(int count) throws IOException {
-        if (count <= 0) {
-            log.warn("数据条数必须大于0");
-            return;
-        }
+        if (count <= 0) return;
 
-        log.info("开始生成 {} 条测试数据", count);
-        List<CodeStyleTemplate> templates = mockDataGenerator.generateBatchTemplates(count);
-        log.info("测试数据生成完成");
-
-        // 使用bulk API批量插入数据
+        List<CodeStyleTemplateDO> templates = mockDataGenerator.generateBatchTemplates(count);
         BulkRequest.Builder bulk = new BulkRequest.Builder();
 
-        for (CodeStyleTemplate template : templates) {
+        for (CodeStyleTemplateDO template : templates) {
             bulk.operations(op -> op
                     .index(idx -> idx
                             .index(INDEX_NAME)
-                            .id(template.getFileId())
+                            .id(template.getId())
                             .document(template)
                     )
             );
@@ -137,15 +112,10 @@ public class ElasticsearchIndexTest {
     }
 
     /**
-     * 并行插入大量测试数据
-     * @param count 要插入的数据条数
-     * @param threadCount 并行线程数
+     * 并行批量插入（修复 bulk 未执行的问题）
      */
     public static void insertTestDataParallel(int count, int threadCount) throws Exception {
-        if (count <= 0) {
-            log.warn("数据条数必须大于0");
-            return;
-        }
+        if (count <= 0) return;
 
         ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
         CountDownLatch latch = new CountDownLatch(threadCount);
@@ -161,23 +131,34 @@ public class ElasticsearchIndexTest {
 
             executorService.submit(() -> {
                 try {
-                    log.info("线程 {} 开始生成 {} 条数据", threadIndex, currentBatchSize);
-                    List<CodeStyleTemplate> templates = mockDataGenerator.generateBatchTemplates(currentBatchSize);
-                    
+                    List<CodeStyleTemplateDO> templates = mockDataGenerator.generateBatchTemplates(currentBatchSize);
+
                     BulkRequest.Builder bulk = new BulkRequest.Builder();
-                    for (CodeStyleTemplate template : templates) {
+                    for (CodeStyleTemplateDO template : templates) {
                         bulk.operations(op -> op
                                 .index(idx -> idx
                                         .index(INDEX_NAME)
-                                        .id(template.getFileId())
+                                        .id(template.getId())
                                         .document(template)
                                 )
                         );
                     }
 
+                    // ***修复：真正执行 bulk 插入***
                     BulkResponse result = client.bulk(bulk.build());
-                    successCount.addAndGet(currentBatchSize);
-                    log.info("线程 {} 完成，成功插入 {} 条数据", threadIndex, currentBatchSize);
+
+                    if (result.errors()) {
+                        errorCount.addAndGet(currentBatchSize);
+                        result.items().forEach(item -> {
+                            if (item.error() != null) {
+                                log.error("[线程 {}] 插入失败 {} - {}", threadIndex, item.id(), item.error().reason());
+                            }
+                        });
+                    } else {
+                        successCount.addAndGet(currentBatchSize);
+                        log.info("[线程 {}] 成功插入 {}", threadIndex, currentBatchSize);
+                    }
+
                 } catch (Exception e) {
                     errorCount.addAndGet(currentBatchSize);
                     log.error("线程 {} 执行失败", threadIndex, e);
@@ -189,33 +170,29 @@ public class ElasticsearchIndexTest {
 
         latch.await();
         executorService.shutdown();
-        
-        log.info("并行插入完成，成功: {}, 失败: {}", successCount.get(), errorCount.get());
+        log.info("并行插入完成，总成功: {}, 总失败: {}", successCount.get(), errorCount.get());
     }
 
     /**
-     * 删除所有测试数据
+     * 删除所有数据
      */
     public static void deleteAllTestData() throws IOException {
-        // 使用delete_by_query删除所有数据
-        client.deleteByQuery(new DeleteByQueryRequest.Builder()
+        client.deleteByQuery(d -> d
                 .index(INDEX_NAME)
                 .query(q -> q.matchAll(m -> m))
-                .build());
+        );
         log.info("已删除索引 {} 中的所有数据", INDEX_NAME);
     }
 
     /**
-     * 删除整个索引
+     * 删除索引
      */
     public static void deleteIndex() throws IOException {
-        // 检查索引是否存在
         boolean exists = client.indices().exists(new ExistsRequest.Builder()
                 .index(INDEX_NAME)
                 .build()).value();
 
         if (exists) {
-            // 删除索引
             client.indices().delete(new DeleteIndexRequest.Builder()
                     .index(INDEX_NAME)
                     .build());
@@ -226,20 +203,15 @@ public class ElasticsearchIndexTest {
     }
 
     /**
-     * 测试方法 - 创建索引并插入指定数量的测试数据
+     * 主测试方法
      */
     @Test
-    public void testCreateIndexAndInsertData() throws IOException {
-        // 创建索引
+    public void testCreateInsertAndDeleteData() throws Exception {
         createIndex();
-        
-        // 插入10条测试数据
-        insertTestData(1000);
-        
-        // 注意：取消注释下面的代码可以在测试完成后清理数据
-        // deleteAllTestData();
-        // deleteIndex();
+
+        insertTestDataParallel(1000, 4);
+
+//         deleteAllTestData();
+//         deleteIndex();
     }
-
-
 }

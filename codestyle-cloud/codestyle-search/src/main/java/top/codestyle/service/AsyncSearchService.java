@@ -1,7 +1,8 @@
 package top.codestyle.service;
 
 import org.springframework.data.domain.Page;
-import top.codestyle.entity.es.CodeStyleTemplate;
+import top.codestyle.entity.es.pojo.CodeStyleTemplateDO;
+import top.codestyle.entity.es.vo.HomePageSearchResultVO;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -11,5 +12,5 @@ import java.util.concurrent.CompletableFuture;
  * 实验级原型接口 用于解决单端并发问题 实现异步化搜索能力增强单节点搜索的能力
  */
 public interface AsyncSearchService {
-    public CompletableFuture<Page<CodeStyleTemplate>> searchAsync(String keyword, int page, int size);
+    public CompletableFuture<Page<HomePageSearchResultVO>> searchAsync(String keyword, int page, int size);
 }

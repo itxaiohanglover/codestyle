@@ -1,11 +1,9 @@
 package top.codestyle.service.impl;
 
 import jakarta.annotation.PostConstruct;
-import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -13,16 +11,15 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
-import top.codestyle.entity.es.CodeStyleTemplate;
+import top.codestyle.entity.es.pojo.CodeStyleTemplateDO;
+import top.codestyle.entity.es.vo.HomePageSearchResultVO;
 import top.codestyle.properties.ElasticsearchSearchProperties;
 import top.codestyle.repository.CodeStyleTemplateRepository;
 import top.codestyle.service.AsyncSearchService;
 
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * @author ChonghaoGao
@@ -44,28 +41,15 @@ public class AsyncSearchServiceImpl implements AsyncSearchService {
     @Autowired
     private CodeStyleTemplateRepository repository;
 
-    @Autowired
-    private ElasticsearchSearchProperties properties;
 
     @Async("searchExecutor")
-    public CompletableFuture<Page<CodeStyleTemplate>> searchAsync(String keyword, int page, int size) {
+    public CompletableFuture<Page<HomePageSearchResultVO>> searchAsync(String keyword, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         try {
 
             return CompletableFuture.completedFuture(repository.searchByKeywordWithParams(
                     keyword,
-                    properties.getMinimumShouldMatch(),
-                    properties.getPhraseSlops().getFileNameSlop(),
-                    properties.getPhraseSlops().getFileDescriptionSlop(),
-                    properties.getPhraseSlops().getProjectDescriptionSlop(),
-                    properties.getBoostFactors().getFileNameBoostFactor(),
-                    properties.getBoostFactors().getFileDescriptionBoostFactor(),
-                    properties.getBoostFactors().getProjectDescriptionBoostFactor(),
-                    properties.getTimeoutMs(),
-                    properties.getTrackTotalHits(),
-                    properties.getSourceIncludes().toArray(String[]::new),
-                    pageable
-            ));
+                    pageable));
 
         } catch (Exception e) {
             log.error("一般搜索也失败，触发兜底回调: {}", e.getMessage());

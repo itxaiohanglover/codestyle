@@ -1,7 +1,8 @@
 package top.codestyle.service;
 
 import org.springframework.data.domain.Page;
-import top.codestyle.entity.es.CodeStyleTemplate;
+import top.codestyle.entity.es.pojo.CodeStyleTemplateDO;
+import top.codestyle.entity.es.vo.HomePageSearchResultVO;
 
 /**
  * @author ChonghaoGao
@@ -11,6 +12,6 @@ import top.codestyle.entity.es.CodeStyleTemplate;
  */
 public interface HomePageSearchService {
 
-    Page<CodeStyleTemplate> searchHomePage(String keyword, int page, int size);
+    Page<HomePageSearchResultVO> searchHomePage(String keyword, int page, int size);
 
 }
