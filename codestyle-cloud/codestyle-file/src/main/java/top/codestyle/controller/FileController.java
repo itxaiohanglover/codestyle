@@ -61,10 +61,6 @@ public class FileController extends BaseController<FileService, FileResp, FileRe
 
     /**
      * 上传文件
-     * <p>
-     * 公共上传文件请使用 {@link CommonController#upload}
-     * </p>
-     *
      * @param file       文件
      * @param parentPath 上级目录
      * @return 文件上传响应参数
