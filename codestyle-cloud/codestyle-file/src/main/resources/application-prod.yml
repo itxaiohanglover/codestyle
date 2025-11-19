@@ -11,14 +11,24 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/codestyle-cloud
     username: root
-    password: root
+    password: abc123
   # redis
   data:
     redis:
-      host: localhost
-      port: 6039
-      database: 1
-#      password: qwe123
+      # 地址
+      host: ${REDIS_HOST:47.100.198.147}
+      # 端口（默认 6379）
+      port: ${REDIS_PORT:7789}
+      # 密码（未设置密码时请注释掉）
+      #    password: ${REDIS_PWD:123456}
+      # 数据库索引
+      database: ${REDIS_DB:0}
+      # 连接超时时间
+      timeout: 10s
+      # 是否开启 SSL
+      ssl:
+        enabled: false
+      ## Redisson 配置
 server:
   port: 8124
   servlet:
