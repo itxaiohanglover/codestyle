@@ -20,9 +20,9 @@
         <spring-cloud.version>2023.0.0</spring-cloud.version>
         <spring-cloud-alibaba.version>2023.0.1.0</spring-cloud-alibaba.version>
         <dubbo.version>3.3.0</dubbo.version>
-        <mybatis-plus.version>3.5.8</mybatis-plus.version>
+        <mybatis-plus.version>3.5.12</mybatis-plus.version>
         <undertow.version>2.3.20.Final</undertow.version>
-        <continew.version>2.7.5</continew.version>
+        <continew.version>2.14.0</continew.version>
         <xfile.version>2.2.1</xfile.version>
         <hutool.version>5.8.40</hutool.version>
         <okhttp.version>4.12.0</okhttp.version>
@@ -30,8 +30,20 @@
         <xstream.version>1.4.21</xstream.version>
         <aws.s3.version>1.12.783</aws.s3.version>
         <lombok.version>1.18.38</lombok.version>
+        <!-- Align springdoc to versions used in modules -->
         <springdoc.version>2.1.0</springdoc.version>
         <dubbo-spring-boot-starter.version>2.7.23</dubbo-spring-boot-starter.version>
+
+        <!-- Additional centralized versions discovered in child modules -->
+        <mysql.version>9.2.0</mysql.version>
+        <cos_api.version>5.6.227</cos_api.version>
+        <hikari.version>6.3.0</hikari.version>
+        <sa-token.version>1.44.0</sa-token.version>
+        <cosid.version>2.13.0</cosid.version>
+        <jetcache.anno.version>2.7.8</jetcache.anno.version>
+        <freemarker.version>2.3.34</freemarker.version>
+        <aws.sdk.v2.version>2.31.63</aws.sdk.v2.version>
+        <swagger.annotations.version>2.2.30</swagger.annotations.version>
     </properties>
 
     <modules>
@@ -41,7 +53,7 @@
         <module>codestyle-user</module>
         <module>codestyle-file</module>
         <module>codestyle-ai</module>
-        <module>codestyle-library</module>
+        <module>codestyle-search</module>
     </modules>
 
     <dependencyManagement>
@@ -117,43 +129,6 @@
                 <version>${aws.s3.version}</version>
             </dependency>
 
-            <!-- continew starters (managed versions) -->
-            <dependency>
-                <groupId>top.continew</groupId>
-                <artifactId>continew-starter-extension-datapermission-mp</artifactId>
-                <version>${continew.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>top.continew</groupId>
-                <artifactId>continew-starter-extension-crud-mp</artifactId>
-                <version>${continew.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>top.continew</groupId>
-                <artifactId>continew-starter-data-mp</artifactId>
-                <version>${continew.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>top.continew</groupId>
-                <artifactId>continew-starter-security-limiter</artifactId>
-                <version>${continew.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>top.continew</groupId>
-                <artifactId>continew-starter-security-crypto</artifactId>
-                <version>${continew.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>top.continew</groupId>
-                <artifactId>continew-starter-security-mask</artifactId>
-                <version>${continew.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>top.continew</groupId>
-                <artifactId>continew-starter-auth-satoken</artifactId>
-                <version>${continew.version}</version>
-            </dependency>
-
             <!-- helper libs -->
             <dependency>
                 <groupId>org.springdoc</groupId>
@@ -184,6 +159,153 @@
                 <version>4.4.0</version>
             </dependency>
 
+            <!-- Additional artifacts discovered in modules -->
+            <dependency>
+                <groupId>com.qcloud</groupId>
+                <artifactId>cos_api</artifactId>
+                <version>${cos_api.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.zaxxer</groupId>
+                <artifactId>HikariCP</artifactId>
+                <version>${hikari.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>cn.dev33</groupId>
+                <artifactId>sa-token-core</artifactId>
+                <version>${sa-token.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>me.ahoo.cosid</groupId>
+                <artifactId>cosid-spring-boot-starter</artifactId>
+                <version>${cosid.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>me.ahoo.cosid</groupId>
+                <artifactId>cosid-spring-redis</artifactId>
+                <version>${cosid.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>software.amazon.awssdk</groupId>
+                <artifactId>s3</artifactId>
+                <version>${aws.sdk.v2.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.freemarker</groupId>
+                <artifactId>freemarker</artifactId>
+                <version>${freemarker.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.alicp.jetcache</groupId>
+                <artifactId>jetcache-anno</artifactId>
+                <version>${jetcache.anno.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.mysql</groupId>
+                <artifactId>mysql-connector-j</artifactId>
+                <version>${mysql.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.swagger.core.v3</groupId>
+                <artifactId>swagger-annotations-jakarta</artifactId>
+                <version>${swagger.annotations.version}</version>
+            </dependency>
+
+            <!-- ContiNew starter modules centralized versions -->
+            <dependency>
+                <groupId>top.continew.starter</groupId>
+                <artifactId>continew-starter-data-mp</artifactId>
+                <version>${continew.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>top.continew.starter</groupId>
+                <artifactId>continew-starter-json-jackson</artifactId>
+                <version>${continew.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>top.continew.starter</groupId>
+                <artifactId>continew-starter-validation</artifactId>
+                <version>${continew.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>top.continew.starter</groupId>
+                <artifactId>continew-starter-cache-jetcache</artifactId>
+                <version>${continew.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>top.continew.starter</groupId>
+                <artifactId>continew-starter-auth-satoken</artifactId>
+                <version>${continew.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>top.continew.starter</groupId>
+                <artifactId>continew-starter-auth-justauth</artifactId>
+                <version>${continew.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>top.continew.starter</groupId>
+                <artifactId>continew-starter-encrypt-field</artifactId>
+                <version>${continew.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>top.continew.starter</groupId>
+                <artifactId>continew-starter-encrypt-password-encoder</artifactId>
+                <version>${continew.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>top.continew.starter</groupId>
+                <artifactId>continew-starter-security-mask</artifactId>
+                <version>${continew.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>top.continew.starter</groupId>
+                <artifactId>continew-starter-ratelimiter</artifactId>
+                <version>${continew.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>top.continew.starter</groupId>
+                <artifactId>continew-starter-captcha-graphic</artifactId>
+                <version>${continew.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>top.continew.starter</groupId>
+                <artifactId>continew-starter-captcha-behavior</artifactId>
+                <version>${continew.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>top.continew.starter</groupId>
+                <artifactId>continew-starter-messaging-mail</artifactId>
+                <version>${continew.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>top.continew.starter</groupId>
+                <artifactId>continew-starter-log-interceptor</artifactId>
+                <version>${continew.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>top.continew.starter</groupId>
+                <artifactId>continew-starter-extension-datapermission-mp</artifactId>
+                <version>${continew.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>top.continew.starter</groupId>
+                <artifactId>continew-starter-extension-crud-mp</artifactId>
+                <version>${continew.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>cn.dev33</groupId>
+                <artifactId>sa-token-sign</artifactId>
+                <version>1.44.0</version>
+            </dependency>
+
         </dependencies>
     </dependencyManagement>
 
@@ -207,4 +329,5 @@
             </plugins>
         </pluginManagement>
     </build>
+
 </project>

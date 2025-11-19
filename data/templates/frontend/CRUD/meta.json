@@ -1,0 +1,157 @@
+{
+  "groupId": "frontend",
+  "artifactId": "CRUD",
+  "configs": [
+    {
+      "version": "v1.0.0",
+      "files": [
+        {
+          "filePath": "/src/views",
+          "filename": "index.ftl",
+          "description": "Vue主页面模板 - 用于生成列表页面组件",
+          "inputVariables": [
+            {
+              "variableName": "businessName",
+              "variableType": "String",
+              "variableComment": "业务名称（中文）",
+              "example": "订单管理"
+            },
+            {
+              "variableName": "classNamePrefix",
+              "variableType": "String",
+              "variableComment": "实体类命名前缀（驼峰式）",
+              "example": "Order"
+            },
+            {
+              "variableName": "apiModuleName",
+              "variableType": "String",
+              "variableComment": "API模块名",
+              "example": "system"
+            },
+            {
+              "variableName": "apiName",
+              "variableType": "String",
+              "variableComment": "API名称",
+              "example": "order"
+            },
+            {
+              "variableName": "tableColumns",
+              "variableType": "List<TableColumn>",
+              "variableComment": "表格列配置列表",
+              "example": "[{fieldName: 'orderNo', fieldLabel: '订单编号', width: 150}]"
+            },
+            {
+              "variableName": "queryFields",
+              "variableType": "List<QueryField>",
+              "variableComment": "查询字段配置列表",
+              "example": "[{fieldName: 'orderNo', fieldLabel: '订单编号', fieldType: 'input'}]"
+            }
+          ],
+          "sha256": "待计算"
+        },
+        {
+          "filePath": "/src/api",
+          "filename": "api.ftl",
+          "description": "API接口模板 - 用于生成前端API调用文件",
+          "inputVariables": [
+            {
+              "variableName": "apiModuleName",
+              "variableType": "String",
+              "variableComment": "API模块名",
+              "example": "system"
+            },
+            {
+              "variableName": "apiName",
+              "variableType": "String",
+              "variableComment": "API名称",
+              "example": "order"
+            },
+            {
+              "variableName": "businessName",
+              "variableType": "String",
+              "variableComment": "业务名称（中文）",
+              "example": "订单"
+            }
+          ],
+          "sha256": "待计算"
+        },
+        {
+          "filePath": "/src/views",
+          "filename": "AddModal.ftl",
+          "description": "新增/编辑弹窗模板 - 用于生成表单弹窗组件",
+          "inputVariables": [
+            {
+              "variableName": "businessName",
+              "variableType": "String",
+              "variableComment": "业务名称（中文）",
+              "example": "订单"
+            },
+            {
+              "variableName": "classNamePrefix",
+              "variableType": "String",
+              "variableComment": "实体类命名前缀（驼峰式）",
+              "example": "Order"
+            },
+            {
+              "variableName": "apiModuleName",
+              "variableType": "String",
+              "variableComment": "API模块名",
+              "example": "system"
+            },
+            {
+              "variableName": "apiName",
+              "variableType": "String",
+              "variableComment": "API名称",
+              "example": "order"
+            },
+            {
+              "variableName": "formFields",
+              "variableType": "List<FormField>",
+              "variableComment": "表单字段配置列表",
+              "example": "[{fieldName: 'orderNo', fieldLabel: '订单编号', fieldType: 'input', required: true}]"
+            }
+          ],
+          "sha256": "待计算"
+        },
+        {
+          "filePath": "/src/views",
+          "filename": "DetailDrawer.ftl",
+          "description": "详情抽屉模板 - 用于生成详情展示组件",
+          "inputVariables": [
+            {
+              "variableName": "businessName",
+              "variableType": "String",
+              "variableComment": "业务名称（中文）",
+              "example": "订单"
+            },
+            {
+              "variableName": "classNamePrefix",
+              "variableType": "String",
+              "variableComment": "实体类命名前缀（驼峰式）",
+              "example": "Order"
+            },
+            {
+              "variableName": "apiModuleName",
+              "variableType": "String",
+              "variableComment": "API模块名",
+              "example": "system"
+            },
+            {
+              "variableName": "apiName",
+              "variableType": "String",
+              "variableComment": "API名称",
+              "example": "order"
+            },
+            {
+              "variableName": "detailFields",
+              "variableType": "List<DetailField>",
+              "variableComment": "详情字段配置列表",
+              "example": "[{fieldName: 'orderNo', fieldLabel: '订单编号', fieldType: 'text'}]"
+            }
+          ],
+          "sha256": "待计算"
+        }
+      ]
+    }
+  ]
+}

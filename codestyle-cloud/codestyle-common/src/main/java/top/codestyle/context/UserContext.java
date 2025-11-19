@@ -1,21 +1,38 @@
+/*
+ * Copyright (c) 2022-present Charles7c Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package top.codestyle.context;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.extra.spring.SpringUtil;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import top.codestyle.constant.SysConstants;
+import top.codestyle.constant.GlobalConstants;
+import top.codestyle.enums.RoleCodeEnum;
+import top.continew.starter.core.util.CollUtils;
 
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * 用户上下文
  *
- * @author GALAwang
+ * @author Charles7c
  * @since 2024/10/9 20:29
  */
 @Data
@@ -65,31 +82,30 @@ public class UserContext implements Serializable {
      */
     private Set<RoleContext> roles;
 
+    /**
+     * 客户端类型
+     */
+    private String clientType;
+
+    /**
+     * 客户端 ID
+     */
+    private String clientId;
+
     public UserContext(Set<String> permissions, Set<RoleContext> roles, Integer passwordExpirationDays) {
         this.permissions = permissions;
         this.setRoles(roles);
         this.passwordExpirationDays = passwordExpirationDays;
     }
 
-    public UserContext(Integer passwordExpirationDays) {
-        this.passwordExpirationDays = passwordExpirationDays;
-    }
-
+    /**
+     * 设置角色
+     *
+     * @param roles 角色
+     */
     public void setRoles(Set<RoleContext> roles) {
         this.roles = roles;
-        this.roleCodes = roles.stream().map(RoleContext::getCode).collect(Collectors.toSet());
-    }
-
-    /**
-     * 是否为管理员
-     *
-     * @return true：是；false：否
-     */
-    public boolean isAdmin() {
-        if (CollUtil.isEmpty(roleCodes)) {
-            return false;
-        }
-        return roleCodes.contains(SysConstants.SUPER_ROLE_CODE);
+        this.roleCodes = CollUtils.mapToSet(roles, RoleContext::getCode);
     }
 
     /**
@@ -99,7 +115,7 @@ public class UserContext implements Serializable {
      */
     public boolean isPasswordExpired() {
         // 永久有效
-        if (this.passwordExpirationDays == null || this.passwordExpirationDays <= SysConstants.NO) {
+        if (this.passwordExpirationDays == null || this.passwordExpirationDays <= GlobalConstants.Boolean.NO) {
             return false;
         }
         // 初始密码（第三方登录用户）暂不提示修改
@@ -107,5 +123,17 @@ public class UserContext implements Serializable {
             return false;
         }
         return this.pwdResetTime.plusDays(this.passwordExpirationDays).isBefore(LocalDateTime.now());
+    }
+
+    /**
+     * 是否为超级管理员
+     *
+     * @return true：是；false：否
+     */
+    public boolean isSuperAdmin() {
+        if (CollUtil.isEmpty(roleCodes)) {
+            return false;
+        }
+        return roleCodes.contains(RoleCodeEnum.SUPER_ADMIN.getCode());
     }
 }

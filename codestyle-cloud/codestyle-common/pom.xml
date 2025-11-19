@@ -25,33 +25,20 @@
     </build>
     <packaging>jar</packaging>
 
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
-
     <dependencies>
 
         <!-- 基础 Web 支持，供拦截器/过滤器等使用 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
-            <version>${spring-boot.version}</version>
         </dependency>
 
         <!-- 腾讯云 COS -->
         <dependency>
             <groupId>com.qcloud</groupId>
             <artifactId>cos_api</artifactId>
-            <version>5.6.227</version>
         </dependency>
 
-
-        <!-- MyBatis Plus generator (version managed in parent) -->
-        <dependency>
-            <groupId>com.baomidou</groupId>
-            <artifactId>mybatis-plus-generator</artifactId>
-            <version>3.5.8</version>
-        </dependency>
 
         <dependency>
             <groupId>com.zaxxer</groupId>
@@ -70,56 +57,19 @@
             <artifactId>x-file-storage-core</artifactId>
         </dependency>
 
-        <!-- continew starters -->
-        <dependency>
-            <groupId>top.continew</groupId>
-            <artifactId>continew-starter-extension-datapermission-mp</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>top.continew</groupId>
-            <artifactId>continew-starter-extension-crud-mp</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>top.continew</groupId>
-            <artifactId>continew-starter-data-mp</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>top.continew</groupId>
-            <artifactId>continew-starter-security-limiter</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>top.continew</groupId>
-            <artifactId>continew-starter-security-crypto</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>top.continew</groupId>
-            <artifactId>continew-starter-security-mask</artifactId>
-        </dependency>
-        <!-- ContiNew Starter 认证模块 - SaToken -->
-        <dependency>
-            <groupId>top.continew</groupId>
-            <artifactId>continew-starter-auth-satoken</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.springframework.boot</groupId>
-                    <artifactId>spring-boot-starter-web</artifactId>
-                </exclusion>
-            </exclusions>
-            <version>2.7.5</version>
-        </dependency>
-
         <!-- Sa-Token core (if continew starter delegates to it) -->
         <dependency>
             <groupId>cn.dev33</groupId>
             <artifactId>sa-token-core</artifactId>
-            <version>1.39.0</version>
         </dependency>
 
         <!-- springdoc UI -->
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>2.1.0</version>
         </dependency>
+
 
         <!-- utils -->
         <dependency>
@@ -138,11 +88,186 @@
             <scope>provided</scope>
         </dependency>
 
+        <!-- CosId（通用、灵活、高性能的分布式 ID 生成器） -->
         <dependency>
-            <groupId>org.springframework.security</groupId>
-            <artifactId>spring-security-crypto</artifactId>
-            <version>6.5.1</version>
+            <groupId>me.ahoo.cosid</groupId>
+            <artifactId>cosid-spring-boot-starter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>me.ahoo.cosid</groupId>
+            <artifactId>cosid-spring-redis</artifactId>
+        </dependency>
+
+        <!-- X File Storage adapters -->
+        <dependency>
+            <groupId>org.dromara.x-file-storage</groupId>
+            <artifactId>x-file-storage-spring</artifactId>
+        </dependency>
+
+        <!-- Amazon S3 (legacy 1.x) -->
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk-s3</artifactId>
+        </dependency>
+
+        <!-- Amazon S3 2.x -->
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>s3</artifactId>
+        </dependency>
+
+        <!-- FreeMarker（模板引擎） -->
+        <dependency>
+            <groupId>org.freemarker</groupId>
+            <artifactId>freemarker</artifactId>
+        </dependency>
+
+        <!-- MySQL 驱动 -->
+        <dependency>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <version>9.2.0</version>
+        </dependency>
+
+        <!-- ContiNew Starter -->
+        <dependency>
+            <groupId>top.continew.starter</groupId>
+            <artifactId>continew-starter-data-mp</artifactId>
+            <exclusions>
+                <!-- 先完全排除内置的 MyBatis-Plus -->
+                <exclusion>
+                    <groupId>com.baomidou</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <!-- 手动完整引入 MyBatis-Plus -->
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
+        </dependency>
+
+        <!-- ✅ 只保留这一个 -->
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-boot-starter</artifactId>
+            <version>3.5.7</version> <!-- 或 3.5.7（Spring Boot 3） -->
+        </dependency>
+
+        <!--  PostgreSQL Java 驱动  -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+        </dependency>
+
+        <!-- Crane4j -->
+        <dependency>
+            <groupId>cn.crane4j</groupId>
+            <artifactId>crane4j-spring-boot-starter</artifactId>
+            <version>2.9.0</version>
+        </dependency>
+
+        <!-- ContiNew Starter modules (managed by parent) -->
+        <dependency>
+            <groupId>top.continew.starter</groupId>
+            <artifactId>continew-starter-json-jackson</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>top.continew.starter</groupId>
+            <artifactId>continew-starter-validation</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>top.continew.starter</groupId>
+            <artifactId>continew-starter-cache-jetcache</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>top.continew.starter</groupId>
+            <artifactId>continew-starter-auth-satoken</artifactId>
+        </dependency>
+
+        <!-- API 接口参数签名 -->
+        <dependency>
+            <groupId>cn.dev33</groupId>
+            <artifactId>sa-token-sign</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>top.continew.starter</groupId>
+            <artifactId>continew-starter-auth-justauth</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>top.continew.starter</groupId>
+            <artifactId>continew-starter-encrypt-field</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>top.continew.starter</groupId>
+            <artifactId>continew-starter-encrypt-password-encoder</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>top.continew.starter</groupId>
+            <artifactId>continew-starter-security-mask</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>top.continew.starter</groupId>
+            <artifactId>continew-starter-ratelimiter</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>top.continew.starter</groupId>
+            <artifactId>continew-starter-captcha-graphic</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>top.continew.starter</groupId>
+            <artifactId>continew-starter-captcha-behavior</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>top.continew.starter</groupId>
+            <artifactId>continew-starter-messaging-mail</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>top.continew.starter</groupId>
+            <artifactId>continew-starter-log-interceptor</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>top.continew.starter</groupId>
+            <artifactId>continew-starter-extension-datapermission-mp</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>top.continew.starter</groupId>
+            <artifactId>continew-starter-extension-crud-mp</artifactId>
         </dependency>
 
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.1</version> <!-- 关键：使用3.5+版本 -->
+                <configuration>
+                    <source>21</source> <!-- 根据你的JDK调整 -->
+                    <target>21</target>
+                    <encoding>UTF-8</encoding>
+                    <!-- 核心配置：显式指定注解处理器 -->
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>1.18.38</version>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>

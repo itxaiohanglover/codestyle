@@ -1,24 +1,43 @@
+/*
+ * Copyright (c) 2022-present Charles7c Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package top.codestyle.config.mybatis;
 
 import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
+import com.baomidou.mybatisplus.extension.parser.JsqlParserGlobal;
+import com.baomidou.mybatisplus.extension.parser.cache.JdkSerialCaffeineJsqlParseCache;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import top.continew.starter.extension.datapermission.filter.DataPermissionUserContextProvider;
+import top.continew.starter.extension.datapermission.provider.DataPermissionUserDataProvider;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * MyBatis Plus 配置
  *
- * @author GALAwang
+ * @author Charles7c
  * @since 2022/12/22 19:51
  */
 @Configuration
 public class MybatisPlusConfiguration {
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+    // SQL 解析本地缓存
+    static {
+        JsqlParserGlobal.setJsqlParseCache(new JdkSerialCaffeineJsqlParseCache(cache -> cache.maximumSize(1024)
+            .expireAfterWrite(5, TimeUnit.SECONDS)));
     }
 
     /**
@@ -30,18 +49,10 @@ public class MybatisPlusConfiguration {
     }
 
     /**
-     * 数据权限用户上下文提供者
+     * 数据权限用户数据提供者
      */
     @Bean
-    public DataPermissionUserContextProvider dataPermissionUserContextProvider() {
-        return new DefaultDataPermissionUserContextProvider();
-    }
-
-    /**
-     * BCrypt 加/解密处理器
-     */
-    @Bean
-    public BCryptEncryptor bCryptEncryptor(PasswordEncoder passwordEncoder) {
-        return new BCryptEncryptor(passwordEncoder);
+    public DataPermissionUserDataProvider dataPermissionUserDataProvider() {
+        return new DefaultDataPermissionUserDataProvider();
     }
 }

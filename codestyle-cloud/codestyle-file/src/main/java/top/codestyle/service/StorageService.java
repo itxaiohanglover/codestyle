@@ -1,13 +1,28 @@
+/*
+ * Copyright (c) 2022-present Charles7c Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package top.codestyle.service;
 
+import top.codestyle.base.model.req.CommonStatusUpdateReq;
+import top.codestyle.base.service.BaseService;
 import top.codestyle.model.dto.file.StorageReq;
 import top.codestyle.model.entity.StorageDO;
 import top.codestyle.model.query.StorageQuery;
 import top.codestyle.model.vo.StorageResp;
-import top.continew.starter.data.mp.service.IService;
-import top.continew.starter.extension.crud.service.BaseService;
-
+import top.continew.starter.data.service.IService;
 
 /**
  * 存储业务接口
@@ -18,31 +33,46 @@ import top.continew.starter.extension.crud.service.BaseService;
 public interface StorageService extends BaseService<StorageResp, StorageResp, StorageQuery, StorageReq>, IService<StorageDO> {
 
     /**
+     * 修改状态
+     *
+     * @param req 状态信息
+     * @param id  ID
+     */
+    void updateStatus(CommonStatusUpdateReq req, Long id);
+
+    /**
+     * 设置默认存储
+     *
+     * @param id ID
+     */
+    void setDefaultStorage(Long id);
+
+    /**
      * 查询默认存储
      *
-     * @return 存储信息
+     * @return 存储配置
      */
     StorageDO getDefaultStorage();
 
     /**
-     * 根据编码查询
+     * 根据编码查询（如果编码为空，则返回默认存储）
      *
      * @param code 编码
-     * @return 存储信息
+     * @return 存储配置
      */
     StorageDO getByCode(String code);
 
     /**
-     * 加载存储
+     * 加载存储引擎
      *
-     * @param req 存储信息
+     * @param storage 存储配置
      */
-    void load(StorageReq req);
+    void load(StorageDO storage);
 
     /**
-     * 卸载存储
+     * 卸载存储引擎
      *
-     * @param req 存储信息
+     * @param storage 存储配置
      */
-    void unload(StorageReq req);
+    void unload(StorageDO storage);
 }

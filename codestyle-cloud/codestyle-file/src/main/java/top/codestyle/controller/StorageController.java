@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025-present IPBD Organization. All Rights Reserved.
+ * Copyright (c) 2022-present Charles7c Authors. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,28 +13,52 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package top.codestyle.controller;
 
+import cn.dev33.satoken.annotation.SaCheckPermission;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.validation.annotation.Validated;
+import jakarta.validation.Valid;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
-import top.codestyle.service.StorageService;
+import top.codestyle.base.controller.BaseController;
+import top.codestyle.base.model.req.CommonStatusUpdateReq;
 import top.codestyle.model.dto.file.StorageReq;
 import top.codestyle.model.query.StorageQuery;
 import top.codestyle.model.vo.StorageResp;
+import top.codestyle.service.StorageService;
 import top.continew.starter.extension.crud.annotation.CrudRequestMapping;
 import top.continew.starter.extension.crud.enums.Api;
-
 
 /**
  * 存储管理 API
  *
- * @author GALAwang
+ * @author Charles7c
  * @since 2023/12/26 22:09
  */
 @Tag(name = "存储管理 API")
-@Validated
 @RestController
-@CrudRequestMapping(value = "/system/storage", api = {Api.PAGE, Api.DETAIL, Api.ADD, Api.UPDATE, Api.DELETE})
+@CrudRequestMapping(value = "/storage", api = {Api.LIST, Api.GET, Api.CREATE, Api.UPDATE, Api.BATCH_DELETE})
 public class StorageController extends BaseController<StorageService, StorageResp, StorageResp, StorageQuery, StorageReq> {
+
+    @Operation(summary = "修改状态", description = "修改状态")
+    @Parameter(name = "id", description = "ID", example = "1", in = ParameterIn.PATH)
+    @SaCheckPermission("system:storage:updateStatus")
+    @PutMapping({"/{id}/status"})
+    public void updateStatus(@RequestBody @Valid CommonStatusUpdateReq req, @PathVariable("id") Long id) {
+        baseService.updateStatus(req, id);
+    }
+
+    @Operation(summary = "设为默认存储", description = "设为默认存储")
+    @Parameter(name = "id", description = "ID", example = "1", in = ParameterIn.PATH)
+    @SaCheckPermission("system:storage:setDefault")
+    @PutMapping({"/{id}/default"})
+    public void setDefault(@PathVariable("id") Long id) {
+        baseService.setDefaultStorage(id);
+    }
 }

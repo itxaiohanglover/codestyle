@@ -1,18 +1,33 @@
+/*
+ * Copyright (c) 2022-present Charles7c Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package top.codestyle.config.mybatis;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
 import org.apache.ibatis.reflection.MetaObject;
+import top.codestyle.base.model.entity.BaseDO;
 import top.codestyle.context.UserContextHolder;
-import top.continew.starter.extension.crud.model.entity.BaseDO;
 
 import java.time.LocalDateTime;
 
 /**
  * MyBatis Plus 元对象处理器配置（插入或修改时自动填充）
  *
- * @author GALAwang
+ * @author Charles7c
  * @since 2022/12/22 19:52
  */
 public class MyBatisPlusMetaObjectHandler implements MetaObjectHandler {
@@ -41,10 +56,13 @@ public class MyBatisPlusMetaObjectHandler implements MetaObjectHandler {
      */
     @Override
     public void insertFill(MetaObject metaObject) {
-        if (null == metaObject) {
+        if (metaObject == null) {
             return;
         }
         Long createUser = UserContextHolder.getUserId();
+        if (createUser == null){
+            createUser = 10086L; // 默认系统用户
+        }
         LocalDateTime createTime = LocalDateTime.now();
         if (metaObject.getOriginalObject() instanceof BaseDO baseDO) {
             // 继承了 BaseDO 的类，填充创建信息字段
@@ -64,7 +82,7 @@ public class MyBatisPlusMetaObjectHandler implements MetaObjectHandler {
      */
     @Override
     public void updateFill(MetaObject metaObject) {
-        if (null == metaObject) {
+        if (metaObject == null) {
             return;
         }
         Long updateUser = UserContextHolder.getUserId();
@@ -91,7 +109,7 @@ public class MyBatisPlusMetaObjectHandler implements MetaObjectHandler {
     private void fillFieldValue(MetaObject metaObject, String fieldName, Object fillFieldValue, boolean isOverride) {
         if (metaObject.hasSetter(fieldName)) {
             Object fieldValue = metaObject.getValue(fieldName);
-            setFieldValByName(fieldName, null != fieldValue && !isOverride ? fieldValue : fillFieldValue, metaObject);
+            setFieldValByName(fieldName, fieldValue != null && !isOverride ? fieldValue : fillFieldValue, metaObject);
         }
     }
 }

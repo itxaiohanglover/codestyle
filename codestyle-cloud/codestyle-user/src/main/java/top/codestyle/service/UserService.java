@@ -1,12 +1,13 @@
 package top.codestyle.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.extension.service.IService;
 import top.codestyle.model.dto.user.UserQueryRequest;
 import top.codestyle.model.entity.User;
 import top.codestyle.model.vo.LoginUserVO;
 import top.codestyle.model.vo.UserVO;
 import jakarta.servlet.http.HttpServletRequest;
+import top.continew.starter.data.service.IService;
+
 import java.util.List;
 
 /**
