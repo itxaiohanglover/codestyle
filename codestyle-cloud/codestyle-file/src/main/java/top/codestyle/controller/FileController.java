@@ -17,6 +17,7 @@
 package top.codestyle.controller;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
+import com.feiniaojin.gracefulresponse.api.ExcludeFromGracefulResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -116,6 +117,7 @@ public class FileController extends BaseController<FileService, FileResp, FileRe
     @Operation(summary = "下载本地文件并打包", description = "下载本地文件并打包")
     @SaCheckPermission("file:load")
     @PostMapping("/load")
+    @ExcludeFromGracefulResponse
     public  byte[] load(FileQuery query, HttpServletResponse response) {;
         if (query.getPaths() == null){
             return null;
@@ -125,6 +127,5 @@ public class FileController extends BaseController<FileService, FileResp, FileRe
         response.setHeader("attachment", "files.zip");
         response.setContentType(MediaType.APPLICATION_OCTET_STREAM_VALUE);
         return zipdata;
-
     }
 }

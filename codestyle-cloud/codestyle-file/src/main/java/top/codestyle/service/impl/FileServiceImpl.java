@@ -330,25 +330,50 @@ public class FileServiceImpl extends BaseServiceImpl<FileMapper, FileDO, FileRes
         }
     }
 
+    // Java
     @Override
     public byte[] load(FileQuery query) {
         List<String> paths = query.getPaths();
-        // 创建内存输出流用于存储zip数据
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        if (CollUtil.isEmpty(paths)) {
+            return new byte[0];
+        }
         StorageDO storage = storageService.getDefaultStorage();
+
+        // 特殊情况：单个路径且以 .json 结尾，直接返回文件二进制流（不打包）
+        if (paths.size() == 1 && paths.get(0) != null
+                && paths.get(0).toLowerCase(java.util.Locale.ROOT).endsWith(".json")) {
+            String pathStr = storage.getBucketName() + paths.get(0);
+            Path path = Paths.get(pathStr);
+            if (!Files.exists(path)) {
+                throw new RuntimeException("路径不存在: " + pathStr);
+            }
+            try {
+                return Files.readAllBytes(path);
+            } catch (IOException e) {
+                log.error("读取json文件失败: {}", pathStr, e);
+                throw new RuntimeException("文件读取失败", e);
+            }
+        }
+
+        // 默认：将多个路径或非 json 文件打包为 zip
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try (ZipOutputStream zos = new ZipOutputStream(baos)) {
-            for (String pathStr : paths) {
-                pathStr =storage.getBucketName() + pathStr;
-                Path path = Paths.get(pathStr);
-                // 检查路径是否存在
+            for (String originalPath : paths) {
+                String fullPath = storage.getBucketName() + originalPath;
+                Path path = Paths.get(fullPath);
                 if (!Files.exists(path)) {
-                    throw new FileNotFoundException("路径不存在: " + pathStr);
+                    throw new RuntimeException("路径不存在: " + fullPath);
                 }
-                // 根据路径类型分别处理
-                if (Files.isDirectory(path)) {
-                    addDirectoryToZip(zos, path, path.getFileName().toString());
+                String basePath;
+                if (paths.size() == 1) {
+                    basePath = originalPath.startsWith("/") ? originalPath.substring(1) : originalPath;
                 } else {
-                    addFileToZip(zos, path, path.getFileName().toString());
+                    basePath = path.getFileName().toString();
+                }
+                if (Files.isDirectory(path)) {
+                    addDirectoryToZip(zos, path, basePath);
+                } else {
+                    addFileToZip(zos, path, basePath);
                 }
             }
         } catch (IOException e) {
@@ -358,6 +383,7 @@ public class FileServiceImpl extends BaseServiceImpl<FileMapper, FileDO, FileRes
 
         return baos.toByteArray();
     }
+
 
     /**
      * 将文件添加到zip输出流中
@@ -414,3 +440,4 @@ public class FileServiceImpl extends BaseServiceImpl<FileMapper, FileDO, FileRes
                 });
     }
 }
+

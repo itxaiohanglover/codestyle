@@ -40,7 +40,7 @@ import java.util.Map;
  */
 @Data
 @NoArgsConstructor
-@TableName("sys_file")
+@TableName("file_file")
 public class FileDO extends BaseDO {
 
     @Serial

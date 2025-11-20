@@ -38,7 +38,7 @@ public class CodestyleUserApplication implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) throws URISyntaxException, IOException {
-        if (Objects.equals(environmentProperties.getProfile(), "dev")) {
+        if (Objects.equals(environmentProperties.getProfile(), "prod")) {
             String hostAddress = NetUtil.getLocalhostStr();
             Integer port = serverProperties.getPort();
             String contextPath = serverProperties.getServlet().getContextPath();

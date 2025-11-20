@@ -42,7 +42,7 @@ import java.net.URL;
  */
 @EqualsAndHashCode(callSuper = true)
 @Data
-@TableName("sys_storage")
+@TableName("file_storage")
 public class StorageDO extends BaseDO {
 
     @Serial

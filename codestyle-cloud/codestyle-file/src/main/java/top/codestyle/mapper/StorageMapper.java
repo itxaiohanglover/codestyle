@@ -38,6 +38,6 @@ public interface StorageMapper extends BaseMapper<StorageDO> {
      * @param longs ID 列表
      * @return 存储列表
      */
-    @Select("SELECT * FROM sys_storage WHERE id IN (#{ids})")
+    @Select("SELECT * FROM file_storage WHERE id IN (#{ids})")
     List<StorageDO> selectByIds(List<Long> longs);
 }
