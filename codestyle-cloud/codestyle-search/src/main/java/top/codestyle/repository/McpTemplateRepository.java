@@ -74,7 +74,7 @@ public class McpTemplateRepository {
 
             // 选取版本最高的模板
             McpSearchResultVO highestVersionTemplate = getHighestVersionTemplate(templates);
-            log.debug("找到最高版本模板: {}, 版本号: {}", highestVersionTemplate.getId(), highestVersionTemplate.getConfig().getVersion());
+            log.debug("找到最高版本模板: {}, 版本号: {}", highestVersionTemplate.getGroupId(), highestVersionTemplate.getConfig().getVersion());
 
             return Optional.of(highestVersionTemplate);
         } catch (Exception e) {
@@ -192,9 +192,9 @@ public class McpTemplateRepository {
      */
     private McpSearchResultVO convertToVO(McpSearchDO template, McpSearchDO.Config config) {
         McpSearchResultVO vo = new McpSearchResultVO();
-        vo.setId(template.getId());
         vo.setGroupId(template.getGroupId());
         vo.setArtifactId(template.getArtifactId());
+        vo.setDescription("待初始化");
 
         McpSearchResultVO.Config voConfig = new McpSearchResultVO.Config();
         voConfig.setVersion(config.getVersion());

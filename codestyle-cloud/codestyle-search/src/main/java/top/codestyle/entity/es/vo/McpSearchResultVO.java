@@ -12,10 +12,11 @@ import java.util.List;
 @Data
 public class McpSearchResultVO {
 
-    private String id;
+
     private String groupId;
     private String artifactId;
     private Config config;
+    private String description;
 
     /**
      * 配置类
