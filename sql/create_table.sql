@@ -49,7 +49,7 @@ create table if not exists template
 ) comment '模板' collate = utf8mb4_unicode_ci;
 
 
-CREATE TABLE IF NOT EXISTS `sys_storage` (
+CREATE TABLE IF NOT EXISTS `file_storage` (
                                              `id`          bigint(20)   AUTO_INCREMENT              COMMENT 'ID',
                                              `name`        varchar(100) NOT NULL                    COMMENT '名称',
                                              `code`        varchar(30)  NOT NULL                    COMMENT '编码',
@@ -75,7 +75,7 @@ CREATE TABLE IF NOT EXISTS `sys_storage` (
                                              INDEX `idx_deleted`(`deleted`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='存储表';
 
-CREATE TABLE IF NOT EXISTS `sys_file` (
+CREATE TABLE IF NOT EXISTS `file_file` (
                                           `id`                 bigint(20)    AUTO_INCREMENT              COMMENT 'ID',
                                           `name`               varchar(255)  NOT NULL                    COMMENT '名称',
                                           `original_name`      varchar(255)  NOT NULL                    COMMENT '原始名称',
@@ -106,7 +106,7 @@ CREATE TABLE IF NOT EXISTS `sys_file` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='文件表';
 
 -- 初始化默认存储
-INSERT INTO `sys_storage`
+INSERT INTO `file_storage`
 (`id`, `name`, `code`, `type`, `access_key`, `secret_key`, `endpoint`, `bucket_name`, `domain`, `description`, `is_default`, `sort`, `status`, `create_user`, `create_time`)
 VALUES
     (1, '本地windows存储', 'local_dev', 1, NULL, NULL, NULL, 'E:/Java项目/code/codestyle-cloud/data/templates', 'http://localhost:8000/file/', '本地存储', b'1', 1, 1, 1, NOW()),

@@ -43,7 +43,7 @@ public class FileStatisticsResp implements Serializable {
      * 文件类型
      */
     @Schema(description = "类型", example = "2")
-    private FileTypeEnum type;
+    private Integer type;
 
     /**
      * 大小（字节）
