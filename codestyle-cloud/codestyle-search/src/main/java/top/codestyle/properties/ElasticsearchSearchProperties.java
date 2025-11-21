@@ -5,7 +5,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 
 @Data
-@ConfigurationProperties(prefix = "elasticsearch.search.homepage")
+@ConfigurationProperties(prefix = "elasticsearch.search.properties")
 public class ElasticsearchSearchProperties {
 
     private String minimumShouldMatch;
@@ -17,8 +17,8 @@ public class ElasticsearchSearchProperties {
     private PhraseSlops phraseSlops;
     private UserActionSort userActionSort;
 
-    // 聚合查询的k个
-    private Integer aggTopKth;
+    private VersionSortConfig versionSortConfig;
+    private QueryConfig queryConfig;
 
     @Data
     public static class BoostFactors {
@@ -40,5 +40,21 @@ public class ElasticsearchSearchProperties {
     public static class UserActionSort {
         private Double totalLikeCountWeight = 1.0;      // 默认权重
         private Double totalFavoriteCountWeight = 1.0;  // 默认权重
+    }
+
+
+    @Data
+    public static class VersionSortConfig {
+        private Integer maxCandidateResults;
+        private Boolean strictVersionComparison;
+        private String versionFieldName;
+        private String defaultVersion;
+    }
+
+
+    @Data
+    public static class QueryConfig {
+        private Boolean searchOnlyPublicTemplates = true;
+        private Boolean includeDeletedTemplates = false;
     }
 }

@@ -1,19 +1,36 @@
+/*
+ * Copyright (c) 2022-present Charles7c Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package top.codestyle.model.entity;
 
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
-import lombok.SneakyThrows;
+import lombok.NoArgsConstructor;
+import org.apache.ibatis.type.EnumOrdinalTypeHandler;
 import org.dromara.x.file.storage.core.FileInfo;
+import top.codestyle.base.model.entity.BaseDO;
 import top.codestyle.model.enums.FileTypeEnum;
-import top.codestyle.model.enums.StorageTypeEnum;
 import top.continew.starter.core.constant.StringConstants;
-import top.continew.starter.core.util.StrUtils;
-import top.continew.starter.extension.crud.model.entity.BaseDO;
-
 
 import java.io.Serial;
-import java.net.URL;
+import java.util.Map;
 
 /**
  * 文件实体
@@ -22,7 +39,8 @@ import java.net.URL;
  * @since 2023/12/23 10:38
  */
 @Data
-@TableName("sys_file")
+@NoArgsConstructor
+@TableName("file_file")
 public class FileDO extends BaseDO {
 
     @Serial
@@ -34,14 +52,24 @@ public class FileDO extends BaseDO {
     private String name;
 
     /**
+     * 原始名称
+     */
+    private String originalName;
+
+    /**
      * 大小（字节）
      */
     private Long size;
 
     /**
-     * URL
+     * 上级目录
      */
-    private String url;
+    private String parentPath;
+
+    /**
+     * 路径
+     */
+    private String path;
 
     /**
      * 扩展名
@@ -49,9 +77,31 @@ public class FileDO extends BaseDO {
     private String extension;
 
     /**
+     * 内容类型
+     */
+    private String contentType;
+
+    /**
      * 类型
      */
+//    @TableField(typeHandler = EnumOrdinalTypeHandler.class)
+//    private FileTypeEnum type;
     private Integer type;
+
+    /**
+     * SHA256 值
+     */
+    private String sha256;
+
+    /**
+     * 元数据
+     */
+    private String metadata;
+
+    /**
+     * 缩略图名称
+     */
+    private String thumbnailName;
 
     /**
      * 缩略图大小（字节)
@@ -59,9 +109,9 @@ public class FileDO extends BaseDO {
     private Long thumbnailSize;
 
     /**
-     * 缩略图URL
+     * 缩略图元数据
      */
-    private String thumbnailUrl;
+    private String thumbnailMetadata;
 
     /**
      * 存储 ID
@@ -69,59 +119,69 @@ public class FileDO extends BaseDO {
     private Long storageId;
 
     /**
-     * 转换为 X-File-Storage 文件信息对象
+     * 基于 {@link FileInfo} 构建文件信息对象
      *
-     * @param storageDO 存储桶信息
-     * @return X-File-Storage 文件信息对象
+     * @param fileInfo {@link FileInfo} 文件信息
      */
-    public FileInfo toFileInfo(StorageDO storageDO) {
-        FileInfo fileInfo = new FileInfo();
-        fileInfo.setUrl(this.url);
-        fileInfo.setSize(this.size);
-        fileInfo.setFilename(StrUtil.contains(this.url, StringConstants.SLASH)
-            ? StrUtil.subAfter(this.url, StringConstants.SLASH, true)
-            : this.url);
-        fileInfo.setOriginalFilename(StrUtils
-            .blankToDefault(this.extension, this.name, ex -> this.name + StringConstants.DOT + ex));
-        fileInfo.setBasePath(StringConstants.EMPTY);
-        // 优化 path 处理
-        fileInfo.setPath(extractRelativePath(this.url, storageDO));
-
-        fileInfo.setExt(this.extension);
-        fileInfo.setPlatform(storageDO.getCode());
-        fileInfo.setThUrl(this.thumbnailUrl);
-        fileInfo.setThFilename(StrUtil.contains(this.thumbnailUrl, StringConstants.SLASH)
-            ? StrUtil.subAfter(this.thumbnailUrl, StringConstants.SLASH, true)
-            : this.thumbnailUrl);
-        fileInfo.setThSize(this.thumbnailSize);
-        return fileInfo;
+    public FileDO(FileInfo fileInfo) {
+        this.name = fileInfo.getFilename();
+        this.originalName = fileInfo.getOriginalFilename();
+        this.size = fileInfo.getSize();
+        // 如果为空，则为 /；如果不为空，则调整格式为：/xxx
+        this.parentPath = StrUtil.isEmpty(fileInfo.getPath())
+            ? StringConstants.SLASH
+            : StrUtil.removeSuffix(StrUtil.prependIfMissing(fileInfo
+                .getPath(), StringConstants.SLASH), StringConstants.SLASH);
+        this.path = StrUtil.prependIfMissing(fileInfo.getUrl(), StringConstants.SLASH);
+        this.extension = fileInfo.getExt();
+        this.contentType = fileInfo.getContentType();
+        this.type = FileTypeEnum.getByExtension(this.extension).getValue();
+        this.sha256 = fileInfo.getHashInfo().getSha256();
+        this.metadata = JSONUtil.toJsonStr(fileInfo.getMetadata());
+        this.thumbnailName = fileInfo.getThFilename();
+        this.thumbnailSize = fileInfo.getThSize();
+        this.thumbnailMetadata = JSONUtil.toJsonStr(fileInfo.getThMetadata());
+        this.setCreateTime(DateUtil.toLocalDateTime(fileInfo.getCreateTime()));
     }
 
     /**
-     * 将文件路径处理成资源路径
-     * 例如:
-     * http://domain.cn/bucketName/2024/11/27/6746ec3b2907f0de80afdd70.png => 2024/11/27/
-     * http://bucketName.domain.cn/2024/11/27/6746ec3b2907f0de80afdd70.png => 2024/11/27/
-     * 
-     * @param url       文件路径
-     * @param storageDO 存储桶信息
-     * @return
+     * 转换为 {@link FileInfo} 文件信息对象
+     *
+     * @param storage 存储配置信息
+     * @return {@link FileInfo} 文件信息对象
      */
-    @SneakyThrows
-    private static String extractRelativePath(String url, StorageDO storageDO) {
-        url = StrUtil.subBefore(url, StringConstants.SLASH, true) + StringConstants.SLASH;
-        if (storageDO.getType().equals(StorageTypeEnum.LOCAL)) {
-            return url;
+    public FileInfo toFileInfo(StorageDO storage) {
+        FileInfo fileInfo = new FileInfo();
+        fileInfo.setPlatform(storage.getCode());
+        fileInfo.setFilename(this.name);
+        fileInfo.setOriginalFilename(this.originalName);
+        // 暂不使用，所以保持空
+        fileInfo.setBasePath(StringConstants.EMPTY);
+        fileInfo.setSize(this.size);
+        fileInfo.setPath(StringConstants.SLASH.equals(this.parentPath)
+            ? StringConstants.EMPTY
+            : StrUtil.appendIfMissing(StrUtil
+                .removePrefix(this.parentPath, StringConstants.SLASH), StringConstants.SLASH));
+        fileInfo.setExt(this.extension);
+        fileInfo.setContentType(this.contentType);
+        if (StrUtil.isNotBlank(this.metadata)) {
+            fileInfo.setMetadata(JSONUtil.toBean(this.metadata, Map.class));
         }
-        // 提取 URL 中的路径部分
-        String fullPath = new URL(url).getPath();
-        // 移除开头的斜杠
-        String relativePath = fullPath.startsWith(StringConstants.SLASH) ? fullPath.substring(1) : fullPath;
-        // 如果路径以 bucketName 开头，则移除 bucketName 例如: bucketName/2024/11/27/ -> 2024/11/27/
-        if (relativePath.startsWith(storageDO.getBucketName())) {
-            return StrUtil.split(relativePath, storageDO.getBucketName()).get(1);
+        fileInfo.setUrl(StrUtil.removePrefix(this.path, StringConstants.SLASH));
+        // 缩略图信息
+        fileInfo.setThFilename(this.thumbnailName);
+        fileInfo.setThSize(this.thumbnailSize);
+        fileInfo.setThUrl(fileInfo.getPath() + fileInfo.getThFilename());
+        if (StrUtil.isNotBlank(this.thumbnailMetadata)) {
+            fileInfo.setThMetadata(JSONUtil.toBean(this.thumbnailMetadata, Map.class));
         }
-        return relativePath;
+        return fileInfo;
     }
 
+    public void setParentPath(String parentPath) {
+        this.parentPath = parentPath;
+        this.path = StringConstants.SLASH.equals(parentPath)
+            ? parentPath + this.name
+            : parentPath + StringConstants.SLASH + this.name;
+    }
 }

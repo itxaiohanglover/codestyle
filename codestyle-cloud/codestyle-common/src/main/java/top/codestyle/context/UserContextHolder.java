@@ -1,22 +1,39 @@
+/*
+ * Copyright (c) 2022-present Charles7c Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package top.codestyle.context;
 
 import cn.dev33.satoken.session.SaSession;
 import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.core.convert.Convert;
 import cn.hutool.extra.spring.SpringUtil;
+import com.alibaba.ttl.TransmittableThreadLocal;
+import top.codestyle.api.system.UserApi;
 import top.continew.starter.core.util.ExceptionUtils;
-import top.continew.starter.extension.crud.service.CommonUserService;
 
 /**
  * 用户上下文 Holder
  *
- * @author GALAwang
+ * @author Charles7c
  * @since 2022/12/24 12:58
  */
 public class UserContextHolder {
 
-    private static final ThreadLocal<UserContext> CONTEXT_HOLDER = new ThreadLocal<>();
-    private static final ThreadLocal<UserExtraContext> EXTRA_CONTEXT_HOLDER = new ThreadLocal<>();
+    private static final TransmittableThreadLocal<UserContext> CONTEXT_HOLDER = new TransmittableThreadLocal<>();
+    private static final TransmittableThreadLocal<UserExtraContext> EXTRA_CONTEXT_HOLDER = new TransmittableThreadLocal<>();
 
     private UserContextHolder() {
     }
@@ -50,7 +67,7 @@ public class UserContextHolder {
      */
     public static UserContext getContext() {
         UserContext context = CONTEXT_HOLDER.get();
-        if (null == context) {
+        if (context == null) {
             context = StpUtil.getSession().getModel(SaSession.USER, UserContext.class);
             CONTEXT_HOLDER.set(context);
         }
@@ -65,7 +82,7 @@ public class UserContextHolder {
      */
     public static UserContext getContext(Long userId) {
         SaSession session = StpUtil.getSessionByLoginId(userId, false);
-        if (null == session) {
+        if (session == null) {
             return null;
         }
         return session.getModel(SaSession.USER, UserContext.class);
@@ -87,7 +104,7 @@ public class UserContextHolder {
      */
     public static UserExtraContext getExtraContext() {
         UserExtraContext context = EXTRA_CONTEXT_HOLDER.get();
-        if (null == context) {
+        if (context == null) {
             context = getExtraContext(StpUtil.getTokenValue());
             EXTRA_CONTEXT_HOLDER.set(context);
         }
@@ -152,16 +169,16 @@ public class UserContextHolder {
      * @return 用户昵称
      */
     public static String getNickname(Long userId) {
-        return ExceptionUtils.exToNull(() -> SpringUtil.getBean(CommonUserService.class).getNicknameById(userId));
+        return ExceptionUtils.exToNull(() -> SpringUtil.getBean(UserApi.class).getNicknameById(userId));
     }
 
     /**
-     * 是否为管理员
+     * 是否为超级管理员
      *
-     * @return 是否为管理员
+     * @return true：是；false：否
      */
-    public static boolean isAdmin() {
+    public static boolean isSuperAdmin() {
         StpUtil.checkLogin();
-        return getContext().isAdmin();
+        return getContext().isSuperAdmin();
     }
 }

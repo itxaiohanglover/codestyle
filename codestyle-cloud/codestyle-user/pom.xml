@@ -25,22 +25,21 @@
         <dependency>
             <groupId>top.codestyle</groupId>
             <artifactId>codestyle-api</artifactId>
-            <version>1.0-SNAPSHOT</version>
-
+            <version>${project.version}</version>
         </dependency>
 
         <!-- 需要 model 中的 VO/DTO -->
         <dependency>
             <groupId>top.codestyle</groupId>
             <artifactId>codestyle-model</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>${project.version}</version>
         </dependency>
 
         <!-- 公共模块 -->
         <dependency>
             <groupId>top.codestyle</groupId>
             <artifactId>codestyle-common</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>${project.version}</version>
         </dependency>
 
         <!-- Web starter (module provides runtime) -->
@@ -95,6 +94,41 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.1</version> <!-- 关键：使用3.5+版本 -->
+                <configuration>
+                    <source>21</source> <!-- 根据你的JDK调整 -->
+                    <target>21</target>
+                    <encoding>UTF-8</encoding>
+                    <!-- 核心配置：显式指定注解处理器 -->
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>1.18.38</version>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <mainClass>top.codestyle.CodestyleUserApplication</mainClass>
+                    <!-- 例如 file-service 模块 -->
+                    <!-- <mainClass>top.codestyle.file.CodestyleFileApplication</mainClass> -->
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal> <!-- 关键：重新打包为可执行JAR -->
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

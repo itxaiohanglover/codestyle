@@ -38,9 +38,9 @@ elasticsearch:
           core-pool-size: 12 # 异步查询的核心线程数 建议保证为CPU核心数目的2倍
           max-pool-size:  24    # 异步查询的最大线程数 建议保证为CPU核心数目的4倍
           queue-capacity: 400  # 异步查询的等待队列容量
-    use-connection-init-query: true # 使用测试查询进行预热查询策略 -> 会在服务启动的时候先进行一次测试关键词检索，以便发现一些问题!
-    pre-heat-word: crud # 预热查询采用的关键字
-    homepage:
+    use-connection-init-query: true # 使用测试查询进行预热查询策略
+    pre-heat-word: redis # 预热查询采用的关键字
+    properties:
       # 搜索相关性配置
       minimum-should-match: "75%"  # 从75%调整为90%
       timeout-ms: 400 # 单位是毫秒
@@ -61,7 +61,23 @@ elasticsearch:
           total-like-count-weight: 1.0
           total-favorite-count-weight: 1.0
       hotScoreWeight: 10 # 人为控分的权重大小
-      agg-top-kth: 3 # 聚合查询的时候选取的多列表聚合结果的频数为前K的标签
+      # 版本排序
+      version-sort-config:
+        # 默认版本号
+        default-version: "1.0"
+        # 最大搜索数量
+        max-candidate-results: 20
+        # 是否开启严格比较
+        strict-version-comparison: true
+      # 查询配置
+      query-config:
+        # 是否包含逻辑删除的模板
+        include-deleted-templates: false
+        # 是否仅搜索公开模板
+        search-only-public-templates: true
+
+
+
 #      source-includes: # 按照需求返回的字段 已经弃用
 #        - "fileName"
 #        - "description"

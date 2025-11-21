@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="top.codestyle.mapper.LibraryInfoMapper">
+
+    <resultMap id="BaseResultMap" type="top.codestyle.model.entity.LibraryInfo">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="nameen" column="nameEn" jdbcType="VARCHAR"/>
+            <result property="namech" column="nameCh" jdbcType="VARCHAR"/>
+            <result property="description" column="description" jdbcType="VARCHAR"/>
+            <result property="avatar" column="avatar" jdbcType="VARCHAR"/>
+            <result property="status" column="status" jdbcType="TINYINT"/>
+            <result property="maxfilesize" column="maxFileSize" jdbcType="BIGINT"/>
+            <result property="maxfilecount" column="maxFileCount" jdbcType="BIGINT"/>
+            <result property="maxmembercount" column="maxMemberCount" jdbcType="BIGINT"/>
+            <result property="totalfilesize" column="totalFileSize" jdbcType="BIGINT"/>
+            <result property="totalfilecount" column="totalFileCount" jdbcType="BIGINT"/>
+            <result property="totalmembercount" column="totalMemberCount" jdbcType="BIGINT"/>
+            <result property="totallikecount" column="totalLikeCount" jdbcType="BIGINT"/>
+            <result property="totalfavoritecount" column="totalFavoriteCount" jdbcType="BIGINT"/>
+            <result property="edittime" column="editTime" jdbcType="TIMESTAMP"/>
+            <result property="createtime" column="createTime" jdbcType="TIMESTAMP"/>
+            <result property="updatetime" column="updateTime" jdbcType="TIMESTAMP"/>
+            <result property="isdelete" column="isDelete" jdbcType="TINYINT"/>
+    </resultMap>
+
+
+</mapper>

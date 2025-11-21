@@ -1,52 +1,90 @@
 spring:
   application:
-    name: codestyle-user
-  # session
+    name: codestyle-file
   session:
     store-type: redis
-    # 30 days expire
     timeout: 2592000
-  # mysql
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/codestyle-cloud
+    url: jdbc:mysql://101.132.70.68:7096/codestyle_cloud?allowPublicKeyRetrieval=true&useSSL=false
     username: root
-    password: root
-  # redis
+    password: tyut123456  # ⚠️ 修改为强密码
   data:
     redis:
-      host: localhost
-      port: 6039
+      host: 101.132.70.68
+      port: 7099
       database: 1
-#      password: qwe123
+      password: qwe123  # ⚠️ 修改为强密码
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 101.132.70.68:8005
+        grpc-port-offset: 1
+        username: nacos
+        password: qwe123
+        namespace: public
+      config:
+        import-check:
+          enabled: false
+        server-addr: 101.132.70.68:8005
+        grpc-port-offset: 1
+        username: nacos
+        password: qwe123
+        namespace: public
+        file-extension: yaml
+
 server:
-  port: 8124
+  port: 8125
   servlet:
     context-path: /api
-    # 30 days expire
     session:
       cookie:
         max-age: 2592000
-# springdoc-openapi
+
 springdoc:
   group-configs:
     - group: 'default'
       packages-to-scan: top.codestyle.controller
-# knife4j
+
 knife4j:
   enable: true
   setting:
     language: zh_cn
-# Dubbo
+
+# ✅ Dubbo配置同步修改
 dubbo:
+  application:
+    name: codestyle-file
+    qos-enable: true
+    qos-port: 22224  # 修改为其他可用端口
+    qos-accept-foreign-ip: false
   registry:
-    address: nacos://127.0.0.1:8848
+    address: nacos://101.132.70.68:8005?nacos.server.grpc.port.offset=1  # 修改IP，端口保持8848
+    username: nacos                       # 添加认证用户名
+    password: qwe123                      # 添加认证密码
     register-mode: instance
+    parameters:
+      namespace: public
   protocol:
     name: tri
-    port: 50051
+    port: 50052
+    metadata-report-enabled: true
+    keepalive: true
+    # 增加连接参数
+    accepts: 100
   consumer:
+    check: false
     timeout: 60000
+    retries: 3
+    lazy: true  # 延迟连接
   provider:
     timeout: 60000
     metadata-report-enabled: true
+
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml
+  type-aliases-package: top.codestyle.file.entity
+  configuration:
+    map-underscore-to-camel-case: true
+
+# ✅  Spring Cloud Alibaba 配置（如果需要配置中心功能）
