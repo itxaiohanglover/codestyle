@@ -1,20 +1,22 @@
 package top.codestyle.service.impl;
 
 
+import co.elastic.clients.elasticsearch._types.SortOrder;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import top.codestyle.entity.es.pojo.CodeStyleTemplateDO;
-import top.codestyle.entity.es.vo.HomePageSearchResultVO;
-import top.codestyle.properties.ElasticsearchSearchProperties;
+import top.codestyle.pojo.dto.HomePageSearchResultDTO;
+import top.codestyle.pojo.dto.TimeRangeParamDTO;
+import top.codestyle.pojo.enums.TemplateSortField;
+import top.codestyle.pojo.vo.HomePageSearchPageableResultVO;
 import top.codestyle.repository.CodeStyleTemplateRepository;
 import top.codestyle.service.HomePageSearchService;
+import top.codestyle.utils.VOConvertUtils;
 
-import java.util.Collections;
+
+import static top.codestyle.utils.VOConvertUtils.searchCovertToHomePageSearchVO;
 
 
 /**
@@ -34,19 +36,39 @@ public class HomePageSearchServiceImpl implements HomePageSearchService {
     /**
      * 使用参数化Repository（推荐） 主页查询的普通接口 平常状态下作为兜底查询
      */
-    public Page<HomePageSearchResultVO> searchHomePage(String keyword, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
+    @Override
+    public HomePageSearchPageableResultVO searchHomePage(
+            String keyword,
+            int page,
+            int size,
+            TemplateSortField sortField,
+            SortOrder sortOrder,
+            TimeRangeParamDTO timeRangeParamDTO) {
         try {
-            return repository.searchByKeywordWithParams(
-                    keyword,
-                    pageable
-            );
+            Pageable pageable = PageRequest.of(page - 1, size);
+            return doHomePageSearch(keyword,pageable,sortField,sortOrder,timeRangeParamDTO);
 
         } catch (Exception e) {
             log.error("一般搜索也失败，触发兜底回调: {}", e.getMessage());
-            return new PageImpl<>(Collections.emptyList(), pageable, 0);
+            return HomePageSearchPageableResultVO.createEmptyResponseVO();
         }
     }
 
+    private HomePageSearchPageableResultVO doHomePageSearch(
+            String keyword,
+            Pageable pageable,
+            TemplateSortField sortField,
+            SortOrder sortOrder,
+            TimeRangeParamDTO timeRangeParamDTO
+    ){
+        HomePageSearchResultDTO homePageSearchResultDTO = repository.searchByKeywordWithParams(
+                keyword,
+                pageable,
+                sortField,
+                sortOrder,
+                timeRangeParamDTO
+        );
+        return VOConvertUtils.searchCovertToHomePageSearchVO(pageable,homePageSearchResultDTO);
+    }
 
 }

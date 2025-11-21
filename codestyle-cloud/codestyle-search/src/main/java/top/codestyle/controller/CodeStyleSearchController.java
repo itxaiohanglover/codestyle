@@ -2,9 +2,6 @@ package top.codestyle.controller;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,7 +15,6 @@ import top.codestyle.service.AsyncSearchService;
 import top.codestyle.service.HomePageSearchService;
 import top.codestyle.service.McpSearchService;
 
-import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 
 
@@ -45,14 +41,48 @@ public class CodeStyleSearchController {
      * @return Simplified template list
      */
     @GetMapping("/search")
-    public ResponseEntity<Page<HomePageSearchResultVO>> codestyleSearch(
+    public ResponseEntity<HomePageSearchPageableResultVO> codestyleSearch(
             @RequestParam String keyword,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        
-        Page<HomePageSearchResultVO> result = homePageSearchService.searchHomePage(keyword, page, size);
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size,
+
+            // 排序字段（可选）
+            @RequestParam(required = false, defaultValue = "HOT_SCORE")
+            String sortField,
+
+            // 排序方式（升序/降序）
+            @RequestParam(required = false, defaultValue = "DESC")
+            String sortOrder,
+
+            // 时间过滤类型（默认 NONE）
+            @RequestParam(required = false, defaultValue = "NONE")
+            String timeRange,
+
+            // 自定义时间（仅在 range=CUSTOM 时有效）
+            @RequestParam(required = false) Long startTime,
+            @RequestParam(required = false) Long endTime
+    ) {
+
+        TimeRangeParamDTO timeRangeParamDTO = new TimeRangeParamDTO();
+        timeRangeParamDTO.setRangeType(TemplateDateRangeFilter.from(timeRange));
+
+        if (timeRangeParamDTO.getRangeType() == TemplateDateRangeFilter.CUSTOM) {
+            timeRangeParamDTO.setStartTime(startTime);
+            timeRangeParamDTO.setEndTime(endTime);
+        }
+
+       HomePageSearchPageableResultVO result = homePageSearchService.searchHomePage(
+                keyword,
+                page,
+                size,
+                TemplateSortField.from(sortField),
+                TemplateSortOrderType.fromString(sortOrder),
+                timeRangeParamDTO
+        );
+
         return ResponseEntity.ok(result);
     }
+
 
 
 
@@ -64,26 +94,54 @@ public class CodeStyleSearchController {
      *  @return Simplified template list in CompletableFuture
      */
     @GetMapping("/async_search")
-    public CompletableFuture<ResponseEntity<Page<HomePageSearchResultVO>>> searchAsync(
+    public CompletableFuture<ResponseEntity<HomePageSearchPageableResultVO>> searchAsync(
             @RequestParam String keyword,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size,
+
+            // 排序字段（可选）
+            @RequestParam(required = false, defaultValue = "HOT_SCORE")
+            String sortField,
+
+            // 排序方式（升序/降序）
+            @RequestParam(required = false, defaultValue = "DESC")
+            String sortOrder,
+
+            // 时间过滤类型（默认 NONE）
+            @RequestParam(required = false, defaultValue = "NONE")
+            String range,
+
+            // 自定义时间（仅在 range=CUSTOM 时有效）
+            @RequestParam(required = false) Long startTime,
+            @RequestParam(required = false) Long endTime)  {
 
         log.info("接收到异步搜索请求 - 关键词: {}, 页码: {}, 大小: {}", keyword, page, size);
-        long startTime = System.currentTimeMillis();
+        long stTime = System.currentTimeMillis();
+        TimeRangeParamDTO timeRangeParamDTO = new TimeRangeParamDTO();
+        timeRangeParamDTO.setRangeType(TemplateDateRangeFilter.from(range));
 
-        return asyncSearchService.searchAsync(keyword, page, size)
-                .thenApply(result -> {
-                    long responseTime = System.currentTimeMillis() - startTime;
+        if (timeRangeParamDTO.getRangeType() == TemplateDateRangeFilter.CUSTOM) {
+            timeRangeParamDTO.setStartTime(startTime);
+            timeRangeParamDTO.setEndTime(endTime);
+        }
+        return asyncSearchService.searchAsync(
+                        keyword,
+                        page,
+                        size,
+                        TemplateSortField.from(sortField),
+                        TemplateSortOrderType.fromString(sortOrder),
+                        timeRangeParamDTO
+                ).thenApply(result -> {
+                    long responseTime = System.currentTimeMillis() - stTime;
                     log.info("异步搜索完成 - 关键词: {}, 耗时: {}ms, 结果数量: {}",
-                            keyword, responseTime, result.getContent().size());
+                            keyword, responseTime, result.getPage().getContent().size());
 
                     return ResponseEntity.ok(result);
                 })
                 .exceptionally(throwable -> {
                     log.error("异步搜索异常 - 关键词: {}", keyword, throwable);
                     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                            .body(new PageImpl<>(Collections.emptyList(), PageRequest.of(page, size), 0));
+                            .body(HomePageSearchPageableResultVO.createEmptyResponseVO());
                 });
     }
 

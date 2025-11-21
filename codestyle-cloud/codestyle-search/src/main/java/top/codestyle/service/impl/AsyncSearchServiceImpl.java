@@ -1,25 +1,30 @@
 package top.codestyle.service.impl;
 
+import co.elastic.clients.elasticsearch._types.SortOrder;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import top.codestyle.entity.es.pojo.CodeStyleTemplateDO;
-import top.codestyle.entity.es.vo.HomePageSearchResultVO;
-import top.codestyle.properties.ElasticsearchSearchProperties;
+import top.codestyle.pojo.dto.HomePageSearchResultDTO;
+import top.codestyle.pojo.dto.TimeRangeParamDTO;
+import top.codestyle.pojo.entity.CodeStyleTemplateDO;
+import top.codestyle.pojo.enums.TemplateSortField;
+import top.codestyle.pojo.vo.HomePageSearchPageableResultVO;
+import top.codestyle.pojo.vo.HomePageSearchDocResultVO;
 import top.codestyle.repository.CodeStyleTemplateRepository;
 import top.codestyle.service.AsyncSearchService;
+import top.codestyle.utils.VOConvertUtils;
 
-import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
+
+import static top.codestyle.utils.VOConvertUtils.searchCovertToHomePageSearchVO;
 
 /**
  * @author ChonghaoGao
@@ -29,7 +34,6 @@ import java.util.concurrent.CompletableFuture;
  */
 @Slf4j
 @Service
-
 public class AsyncSearchServiceImpl implements AsyncSearchService {
 
     @Value("${elasticsearch.search.use-connection-init-query}")
@@ -42,37 +46,66 @@ public class AsyncSearchServiceImpl implements AsyncSearchService {
     private CodeStyleTemplateRepository repository;
 
 
-    @Async("searchExecutor")
-    public CompletableFuture<Page<HomePageSearchResultVO>> searchAsync(String keyword, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        try {
 
-            return CompletableFuture.completedFuture(repository.searchByKeywordWithParams(
-                    keyword,
-                    pageable));
+    @Async("searchExecutor")
+    public CompletableFuture<HomePageSearchPageableResultVO> searchAsync(
+            String keyword,
+            int page,
+            int size,
+            TemplateSortField sortField,
+            SortOrder sortOrder,
+            TimeRangeParamDTO timeRangeParamDTO) {
+
+        try {
+            Pageable pageable = PageRequest.of(page - 1, size);
+            return CompletableFuture.completedFuture(doHomePageSearch(
+                  keyword,
+                  pageable,
+                  sortField,
+                  sortOrder,
+                  timeRangeParamDTO
+            ));
 
         } catch (Exception e) {
             log.error("一般搜索也失败，触发兜底回调: {}", e.getMessage());
-            return CompletableFuture.completedFuture(new PageImpl<>(Collections.emptyList(), pageable, 0));
+            return CompletableFuture.completedFuture(HomePageSearchPageableResultVO.createEmptyResponseVO());
         }
     }
+    private HomePageSearchPageableResultVO doHomePageSearch(
+            String keyword,
+            Pageable pageable,
+            TemplateSortField sortField,
+            SortOrder sortOrder,
+            TimeRangeParamDTO timeRangeParamDTO
+    ){
+        HomePageSearchResultDTO homePageSearchResultDTO = repository.searchByKeywordWithParams(
+                keyword,
+                pageable,
+                sortField,
+                sortOrder,
+                timeRangeParamDTO
+        );
+        return VOConvertUtils.searchCovertToHomePageSearchVO(pageable,homePageSearchResultDTO);
+    }
+
+
 
     @PostConstruct
     private void init(){
         if(!useConnectionInitQuery) return;
         log.info("进行异步初始化预热搜索，检索关键词为:{}",preHeatWord);
         long startTime = System.currentTimeMillis();
-        searchAsync(preHeatWord,0,10).thenApply(result -> {
+        searchAsync(preHeatWord,1,10, TemplateSortField.HOT_SCORE,SortOrder.Desc,null).thenApply(result -> {
                     long responseTime = System.currentTimeMillis() - startTime;
                     log.info("预热异步搜索完成 - 关键词: {}, 耗时: {}ms, 结果数量: {}",
-                            preHeatWord, responseTime, result.getContent().size());
+                            preHeatWord, responseTime, result.getPage().getContent().size());
 
                     return ResponseEntity.ok(result);
                 })
                 .exceptionally(throwable -> {
                     log.error("预热异步搜索异常 - 关键词: {}", preHeatWord, throwable);
                     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                            .body(new PageImpl<>(Collections.emptyList(), PageRequest.of(0, 10), 0));
+                            .body(HomePageSearchPageableResultVO.createEmptyResponseVO());
                 });;
     }
 
