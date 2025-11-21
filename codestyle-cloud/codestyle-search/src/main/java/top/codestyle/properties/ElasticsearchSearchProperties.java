@@ -17,6 +17,9 @@ public class ElasticsearchSearchProperties {
     private PhraseSlops phraseSlops;
     private UserActionSort userActionSort;
 
+    // 聚合查询的k个
+    private Integer aggTopKth;
+
     @Data
     public static class BoostFactors {
         private Double nameChBoost;

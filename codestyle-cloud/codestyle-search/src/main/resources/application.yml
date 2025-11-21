@@ -38,13 +38,13 @@ elasticsearch:
           core-pool-size: 12 # 异步查询的核心线程数 建议保证为CPU核心数目的2倍
           max-pool-size:  24    # 异步查询的最大线程数 建议保证为CPU核心数目的4倍
           queue-capacity: 400  # 异步查询的等待队列容量
-    use-connection-init-query: true # 使用测试查询进行预热查询策略
-    pre-heat-word: redis # 预热查询采用的关键字
+    use-connection-init-query: true # 使用测试查询进行预热查询策略 -> 会在服务启动的时候先进行一次测试关键词检索，以便发现一些问题!
+    pre-heat-word: crud # 预热查询采用的关键字
     homepage:
       # 搜索相关性配置
       minimum-should-match: "75%"  # 从75%调整为90%
       timeout-ms: 400 # 单位是毫秒
-      track-total-hits: false
+      track-total-hits: true # 为true则保证正常分页 获取检索文档的总数 为false则不统计总命中数目 踩坑了!
       # 字段权重配置
       boost-factors:
         name-ch-boost: 3.0
@@ -61,6 +61,7 @@ elasticsearch:
           total-like-count-weight: 1.0
           total-favorite-count-weight: 1.0
       hotScoreWeight: 10 # 人为控分的权重大小
+      agg-top-kth: 3 # 聚合查询的时候选取的多列表聚合结果的频数为前K的标签
 #      source-includes: # 按照需求返回的字段 已经弃用
 #        - "fileName"
 #        - "description"

@@ -1,4 +1,4 @@
-package top.codestyle.entity.es.vo;
+package top.codestyle.pojo.vo;
 
 /**
  * @author ChonghaoGao
@@ -15,7 +15,7 @@ import java.util.List;
  * 首页搜索单条结果 VO
  */
 @Data
-public class HomePageSearchResultVO {
+public class HomePageSearchDocResultVO {
 
     private String Id;
     // 模板中文名称
@@ -26,7 +26,7 @@ public class HomePageSearchResultVO {
     private String description;
     // 模板图标
     private String templateAvatar;
-    // 模板标签
+    // 模板标签 —— 模板内部的自分类
     private List<String> tags;
 
     // 模板创建者的名称

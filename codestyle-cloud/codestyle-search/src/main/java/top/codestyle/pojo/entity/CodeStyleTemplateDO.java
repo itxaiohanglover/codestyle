@@ -1,4 +1,4 @@
-package top.codestyle.entity.es.pojo;
+package top.codestyle.pojo.entity;
 
 import lombok.Data;
 import org.springframework.data.annotation.Id;
@@ -20,25 +20,23 @@ public class CodeStyleTemplateDO {
     /**
      * 英文名称：一般不需要拼音、中文特性，使用英文检索即可
      */
-    @Field(type = FieldType.Text, analyzer = "standard", searchAnalyzer = "standard")
+    @Field(type = FieldType.Text, analyzer = "en_std", searchAnalyzer = "en_std")
     private String nameEn;
 
     /**
      * 中文名称：最重要的搜索字段
      * 使用中文 + 拼音混合检索
      */
-    @MultiField(mainField = @Field(type = FieldType.Text,
-            analyzer = "ik_max_word_pinyin",
-            searchAnalyzer = "ik_smart_pinyin"))
+    @MultiField(
+            mainField = @Field(type = FieldType.Text, analyzer = "cn_en_index", searchAnalyzer = "cn_en_search")
+    )
     private String nameCh;
 
     /**
      * 中文描述：适合拼音检索，并提供 keyword 用于排序/过滤
      */
     @MultiField(
-            mainField = @Field(type = FieldType.Text,
-                    analyzer = "ik_max_word_pinyin",
-                    searchAnalyzer = "ik_smart_pinyin"),
+            mainField = @Field(type = FieldType.Text, analyzer = "cn_en_index", searchAnalyzer = "cn_en_search"),
             otherFields = {
                     @InnerField(type = FieldType.Keyword, suffix = "keyword")
             }
@@ -50,13 +48,12 @@ public class CodeStyleTemplateDO {
      * 既能全文检索，又能精确匹配过滤
      */
     @MultiField(
-            mainField = @Field(type = FieldType.Text, analyzer = "ik_max_word_pinyin"),
+            mainField = @Field(type = FieldType.Text, analyzer = "cn_en_index", searchAnalyzer = "cn_en_search"),
             otherFields = {
                     @InnerField(type = FieldType.Keyword, suffix = "keyword")
             }
     )
     private List<String> searchTags;
-
 
     // ===================== 展示类字段（无需分词） =====================
 
@@ -68,7 +65,7 @@ public class CodeStyleTemplateDO {
     private String avatar; // 空间图像 - 封面
 
     @Field(type = FieldType.Keyword)
-    private String category; // 所属类别
+    private List<String> tagsAgg; // 聚合得到的类别
 
     @Field(type = FieldType.Keyword)
     private List<String> memberNames;

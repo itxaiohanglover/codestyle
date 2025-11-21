@@ -14,8 +14,8 @@ import org.elasticsearch.client.RestClient;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import top.codestyle.entity.es.pojo.CodeStyleTemplateDO;
 import top.codestyle.generator.MockDataGenerator;
+import top.codestyle.pojo.entity.CodeStyleTemplateDO;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -207,11 +207,17 @@ public class ElasticsearchIndexTest {
      */
     @Test
     public void testCreateInsertAndDeleteData() throws Exception {
+        createTestIndex();
+//        clearCurrentIndex();
+    }
+
+    private static void createTestIndex() throws Exception {
         createIndex();
-
         insertTestDataParallel(1000, 4);
+    }
 
-//         deleteAllTestData();
-//         deleteIndex();
+    private static void clearCurrentIndex() throws IOException {
+        deleteAllTestData();
+        deleteIndex();
     }
 }

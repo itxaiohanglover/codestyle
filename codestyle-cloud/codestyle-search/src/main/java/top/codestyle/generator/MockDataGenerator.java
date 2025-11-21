@@ -2,7 +2,7 @@ package top.codestyle.generator;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import top.codestyle.entity.es.pojo.CodeStyleTemplateDO;
+import top.codestyle.pojo.entity.CodeStyleTemplateDO;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
@@ -86,7 +86,6 @@ public class MockDataGenerator {
         // 展示字段
         t.setVersion(getRandom(VERSIONS));
         t.setAvatar(getRandom(AVATARS));
-        t.setCategory(getRandom(CATEGORIES));
 
         t.setMemberNames(randomList(MEMBER_NAMES, 3));
         t.setMemberAvatarUrls(randomList(MEMBER_AVATARS, 3));

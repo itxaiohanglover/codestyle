@@ -1,8 +1,9 @@
 package top.codestyle.service;
 
-import org.springframework.data.domain.Page;
-import top.codestyle.entity.es.pojo.CodeStyleTemplateDO;
-import top.codestyle.entity.es.vo.HomePageSearchResultVO;
+import co.elastic.clients.elasticsearch._types.SortOrder;
+import top.codestyle.pojo.dto.TimeRangeParamDTO;
+import top.codestyle.pojo.enums.TemplateSortField;
+import top.codestyle.pojo.vo.HomePageSearchPageableResultVO;
 
 /**
  * @author ChonghaoGao
@@ -12,6 +13,12 @@ import top.codestyle.entity.es.vo.HomePageSearchResultVO;
  */
 public interface HomePageSearchService {
 
-    Page<HomePageSearchResultVO> searchHomePage(String keyword, int page, int size);
+   HomePageSearchPageableResultVO searchHomePage(
+            String keyword,
+            int page,
+            int size,
+            TemplateSortField popularitySortField,
+            SortOrder sortOrder,
+            TimeRangeParamDTO timeRangeParamDTO);
 
 }
