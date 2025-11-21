@@ -30,7 +30,7 @@ public class McpSearchController {
     public ResponseEntity<McpSearchResultVO> searchMcp(@RequestParam String templateKeyword) {
         log.info("进行mcp模板检索 - 关键词: {}", templateKeyword);
         McpSearchResultVO result = mcpSearchService.searchMcp(templateKeyword);
-        return result != null ? ResponseEntity.ok(result) : ResponseEntity.notFound().build();
+        return result != null ? ResponseEntity.ok(result) : ResponseEntity.ok(null);
     }
 
 
