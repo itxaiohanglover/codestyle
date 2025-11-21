@@ -13,8 +13,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import top.codestyle.entity.es.pojo.CodeStyleTemplateDO;
 import top.codestyle.entity.es.vo.HomePageSearchResultVO;
+import top.codestyle.entity.es.vo.McpSearchResultVO;
 import top.codestyle.service.AsyncSearchService;
 import top.codestyle.service.HomePageSearchService;
+import top.codestyle.service.McpSearchService;
 
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
@@ -84,5 +86,8 @@ public class CodeStyleSearchController {
                             .body(new PageImpl<>(Collections.emptyList(), PageRequest.of(page, size), 0));
                 });
     }
+
+
+
 
 }
