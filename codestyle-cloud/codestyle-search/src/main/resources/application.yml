@@ -44,7 +44,7 @@ elasticsearch:
       # 搜索相关性配置
       minimum-should-match: "75%"  # 从75%调整为90%
       timeout-ms: 400 # 单位是毫秒
-      track-total-hits: false
+      track-total-hits: true # 为true则保证正常分页 获取检索文档的总数 为false则不统计总命中数目 踩坑了!
       # 字段权重配置
       boost-factors:
         name-ch-boost: 3.0
@@ -61,7 +61,6 @@ elasticsearch:
           total-like-count-weight: 1.0
           total-favorite-count-weight: 1.0
       hotScoreWeight: 10 # 人为控分的权重大小
-
       # 版本排序
       version-sort-config:
         # 默认版本号
