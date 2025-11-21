@@ -35,7 +35,7 @@ public class McpSearchResultVO {
         private String filePath;
         private String description;
         private String filename;
-        private List<InputVariable> inputVariables;
+        private List<InputVarivales> inputVarivales;
         private String sha256;
     }
 
@@ -43,7 +43,7 @@ public class McpSearchResultVO {
      * 输入变量类
      */
     @Data
-    public static class InputVariable {
+    public static class InputVarivales {
         private String variableName;
         private String variableType;
         private String variableComment;
