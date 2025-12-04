@@ -1,7 +1,6 @@
 package top.codestyle.entity.es.vo;
 
 import lombok.Data;
-import top.codestyle.entity.es.pojo.CodeStyleTemplateDO;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -54,6 +54,7 @@
         <module>codestyle-file</module>
         <module>codestyle-ai</module>
         <module>codestyle-search</module>
+        <module>codeStyle-remote-search</module>
     </modules>
 
     <dependencyManagement>

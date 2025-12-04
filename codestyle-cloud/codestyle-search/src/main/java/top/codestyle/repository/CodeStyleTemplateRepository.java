@@ -45,7 +45,6 @@ public class CodeStyleTemplateRepository {
             TimeRangeParamDTO timeRangeParamDTO
             ) {
         try {
-            log.info("传入进来的pageable:{}",pageable);
             NativeQuery nativeQuery = createCompleteNativeQuery(keyword,pageable,popularitySortField,order, timeRangeParamDTO);
 
             SearchHits<CodeStyleTemplateDO> hits = elasticsearchTemplate.search(
@@ -279,7 +278,12 @@ public class CodeStyleTemplateRepository {
             case LAST_180_DAYS -> start = now - 180L * 24 * 3600 * 1000L;
 
             case CUSTOM -> {
-                if (param.getStartTime() == null || param.getEndTime() == null || param.getEndTime() < param.getStartTime())
+                if (
+                        param.getStartTime() == null ||
+                        param.getEndTime() == null ||
+                        param.getEndTime() < param.getStartTime() ||
+                        param.getStartTime() < 0
+                )
                     return null; // 不合法就不加过滤
                 start = param.getStartTime();
                 end = param.getEndTime();
@@ -301,7 +305,7 @@ public class CodeStyleTemplateRepository {
             default          -> field = "createTime";
         }
 
-        // ③ 构建 RangeQuery（动态字段）
+        //  构建 RangeQuery（动态字段）
         return RangeQuery.of(r -> r
                 .field(field)
                 .gte(JsonData.of(finalStart))

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="top.codestyle.mapper.RemoteMetaInfoMapper">
+    
+    <!-- 自定义查询所有已删除的数据，绕过MyBatis-Plus的逻辑删除自动过滤 -->
+    <select id="selectAllDeletedData" resultType="top.codestyle.model.mysql.dao.RemoteMetaInfo">
+        SELECT id, meta_json, group_id, create_time, update_time, deleted 
+        FROM tb_remote_meta_info 
+        WHERE deleted = 1
+    </select>
+    
+    <!-- 自定义查询方法：获取所有已恢复的数据（deleted=0） -->
+    <select id="selectAllRestoredData" resultType="top.codestyle.model.mysql.dao.RemoteMetaInfo">
+        SELECT id, meta_json, group_id, create_time, update_time, deleted 
+        FROM tb_remote_meta_info 
+        WHERE deleted = 0
+    </select>
+    
+    <!-- 自定义查询方法：获取指定时间后更新的数据，包括已删除的 -->
+    <select id="selectUpdatedDataAfterTime" resultType="top.codestyle.model.mysql.dao.RemoteMetaInfo">
+        SELECT id, meta_json, group_id, create_time, update_time, deleted 
+        FROM tb_remote_meta_info 
+        WHERE update_time > #{lastSyncTime}
+    </select>
+    
+</mapper>
