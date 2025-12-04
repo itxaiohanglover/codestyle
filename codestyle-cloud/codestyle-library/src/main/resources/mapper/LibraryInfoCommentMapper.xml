@@ -15,5 +15,4 @@
             <result property="createtime" column="createTime" jdbcType="TIMESTAMP"/>
             <result property="updatetime" column="updateTime" jdbcType="TIMESTAMP"/>
     </resultMap>
-
 </mapper>

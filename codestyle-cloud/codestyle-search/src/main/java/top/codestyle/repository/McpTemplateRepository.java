@@ -197,7 +197,7 @@ public class McpTemplateRepository {
         vo.setDescription("待初始化");
 
         McpSearchResultVO.Config voConfig = new McpSearchResultVO.Config();
-        voConfig.setVersion(config.getVersion());
+        voConfig.setVersion(config.getVersion().replaceFirst("^[vV]", ""));
         
         if (config.getFiles() != null) {
             List<McpSearchResultVO.FileInfo> fileInfos = config.getFiles().stream().map(file -> {
@@ -208,8 +208,8 @@ public class McpTemplateRepository {
                 fileInfo.setSha256(file.getSha256());
                 
                 if (file.getInputVariables() != null) {
-                    fileInfo.setInputVariables(file.getInputVariables().stream().map(var -> {
-                        McpSearchResultVO.InputVariable inputVar = new McpSearchResultVO.InputVariable();
+                    fileInfo.setInputVarivales(file.getInputVariables().stream().map(var -> {
+                        McpSearchResultVO.InputVarivales inputVar = new McpSearchResultVO.InputVarivales();
                         inputVar.setVariableName(var.getVariableName());
                         inputVar.setVariableType(var.getVariableType());
                         inputVar.setVariableComment(var.getVariableComment());

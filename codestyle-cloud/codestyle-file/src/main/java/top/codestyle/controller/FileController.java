@@ -116,7 +116,7 @@ public class FileController extends BaseController<FileService, FileResp, FileRe
 
     @Operation(summary = "下载本地文件并打包", description = "下载本地文件并打包")
     @SaCheckPermission("file:load")
-    @PostMapping("/load")
+    @GetMapping("/load")
     @ExcludeFromGracefulResponse
     public  byte[] load(FileQuery query, HttpServletResponse response) {;
         if (query.getPaths() == null){

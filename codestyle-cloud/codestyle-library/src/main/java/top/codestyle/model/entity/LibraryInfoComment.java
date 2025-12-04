@@ -16,7 +16,6 @@ import java.util.Date;
 * 模板库评论
 */
 @Data
-@Builder
 @TableName("library_info_comment")
 public class LibraryInfoComment implements Serializable {
 
