@@ -1,0 +1,104 @@
+/*
+ * Copyright (c) 2022-present Charles7c Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package top.codestyle.admin.system.service.impl;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import top.codestyle.admin.common.base.service.BaseServiceImpl;
+import top.codestyle.admin.system.mapper.DictMapper;
+import top.codestyle.admin.system.model.entity.DictDO;
+import top.codestyle.admin.system.model.query.DictQuery;
+import top.codestyle.admin.system.model.req.DictReq;
+import top.codestyle.admin.system.model.resp.DictResp;
+import top.codestyle.admin.system.service.DictItemService;
+import top.codestyle.admin.system.service.DictService;
+import top.continew.starter.core.util.CollUtils;
+import top.continew.starter.core.util.validation.CheckUtils;
+import top.continew.starter.extension.crud.model.resp.LabelValueResp;
+
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * 字典业务实现
+ *
+ * @author Charles7c
+ * @since 2023/9/11 21:29
+ */
+@Service
+@RequiredArgsConstructor
+public class DictServiceImpl extends BaseServiceImpl<DictMapper, DictDO, DictResp, DictResp, DictQuery, DictReq> implements DictService {
+
+    private final DictItemService dictItemService;
+
+    @Override
+    public void beforeCreate(DictReq req) {
+        this.checkNameRepeat(req.getName(), null);
+        this.checkCodeRepeat(req.getCode(), null);
+    }
+
+    @Override
+    public void beforeUpdate(DictReq req, Long id) {
+        this.checkNameRepeat(req.getName(), id);
+        DictDO oldDict = super.getById(id);
+        CheckUtils.throwIfNotEqual(req.getCode(), oldDict.getCode(), "不允许修改字典编码");
+    }
+
+    @Override
+    public void beforeDelete(List<Long> ids) {
+        List<DictDO> list = baseMapper.lambdaQuery()
+            .select(DictDO::getName, DictDO::getIsSystem)
+            .in(DictDO::getId, ids)
+            .list();
+        Optional<DictDO> isSystemData = list.stream().filter(DictDO::getIsSystem).findFirst();
+        CheckUtils.throwIf(isSystemData::isPresent, "所选字典 [{}] 是系统内置字典，不允许删除", isSystemData.orElseGet(DictDO::new)
+            .getName());
+        dictItemService.deleteByDictIds(ids);
+    }
+
+    @Override
+    public List<LabelValueResp> listEnumDict() {
+        List<String> enumDictNameList = dictItemService.listEnumDictNames();
+        return CollUtils.mapToList(enumDictNameList, name -> new LabelValueResp(name, name));
+    }
+
+    /**
+     * 检查名称是否重复
+     *
+     * @param name 名称
+     * @param id   ID
+     */
+    private void checkNameRepeat(String name, Long id) {
+        CheckUtils.throwIf(baseMapper.lambdaQuery()
+            .eq(DictDO::getName, name)
+            .ne(id != null, DictDO::getId, id)
+            .exists(), "名称为 [{}] 的字典已存在", name);
+    }
+
+    /**
+     * 检查编码是否重复
+     *
+     * @param code 编码
+     * @param id   ID
+     */
+    private void checkCodeRepeat(String code, Long id) {
+        CheckUtils.throwIf(baseMapper.lambdaQuery()
+            .eq(DictDO::getCode, code)
+            .ne(id != null, DictDO::getId, id)
+            .exists(), "编码为 [{}] 的字典已存在", code);
+    }
+}

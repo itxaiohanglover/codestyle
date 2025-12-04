@@ -1,0 +1,110 @@
+/*
+ * Copyright (c) 2022-present Charles7c Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package top.codestyle.admin.system.service;
+
+import top.codestyle.admin.common.base.service.BaseService;
+import top.codestyle.admin.common.context.RoleContext;
+import top.codestyle.admin.system.model.entity.RoleDO;
+import top.codestyle.admin.system.model.query.RoleQuery;
+import top.codestyle.admin.system.model.req.RoleReq;
+import top.codestyle.admin.system.model.req.RolePermissionUpdateReq;
+import top.codestyle.admin.system.model.resp.role.RoleDetailResp;
+import top.codestyle.admin.system.model.resp.role.RoleResp;
+import top.continew.starter.data.service.IService;
+
+import java.util.List;
+import java.util.Set;
+
+/**
+ * 角色业务接口
+ *
+ * @author Charles7c
+ * @since 2023/2/8 23:15
+ */
+public interface RoleService extends BaseService<RoleResp, RoleDetailResp, RoleQuery, RoleReq>, IService<RoleDO> {
+
+    /**
+     * 修改角色权限
+     *
+     * @param id  角色 ID
+     * @param req 请求参数
+     */
+    void updatePermission(Long id, RolePermissionUpdateReq req);
+
+    /**
+     * 分配角色给用户
+     *
+     * @param id      角色 ID
+     * @param userIds 用户 ID 列表
+     */
+    void assignToUsers(Long id, List<Long> userIds);
+
+    /**
+     * 更新用户上下文
+     *
+     * @param roleId 角色 ID
+     */
+    void updateUserContext(Long roleId);
+
+    /**
+     * 根据用户 ID 查询权限码
+     *
+     * @param userId 用户 ID
+     * @return 权限码集合
+     */
+    Set<String> listPermissionByUserId(Long userId);
+
+    /**
+     * 根据用户 ID 查询角色编码
+     *
+     * @param userId 用户 ID
+     * @return 角色编码集合
+     */
+    Set<String> listCodeByUserId(Long userId);
+
+    /**
+     * 根据用户 ID 查询角色
+     *
+     * @param userId 用户 ID
+     * @return 角色集合
+     */
+    Set<RoleContext> listByUserId(Long userId);
+
+    /**
+     * 根据编码查询 ID
+     *
+     * @param code 编码
+     * @return ID
+     */
+    Long getIdByCode(String code);
+
+    /**
+     * 根据角色名称查询
+     *
+     * @param list 名称列表
+     * @return 角色列表
+     */
+    List<RoleDO> listByNames(List<String> list);
+
+    /**
+     * 根据角色名称查询数量
+     *
+     * @param roleNames 名称列表
+     * @return 角色数量
+     */
+    int countByNames(List<String> roleNames);
+}

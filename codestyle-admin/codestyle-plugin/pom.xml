@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>top.codestyle.admin</groupId>
+        <artifactId>codestyle-admin</artifactId>
+        <version>${revision}</version>
+    </parent>
+
+    <artifactId>codestyle-plugin</artifactId>
+    <packaging>pom</packaging>
+
+    <name>${project.artifactId}</name>
+    <description>插件模块（存放能力开放、租户等扩展模块）</description>
+
+    <modules>
+        <module>codestyle-plugin-open</module>
+        <module>codestyle-plugin-tenant</module>
+        <module>codestyle-plugin-schedule</module>
+        <module>codestyle-plugin-generator</module>
+    </modules>
+
+    <dependencies>
+        <!-- 公共模块 -->
+        <dependency>
+            <groupId>top.codestyle.admin</groupId>
+            <artifactId>codestyle-common</artifactId>
+        </dependency>
+    </dependencies>
+</project>
