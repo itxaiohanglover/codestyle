@@ -38,6 +38,6 @@ public interface FileMapper extends BaseMapper<FileDO> {
      *
      * @return 文件资源统计信息
      */
-    @Select("SELECT type, COUNT(1) number, SUM(size) size FROM file_file WHERE deleted = 0 AND type != 0 GROUP BY type")
+    @Select("SELECT type, COUNT(1) number, SUM(size) size FROM file_info WHERE deleted = 0 AND type != 0 GROUP BY type")
     List<FileStatisticsResp> statistics();
 }
