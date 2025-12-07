@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>top.codestyle.admin</groupId>
-        <artifactId>codestyle-admin</artifactId>
+        <artifactId>codestyle-plugin</artifactId>
         <version>${revision}</version>
     </parent>
 
