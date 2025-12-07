@@ -20,6 +20,8 @@
         <module>codestyle-plugin-tenant</module>
         <module>codestyle-plugin-schedule</module>
         <module>codestyle-plugin-generator</module>
+        <module>codeStyle-plugin-remote-search</module>
+        <module>codestyle-plugin-original-search</module>
     </modules>
 
     <dependencies>
