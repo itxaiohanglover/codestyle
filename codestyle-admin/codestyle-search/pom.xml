@@ -3,9 +3,9 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>top.codestyle</groupId>
-        <artifactId>codestyle-cloud</artifactId>
-        <version>1.0-SNAPSHOT</version>
+        <groupId>top.codestyle.admin</groupId>
+        <artifactId>codestyle-admin</artifactId>
+        <version>${revision}</version>
     </parent>
 
     <artifactId>codestyle-search</artifactId>
