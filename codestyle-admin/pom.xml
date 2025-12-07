@@ -31,6 +31,8 @@
         <module>codestyle-plugin</module>
         <module>codestyle-common</module>
         <module>codestyle-extension</module>
+        <module>codestyle-search</module>
+        <module>codeStyle-remote-search</module>
     </modules>
 
     <properties>
