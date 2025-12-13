@@ -1,10 +1,26 @@
+/*
+ * Copyright (c) 2022-present Charles7c Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import top.codestyle.mapper.RemoteMetaInfoMapper;
-import top.codestyle.model.mysql.dao.RemoteMetaInfo;
+import top.codestyle.model.mysql.entity.RemoteMetaInfo;
 import top.codestyle.respository.es.RemoteSearchESRepository;
 import top.codestyle.services.SyncService;
 import top.codestyle.vo.SearchMetaVO;
@@ -24,45 +40,45 @@ public class IntegratedSyncSearchTest {
 
     @Autowired
     private RemoteMetaInfoMapper remoteMetaInfoMapper;
-    
+
     @Autowired
     private SyncService syncService;
-    
+
     @Autowired
     private RemoteSearchESRepository remoteSearchESRepository;
-    
+
     /**
      * 测试完整流程：更新数据 → 增量同步 → ES检索
      */
     @Test
     public void testFullSyncSearchFlow() throws InterruptedException {
         System.out.println("开始测试完整流程：更新数据 → 增量同步 → ES检索");
-        
+
         // 1. 查询ID为6的记录
         RemoteMetaInfo metaInfo = remoteMetaInfoMapper.selectById(6L);
         System.out.println("更新前的记录: " + metaInfo.getMetaJson());
-        
+
         // 2. 修改metaJson字段，设置artifactid为"test-updated"
         String newMetaJson = "{\"groupId\": \"MachineLearning\", \"artifactId\": \"test-updated\", \"description\": \"测试更新后的描述\", \"config\": {}}";
         metaInfo.setMetaJson(newMetaJson);
-        
+
         // 3. 更新记录
         int updateResult = remoteMetaInfoMapper.updateById(metaInfo);
         System.out.println("更新结果: " + updateResult);
-        
+
         // 4. 手动执行增量同步
         System.out.println("执行增量同步...");
         int syncResult = syncService.incrementalSync(java.time.LocalDateTime.now().minusMinutes(1));
         System.out.println("增量同步结果: " + syncResult);
-        
+
         // 5. 等待ES同步完成
         System.out.println("等待2秒，让ES同步完成...");
         Thread.sleep(2000);
-        
+
         // 6. 搜索"test-updated"
         System.out.println("搜索'test-updated'...");
         Optional<SearchMetaVO> searchResult = remoteSearchESRepository.searchInES("test-updated");
-        
+
         // 7. 验证是否检索到了结果
         if (searchResult.isPresent()) {
             System.out.println("✅ 成功检索到数据！");
@@ -76,7 +92,7 @@ public class IntegratedSyncSearchTest {
             printAllESData();
         }
     }
-    
+
     /**
      * 打印ES中的所有数据，用于调试
      */

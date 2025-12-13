@@ -1,3 +1,19 @@
+/*
+ * Copyright (c) 2022-present Charles7c Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package top.codestyle;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
@@ -35,14 +51,9 @@ public class ElasticsearchIndexTest {
 
     @BeforeAll
     public static void setUp() {
-        RestClient restClient = RestClient.builder(
-                new HttpHost("localhost", 9200, "http")
-        ).build();
+        RestClient restClient = RestClient.builder(new HttpHost("localhost", 9200, "http")).build();
 
-        RestClientTransport transport = new RestClientTransport(
-                restClient,
-                new JacksonJsonpMapper()
-        );
+        RestClientTransport transport = new RestClientTransport(restClient, new JacksonJsonpMapper());
 
         client = new ElasticsearchClient(transport);
         mockDataGenerator = new MockDataGenerator();
@@ -63,13 +74,11 @@ public class ElasticsearchIndexTest {
      * 创建索引
      */
     public static void createIndex() throws IOException {
-        boolean exists = client.indices().exists(new ExistsRequest.Builder()
-                .index(INDEX_NAME)
-                .build()).value();
+        boolean exists = client.indices().exists(new ExistsRequest.Builder().index(INDEX_NAME).build()).value();
 
         if (!exists) {
-            client.indices().create(new CreateIndexRequest.Builder()
-                    .index(INDEX_NAME)
+            client.indices()
+                .create(new CreateIndexRequest.Builder().index(INDEX_NAME)
                     .withJson(new FileInputStream("src/main/resources/elasticsearch/template-settings.json"))
                     .build());
             log.info("索引 {} 创建成功", INDEX_NAME);
@@ -82,19 +91,14 @@ public class ElasticsearchIndexTest {
      * 单线程批量插入
      */
     public static void insertTestData(int count) throws IOException {
-        if (count <= 0) return;
+        if (count <= 0)
+            return;
 
         List<CodeStyleTemplateDO> templates = mockDataGenerator.generateBatchTemplates(count);
         BulkRequest.Builder bulk = new BulkRequest.Builder();
 
         for (CodeStyleTemplateDO template : templates) {
-            bulk.operations(op -> op
-                    .index(idx -> idx
-                            .index(INDEX_NAME)
-                            .id(template.getId())
-                            .document(template)
-                    )
-            );
+            bulk.operations(op -> op.index(idx -> idx.index(INDEX_NAME).id(template.getId()).document(template)));
         }
 
         BulkResponse result = client.bulk(bulk.build());
@@ -115,7 +119,8 @@ public class ElasticsearchIndexTest {
      * 并行批量插入（修复 bulk 未执行的问题）
      */
     public static void insertTestDataParallel(int count, int threadCount) throws Exception {
-        if (count <= 0) return;
+        if (count <= 0)
+            return;
 
         ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
         CountDownLatch latch = new CountDownLatch(threadCount);
@@ -135,13 +140,9 @@ public class ElasticsearchIndexTest {
 
                     BulkRequest.Builder bulk = new BulkRequest.Builder();
                     for (CodeStyleTemplateDO template : templates) {
-                        bulk.operations(op -> op
-                                .index(idx -> idx
-                                        .index(INDEX_NAME)
-                                        .id(template.getId())
-                                        .document(template)
-                                )
-                        );
+                        bulk.operations(op -> op.index(idx -> idx.index(INDEX_NAME)
+                            .id(template.getId())
+                            .document(template)));
                     }
 
                     // ***修复：真正执行 bulk 插入***
@@ -177,10 +178,7 @@ public class ElasticsearchIndexTest {
      * 删除所有数据
      */
     public static void deleteAllTestData() throws IOException {
-        client.deleteByQuery(d -> d
-                .index(INDEX_NAME)
-                .query(q -> q.matchAll(m -> m))
-        );
+        client.deleteByQuery(d -> d.index(INDEX_NAME).query(q -> q.matchAll(m -> m)));
         log.info("已删除索引 {} 中的所有数据", INDEX_NAME);
     }
 
@@ -188,14 +186,10 @@ public class ElasticsearchIndexTest {
      * 删除索引
      */
     public static void deleteIndex() throws IOException {
-        boolean exists = client.indices().exists(new ExistsRequest.Builder()
-                .index(INDEX_NAME)
-                .build()).value();
+        boolean exists = client.indices().exists(new ExistsRequest.Builder().index(INDEX_NAME).build()).value();
 
         if (exists) {
-            client.indices().delete(new DeleteIndexRequest.Builder()
-                    .index(INDEX_NAME)
-                    .build());
+            client.indices().delete(new DeleteIndexRequest.Builder().index(INDEX_NAME).build());
             log.info("已删除索引 {}", INDEX_NAME);
         } else {
             log.info("索引 {} 不存在", INDEX_NAME);
@@ -208,7 +202,7 @@ public class ElasticsearchIndexTest {
     @Test
     public void testCreateInsertAndDeleteData() throws Exception {
         createTestIndex();
-//        clearCurrentIndex();
+        //        clearCurrentIndex();
     }
 
     private static void createTestIndex() throws Exception {

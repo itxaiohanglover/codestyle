@@ -1,3 +1,5 @@
+
+
 package top.codestyle.controller;
 
 import lombok.AllArgsConstructor;
@@ -18,17 +20,17 @@ import java.util.Optional;
  */
 @Slf4j
 @RestController
-@RequestMapping("/meta")
+@RequestMapping("/mcp")
 @AllArgsConstructor
 public class RemoteMetaSearchController {
 
     private final RemoteMetaSearchService remoteMetaSearchService;
 
     @GetMapping("/search")
-    private ResponseEntity<?> metaSearch(@RequestParam String query){
+    private ResponseEntity<?> metaSearch(@RequestParam String query) {
 
         Optional<SearchMetaVO> searchMetaVO = remoteMetaSearchService.search(query);
-        log.info("{}",searchMetaVO);
+        log.info("{}", searchMetaVO);
         if (searchMetaVO.isPresent()) {
             return ResponseEntity.ok(searchMetaVO.get());
         } else {

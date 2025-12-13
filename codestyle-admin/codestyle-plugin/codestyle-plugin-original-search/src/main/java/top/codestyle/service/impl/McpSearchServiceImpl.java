@@ -1,15 +1,26 @@
+/*
+ * Copyright (c) 2022-present Charles7c Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package top.codestyle.service.impl;
 
-import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.elasticsearch.indices.CreateIndexRequest;
-import co.elastic.clients.elasticsearch.indices.ExistsRequest;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.common.util.StringUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.data.elasticsearch.client.elc.ElasticsearchTemplate;
 import org.springframework.stereotype.Service;
 import top.codestyle.entity.es.pojo.McpSearchDO;
 import top.codestyle.entity.es.vo.McpSearchResultVO;
@@ -17,9 +28,7 @@ import top.codestyle.repository.McpTemplateRepository;
 import top.codestyle.service.McpSearchService;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.*;
 
 @Slf4j
@@ -40,9 +49,9 @@ public class McpSearchServiceImpl implements McpSearchService {
         return mcpSearchResult.orElse(null);
     }
 
-
     /**
      * 根据meta.json文件自动保存到Elasticsearch
+     * 
      * @param metaJsonFile meta.json文件
      * @return 保存结果
      */
@@ -54,15 +63,13 @@ public class McpSearchServiceImpl implements McpSearchService {
         // 2. 解析meta.json文件
         McpSearchDO mcpSearchDO = parseMetaJsonAndBuildMcpSearchDO(metaJsonFile);
 
-
         // 4. 保存到Elasticsearch
         mcpTemplateRepository.saveOrUpdateTemplate(mcpSearchDO);
-        log.info("Meta.json文件保存到Elasticsearch成功: groupId={}, artifactId={}, version={}",
-                mcpSearchDO.getGroupId(), mcpSearchDO.getArtifactId(), mcpSearchDO.getConfigs().get(0).getVersion());
+        log.info("Meta.json文件保存到Elasticsearch成功: groupId={}, artifactId={}, version={}", mcpSearchDO
+            .getGroupId(), mcpSearchDO.getArtifactId(), mcpSearchDO.getConfigs().get(0).getVersion());
         return true;
     }
 
-    
     /**
      * 解析meta.json并构建McpSearchDO对象
      */
@@ -126,10 +133,7 @@ public class McpSearchServiceImpl implements McpSearchService {
         }
         doc.setConfigs(configList);
 
-
-        long total = configList.stream()
-                .mapToLong(c -> c.getFiles() == null ? 0 : c.getFiles().size())
-                .sum();
+        long total = configList.stream().mapToLong(c -> c.getFiles() == null ? 0 : c.getFiles().size()).sum();
         doc.setTotalFileCount(total);
 
         return doc;

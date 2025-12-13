@@ -1,3 +1,19 @@
+/*
+ * Copyright (c) 2022-present Charles7c Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package top.codestyle.pojo.entity;
 
 import lombok.Data;
@@ -27,36 +43,25 @@ public class CodeStyleTemplateDO {
      * 中文名称：最重要的搜索字段
      * 使用中文 + 拼音混合检索
      */
-    @MultiField(
-            mainField = @Field(type = FieldType.Text, analyzer = "cn_en_index", searchAnalyzer = "cn_en_search")
-    )
+    @MultiField(mainField = @Field(type = FieldType.Text, analyzer = "cn_en_index", searchAnalyzer = "cn_en_search"))
     private String nameCh;
 
     /**
      * 中文描述：适合拼音检索，并提供 keyword 用于排序/过滤
      */
-    @MultiField(
-            mainField = @Field(type = FieldType.Text, analyzer = "cn_en_index", searchAnalyzer = "cn_en_search"),
-            otherFields = {
-                    @InnerField(type = FieldType.Keyword, suffix = "keyword")
-            }
-    )
+    @MultiField(mainField = @Field(type = FieldType.Text, analyzer = "cn_en_index", searchAnalyzer = "cn_en_search"), otherFields = {
+        @InnerField(type = FieldType.Keyword, suffix = "keyword")})
     private String description;
 
     /**
      * 搜索标签：建议使用 keyword + text 多字段
      * 既能全文检索，又能精确匹配过滤
      */
-    @MultiField(
-            mainField = @Field(type = FieldType.Text, analyzer = "cn_en_index", searchAnalyzer = "cn_en_search"),
-            otherFields = {
-                    @InnerField(type = FieldType.Keyword, suffix = "keyword")
-            }
-    )
+    @MultiField(mainField = @Field(type = FieldType.Text, analyzer = "cn_en_index", searchAnalyzer = "cn_en_search"), otherFields = {
+        @InnerField(type = FieldType.Keyword, suffix = "keyword")})
     private List<String> searchTags;
 
     // ===================== 展示类字段（无需分词） =====================
-
 
     @Field(type = FieldType.Keyword)
     private String version; // 版本信息
@@ -88,7 +93,6 @@ public class CodeStyleTemplateDO {
     @Field(type = FieldType.Integer)
     private Integer isPrivate; // 1代表私有 0代表公开
 
-
     @Field(type = FieldType.Long)
     private Long totalFileSize;
 
@@ -113,7 +117,6 @@ public class CodeStyleTemplateDO {
 
     @Field(type = FieldType.Date)
     private Date editTime;
-
 
     // ===================== 逻辑删除 =====================
     @Field(type = FieldType.Integer)

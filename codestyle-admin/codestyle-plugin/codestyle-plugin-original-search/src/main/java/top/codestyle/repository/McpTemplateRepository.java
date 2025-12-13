@@ -1,3 +1,4 @@
+
 package top.codestyle.repository;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
@@ -8,16 +9,9 @@ import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch._types.query_dsl.TermQuery;
 import co.elastic.clients.elasticsearch.indices.CreateIndexRequest;
 import co.elastic.clients.elasticsearch.indices.ExistsRequest;
-import co.elastic.clients.json.jackson.JacksonJsonpMapper;
-import co.elastic.clients.transport.ElasticsearchTransport;
-import co.elastic.clients.transport.rest_client.RestClientTransport;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.HttpHost;
-import org.elasticsearch.client.RestClient;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.elasticsearch.client.elc.ElasticsearchTemplate;
@@ -31,7 +25,6 @@ import top.codestyle.entity.es.pojo.McpSearchDO;
 import top.codestyle.entity.es.vo.McpSearchResultVO;
 import top.codestyle.properties.ElasticsearchSearchProperties;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Date;
@@ -57,15 +50,13 @@ public class McpTemplateRepository {
         try {
             NativeQuery nativeQuery = createMcpNativeQuery(keyword);
 
-            SearchHits<McpSearchDO> hits = elasticsearchTemplate.search(
-                    nativeQuery,
-                    McpSearchDO.class,
-                    IndexCoordinates.of(INDEX_NAME)
-            );
+            SearchHits<McpSearchDO> hits = elasticsearchTemplate.search(nativeQuery, McpSearchDO.class, IndexCoordinates
+                .of(INDEX_NAME));
 
-            List<McpSearchDO> templates = hits.getSearchHits().stream()
-                    .map(SearchHit::getContent)
-                    .collect(Collectors.toList());
+            List<McpSearchDO> templates = hits.getSearchHits()
+                .stream()
+                .map(SearchHit::getContent)
+                .collect(Collectors.toList());
 
             if (templates.isEmpty()) {
                 log.info("未找到匹配关键词: {} 的模板", keyword);
@@ -74,7 +65,8 @@ public class McpTemplateRepository {
 
             // 选取版本最高的模板
             McpSearchResultVO highestVersionTemplate = getHighestVersionTemplate(templates);
-            log.debug("找到最高版本模板: {}, 版本号: {}", highestVersionTemplate.getGroupId(), highestVersionTemplate.getConfig().getVersion());
+            log.debug("找到最高版本模板: {}, 版本号: {}", highestVersionTemplate.getGroupId(), highestVersionTemplate.getConfig()
+                .getVersion());
 
             return Optional.of(highestVersionTemplate);
         } catch (Exception e) {
@@ -89,19 +81,13 @@ public class McpTemplateRepository {
     private NativeQuery createMcpNativeQuery(String keyword) {
         Query baseQuery = buildMcpBoolQuery(keyword);
 
-        int maxResults = properties.getVersionSortConfig() != null && properties.getVersionSortConfig().getMaxCandidateResults() != null
-                ? properties.getVersionSortConfig().getMaxCandidateResults()
-                : 50;
+        int maxResults = properties.getVersionSortConfig() != null && properties.getVersionSortConfig()
+            .getMaxCandidateResults() != null ? properties.getVersionSortConfig().getMaxCandidateResults() : 50;
 
         NativeQueryBuilder builder = NativeQuery.builder()
-                .withQuery(baseQuery)
-                .withPageable(PageRequest.of(0, maxResults))
-                .withSort(s -> s
-                        .field(f -> f
-                                .field("hotScoreWeight")
-                                .order(SortOrder.Desc)
-                        )
-                );
+            .withQuery(baseQuery)
+            .withPageable(PageRequest.of(0, maxResults))
+            .withSort(s -> s.field(f -> f.field("hotScoreWeight").order(SortOrder.Desc)));
 
         return builder.build();
     }
@@ -113,9 +99,8 @@ public class McpTemplateRepository {
         BoolQuery.Builder boolBuilder = new BoolQuery.Builder();
 
         // 多字段匹配查询
-        MultiMatchQuery.Builder multiBuilder = new MultiMatchQuery.Builder()
-                .query(keyword)
-                .fields("artifactId", "groupId", "description", "configs.files.filename", "configs.files.description");
+        MultiMatchQuery.Builder multiBuilder = new MultiMatchQuery.Builder().query(keyword)
+            .fields("artifactId", "groupId", "description", "configs.files.filename", "configs.files.description");
 
         if (properties.getMinimumShouldMatch() != null) {
             multiBuilder.minimumShouldMatch(properties.getMinimumShouldMatch());
@@ -198,7 +183,7 @@ public class McpTemplateRepository {
 
         McpSearchResultVO.Config voConfig = new McpSearchResultVO.Config();
         voConfig.setVersion(config.getVersion().replaceFirst("^[vV]", ""));
-        
+
         if (config.getFiles() != null) {
             List<McpSearchResultVO.FileInfo> fileInfos = config.getFiles().stream().map(file -> {
                 McpSearchResultVO.FileInfo fileInfo = new McpSearchResultVO.FileInfo();
@@ -206,7 +191,7 @@ public class McpTemplateRepository {
                 fileInfo.setDescription(file.getDescription());
                 fileInfo.setFilename(file.getFilename());
                 fileInfo.setSha256(file.getSha256());
-                
+
                 if (file.getInputVariables() != null) {
                     fileInfo.setInputVarivales(file.getInputVariables().stream().map(var -> {
                         McpSearchResultVO.InputVarivales inputVar = new McpSearchResultVO.InputVarivales();
@@ -217,101 +202,92 @@ public class McpTemplateRepository {
                         return inputVar;
                     }).collect(Collectors.toList()));
                 }
-                
+
                 return fileInfo;
             }).collect(Collectors.toList());
             voConfig.setFiles(fileInfos);
         }
-        
+
         vo.setConfig(voConfig);
         return vo;
     }
 
-    
     /**
      * 根据groupId和artifactId查找模板
      */
     public Optional<McpSearchDO> findTemplateByGroupIdAndArtifactId(String groupId, String artifactId) {
         try {
             NativeQuery nativeQuery = NativeQuery.builder()
-                    .withQuery(qb -> qb
-                            .bool(b -> b
-                                    .must(m1 -> m1.term(t -> t.field("groupId").value(groupId)))
-                                    .must(m2 -> m2.term(t -> t.field("artifactId").value(artifactId)))
-                            )
-                    )
-                    .build();
-    
-            SearchHits<McpSearchDO> hits = elasticsearchTemplate.search(
-                    nativeQuery,
-                    McpSearchDO.class,
-                    IndexCoordinates.of("template_mcp")
-            );
-    
+                .withQuery(qb -> qb.bool(b -> b.must(m1 -> m1.term(t -> t.field("groupId").value(groupId)))
+                    .must(m2 -> m2.term(t -> t.field("artifactId").value(artifactId)))))
+                .build();
+
+            SearchHits<McpSearchDO> hits = elasticsearchTemplate.search(nativeQuery, McpSearchDO.class, IndexCoordinates
+                .of("template_mcp"));
+
             if (hits.getSearchHits().isEmpty()) {
                 return Optional.empty();
             }
-    
+
             return Optional.of(hits.getSearchHits().get(0).getContent());
         } catch (Exception e) {
             log.error("查找模板失败: {}", e.getMessage(), e);
             return Optional.empty();
         }
     }
-    
+
     /**
      * 保存或更新模板
      * 如果模板已存在，则更新版本信息
      */
     public void saveOrUpdateTemplate(McpSearchDO newTemplate) {
         // 查找现有模板
-        Optional<McpSearchDO> existingTemplateOpt = findTemplateByGroupIdAndArtifactId(
-                newTemplate.getGroupId(), newTemplate.getArtifactId());
-    
+        Optional<McpSearchDO> existingTemplateOpt = findTemplateByGroupIdAndArtifactId(newTemplate
+            .getGroupId(), newTemplate.getArtifactId());
+
         if (existingTemplateOpt.isPresent()) {
             // 模板已存在，更新版本信息
             McpSearchDO existingTemplate = existingTemplateOpt.get();
-            
+
             // 检查版本是否已存在
-            boolean versionExists = existingTemplate.getConfigs().stream()
-                    .anyMatch(config -> config.getVersion().equals(newTemplate.getConfigs().get(0).getVersion()));
-    
+            boolean versionExists = existingTemplate.getConfigs()
+                .stream()
+                .anyMatch(config -> config.getVersion().equals(newTemplate.getConfigs().get(0).getVersion()));
+
             if (!versionExists) {
                 // 版本不存在，添加新版本
                 existingTemplate.getConfigs().add(newTemplate.getConfigs().get(0));
                 existingTemplate.setUpdateTime(new Date());
                 existingTemplate.setTotalFileCount(newTemplate.getTotalFileCount());
-                
+
                 // 保存更新后的模板
                 elasticsearchTemplate.save(existingTemplate, IndexCoordinates.of("template_mcp"));
-                log.info("更新模板成功: {}, 新增版本: {}, 总版本数: {}", 
-                        existingTemplate.getId(), 
-                        newTemplate.getConfigs().get(0).getVersion(), 
-                        existingTemplate.getConfigs().size());
+                log.info("更新模板成功: {}, 新增版本: {}, 总版本数: {}", existingTemplate.getId(), newTemplate.getConfigs()
+                    .get(0)
+                    .getVersion(), existingTemplate.getConfigs().size());
             } else {
                 // 版本已存在，替换该版本
-                List<McpSearchDO.Config> updatedConfigs = existingTemplate.getConfigs().stream()
-                        .map(config -> config.getVersion().equals(newTemplate.getConfigs().get(0).getVersion()) 
-                                ? newTemplate.getConfigs().get(0) 
-                                : config)
-                        .collect(Collectors.toList());
-                
+                List<McpSearchDO.Config> updatedConfigs = existingTemplate.getConfigs()
+                    .stream()
+                    .map(config -> config.getVersion().equals(newTemplate.getConfigs().get(0).getVersion())
+                        ? newTemplate.getConfigs().get(0)
+                        : config)
+                    .collect(Collectors.toList());
+
                 existingTemplate.setConfigs(updatedConfigs);
                 existingTemplate.setUpdateTime(new Date());
                 existingTemplate.setTotalFileCount(newTemplate.getTotalFileCount());
-                
+
                 // 保存更新后的模板
                 elasticsearchTemplate.save(existingTemplate, IndexCoordinates.of("template_mcp"));
-                log.info("替换模板版本成功: {}, 版本: {}", 
-                        existingTemplate.getId(), 
-                        newTemplate.getConfigs().get(0).getVersion());
+                log.info("替换模板版本成功: {}, 版本: {}", existingTemplate.getId(), newTemplate.getConfigs()
+                    .get(0)
+                    .getVersion());
             }
         } else {
             // 模板不存在，创建新模板
             elasticsearchTemplate.save(newTemplate, IndexCoordinates.of("template_mcp"));
-            log.info("创建新模板成功: {}, 版本: {}", 
-                    newTemplate.getId(), 
-                    newTemplate.getConfigs().get(0).getVersion());
+            log.info("创建新模板成功: {}, 版本: {}", newTemplate.getId(), newTemplate.getConfigs().get(0).getVersion());
         }
     }
 
@@ -324,29 +300,23 @@ public class McpTemplateRepository {
      * 创建索引
      */
     public void createIndex() throws IOException {
-        boolean exists = client.indices().exists(new ExistsRequest.Builder()
-                .index(INDEX_NAME)
-                .build()).value();
-    
+        boolean exists = client.indices().exists(new ExistsRequest.Builder().index(INDEX_NAME).build()).value();
+
         if (!exists) {
             try {
                 // 使用ClassPathResource从类路径加载配置文件
                 ClassPathResource resource = new ClassPathResource("elasticsearch/template-settings.json");
-                
+
                 if (resource.exists()) {
                     // 文件存在时使用配置文件创建索引
                     try (InputStream inputStream = resource.getInputStream()) {
-                        client.indices().create(new CreateIndexRequest.Builder()
-                                .index(INDEX_NAME)
-                                .withJson(inputStream)
-                                .build());
+                        client.indices()
+                            .create(new CreateIndexRequest.Builder().index(INDEX_NAME).withJson(inputStream).build());
                         log.info("使用配置文件创建索引 {} 成功", INDEX_NAME);
                     }
                 } else {
                     // 文件不存在时，创建默认索引
-                    client.indices().create(new CreateIndexRequest.Builder()
-                            .index(INDEX_NAME)
-                            .build());
+                    client.indices().create(new CreateIndexRequest.Builder().index(INDEX_NAME).build());
                     log.warn("未找到索引配置文件 elasticsearch/template-settings.json，已创建默认索引 {}", INDEX_NAME);
                 }
             } catch (Exception e) {

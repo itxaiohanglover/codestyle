@@ -1,3 +1,5 @@
+
+
 package top.codestyle.vo;
 
 import lombok.AllArgsConstructor;
@@ -13,7 +15,6 @@ import top.codestyle.model.es.entity.RemoteMetaDoc;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SearchMetaVO {
-
 
     /**
      * 组织名(用户名)

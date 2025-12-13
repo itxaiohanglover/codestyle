@@ -22,7 +22,6 @@
     }
   },
   "mappings": {
-    "dynamic": "strict",
     "_source": {
       "enabled": true
     },

@@ -1,8 +1,23 @@
+/*
+ * Copyright (c) 2022-present Charles7c Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package top.codestyle.controller;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,6 +38,7 @@ public class McpSearchController {
 
     /**
      * MCP模板检索接口
+     * 
      * @param templateKeyword 搜索关键词
      * @return 模板搜索结果
      */
@@ -32,7 +48,6 @@ public class McpSearchController {
         McpSearchResultVO result = mcpSearchService.searchMcp(templateKeyword);
         return result != null ? ResponseEntity.ok(result) : ResponseEntity.ok(null);
     }
-
 
     /**
      * 上传meta.json文件并保存到Elasticsearch
@@ -68,8 +83,7 @@ public class McpSearchController {
             }
         } catch (IOException e) {
             log.error("上传meta.json文件失败: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("上传文件失败: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("上传文件失败: " + e.getMessage());
         }
     }
 }

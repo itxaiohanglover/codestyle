@@ -29,6 +29,14 @@ server:
     context-path: /api
 
 
+# captcha 配置
+continew-starter:
+  captcha:
+    graphic:
+      width: 120
+      height: 40
+      expirationInMinutes: 10
+
 # ES检索的一些配置
 elasticsearch:
   search:
@@ -75,6 +83,8 @@ elasticsearch:
         include-deleted-templates: false
         # 是否仅搜索公开模板
         search-only-public-templates: true
+        # 聚合的时候选举前 k 频次的模板
+        agg-top-kth: 1
 
 
 

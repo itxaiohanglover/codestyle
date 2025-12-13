@@ -1,3 +1,5 @@
+
+
 package top.codestyle.services.impl;
 
 import lombok.AllArgsConstructor;
@@ -22,10 +24,10 @@ public class RemoteMetaSearchServiceImpl implements RemoteMetaSearchService {
 
     @Override
     public Optional<SearchMetaVO> search(String query) {
-        try{
+        try {
             return repository.searchInES(query);
-        }catch (Exception e){
-            log.info("检索异常:{},尝试返回兜底数据",e.getMessage());
+        } catch (Exception e) {
+            log.info("检索异常:{},尝试返回兜底数据", e.getMessage());
         }
         return Optional.empty();
     }

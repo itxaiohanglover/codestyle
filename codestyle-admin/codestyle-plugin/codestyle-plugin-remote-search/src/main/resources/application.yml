@@ -1,12 +1,53 @@
 server:
-  port: 9001
+  port: 8080
+  servlet:
+    context-path: /api
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/meta_info_db?characterEncoding=utf8&useSSL=false
+    url: jdbc:mysql://localhost:3306/meta_info_db?characterEncoding=utf8&useSSL=false&&allowPublicKeyRetrieval=true
     username: root
     password: root
   application:
     name: codestyle
+
+# 验证码配置
+continew-starter:
+  captcha:
+    graphic:
+      expirationInMinutes: 5
+      width: 100
+      height: 36
+      length: 4
+  # SaToken配置
+  auth:
+    satoken:
+      enabled: true
+      security:
+        excludes:
+          - /auth/**
+          - /monitor/online/**
+          - /swagger-ui/**
+          - /v3/api-docs/**
+          - /actuator/**
+      extension:
+        enabled: true
+        enableJwt: true
+        dao:
+          type: REDIS
+
+# Canal配置
+canal:
+  client:
+    instances:
+      example:
+        host: localhost
+        port: 11111
+        instance: example
+        batch-size: 1000
+        timeout: 10000 # 设定监听canal pull取信息的时间  同步周期！
+        db:
+          username: root
+          password: root
 
 mybatis-plus:
   global-config:
@@ -23,10 +64,6 @@ mybatis-plus:
     # 日志
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
 
-elasticsearch:
-  config:
-    host: http://localhost:9200
-    index-name: meta_info
 
 # Actuator配置
 management:
@@ -38,6 +75,10 @@ management:
     refresh:
       enabled: true  # 启用refresh端点
 
-# 同步配置
-sync:
-  interval: 10000  # 同步间隔，单位毫秒，默认30秒
+
+
+# 日志配置
+logging:
+  level:
+    top.codestyle.canal: DEBUG  # 开启Canal相关的DEBUG日志
+    top.codestyle.config: INFO    # 开启配置相关的INFO日志
