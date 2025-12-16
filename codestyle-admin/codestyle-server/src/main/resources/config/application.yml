@@ -334,6 +334,21 @@ cosid:
             char-size: 11
             pad-start: true
 
+--- ### Canal 配置
+canal:
+  client:
+    instances:
+      example:
+        host: localhost
+        port: 11111
+        instance: example
+        batch-size: 100
+        timeout: 30000
+        db:
+          username: ${DB_USER:root}
+          password: ${DB_PWD:root}
+        subscribe-tables: ${DB_NAME:codestyle}.remote_meta_info # 默认表名称 需要同步的数据库+表配置，格式为dbName.tableName，多个配置用逗号分隔
+
 --- ### 认证配置
 auth:
   ## 密码配置

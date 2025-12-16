@@ -89,6 +89,13 @@
                 <artifactId>codestyle-plugin-generator</artifactId>
                 <version>${revision}</version>
             </dependency>
+            
+            <!-- 搜索插件 -->
+            <dependency>
+                <groupId>top.codestyle.admin</groupId>
+                <artifactId>codestyle-plugin-search</artifactId>
+                <version>${revision}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
