@@ -52,15 +52,15 @@ VALUES
 (1095, '修改', 1090, 3, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'system:notice:update', 5, 1, 1, NOW()),
 (1096, '删除', 1090, 3, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'system:notice:delete', 6, 1, 1, NOW()),
 
-(1110, '文件管理', 1000, 2, '/system/fileInfo', 'SystemFile', 'system/fileInfo/index', NULL, 'fileInfo', false, false, false, NULL, 6, 1, 1, NOW()),
-(1111, '列表', 1110, 3, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'system:fileInfo:list', 1, 1, 1, NOW()),
-(1112, '详情', 1110, 3, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'system:fileInfo:get', 2, 1, 1, NOW()),
-(1113, '上传', 1110, 3, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'system:fileInfo:upload', 3, 1, 1, NOW()),
-(1114, '修改', 1110, 3, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'system:fileInfo:update', 4, 1, 1, NOW()),
-(1115, '删除', 1110, 3, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'system:fileInfo:delete', 5, 1, 1, NOW()),
-(1116, '下载', 1110, 3, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'system:fileInfo:download', 6, 1, 1, NOW()),
-(1117, '创建文件夹', 1110, 3, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'system:fileInfo:createDir', 7, 1, 1, NOW()),
-(1118, '计算文件夹大小', 1110, 3, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'system:fileInfo:calcDirSize', 8, 1, 1, NOW()),
+(1110, '文件管理', 1000, 2, '/system/file', 'SystemFile', 'system/file/index', NULL, 'file', false, false, false, NULL, 6, 1, 1, NOW()),
+(1111, '列表', 1110, 3, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'system:file:list', 1, 1, 1, NOW()),
+(1112, '详情', 1110, 3, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'system:file:get', 2, 1, 1, NOW()),
+(1113, '上传', 1110, 3, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'system:file:upload', 3, 1, 1, NOW()),
+(1114, '修改', 1110, 3, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'system:file:update', 4, 1, 1, NOW()),
+(1115, '删除', 1110, 3, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'system:file:delete', 5, 1, 1, NOW()),
+(1116, '下载', 1110, 3, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'system:file:download', 6, 1, 1, NOW()),
+(1117, '创建文件夹', 1110, 3, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'system:file:createDir', 7, 1, 1, NOW()),
+(1118, '计算文件夹大小', 1110, 3, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'system:file:calcDirSize', 8, 1, 1, NOW()),
 (1119, '回收站文件列表', 1110, 3, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'system:fileRecycle:list', 9, 1, 1, NOW()),
 (1120, '还原回收站文件', 1110, 3, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'system:fileRecycle:restore', 10, 1, 1, NOW()),
 (1121, '删除回收站文件', 1110, 3, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'system:fileRecycle:delete', 11, 1, 1, NOW()),
@@ -284,8 +284,8 @@ INSERT INTO "sys_role_dept" ("role_id", "dept_id") VALUES (547888897925840927, 5
 INSERT INTO "sys_storage"
 ("id", "name", "code", "type", "access_key", "secret_key", "endpoint", "bucket_name", "domain", "recycle_bin_enabled", "recycle_bin_path", "description", "is_default", "sort", "status", "create_user", "create_time")
 VALUES
-(1, '开发环境', 'local_dev', 1, NULL, NULL, NULL, 'C:/continew-admin/data/fileInfo/', 'http://localhost:8000/fileInfo/', true, '.RECYCLE.BIN/', '本地存储', true, 1, 1, 1, NOW()),
-(2, '生产环境', 'local_prod', 1, NULL, NULL, NULL, '../data/fileInfo/', 'http://api.continew.top/fileInfo/', true, '.RECYCLE.BIN/', '本地存储', false, 2, 2, 1, NOW());
+(1, '开发环境', 'local_dev', 1, NULL, NULL, NULL, 'C:/continew-admin/data/file/', 'http://localhost:8000/file/', true, '.RECYCLE.BIN/', '本地存储', true, 1, 1, 1, NOW()),
+(2, '生产环境', 'local_prod', 1, NULL, NULL, NULL, '../data/file/', 'http://api.continew.top/file/', true, '.RECYCLE.BIN/', '本地存储', false, 2, 2, 1, NOW());
 
 -- 初始化客户端数据
 INSERT INTO "sys_client"

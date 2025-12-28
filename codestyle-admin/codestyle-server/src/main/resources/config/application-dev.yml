@@ -12,11 +12,10 @@ server:
 spring.datasource:
   type: com.zaxxer.hikari.HikariDataSource
   # 请务必提前创建好名为 continew_admin 的数据库，如果使用其他数据库名请注意同步修改 DB_NAME 配置
-  url: jdbc:mysql://${DB_HOST:127.0.0.1}:${DB_PORT:3306}/${DB_NAME:codestyle}?serverTimezone=Asia/Shanghai&useSSL=true&useUnicode=true&characterEncoding=utf8&rewriteBatchedStatements=true&autoReconnect=true&allowPublicKeyRetrieval=true&nullCatalogMeansCurrent=true
+  url: jdbc:p6spy:mysql://${DB_HOST:127.0.0.1}:${DB_PORT:3306}/${DB_NAME:codestyle}?serverTimezone=Asia/Shanghai&useSSL=true&useUnicode=true&characterEncoding=utf8&rewriteBatchedStatements=true&autoReconnect=true&allowPublicKeyRetrieval=true&nullCatalogMeansCurrent=true
   username: ${DB_USER:root}
-  password: ${DB_PWD:root}
-  driver-class-name: com.mysql.cj.jdbc.Driver
-
+  password: ${DB_PWD:456321}
+  driver-class-name: com.p6spy.engine.spy.P6SpyDriver
   #  # PostgreSQL 配置
   #  url: jdbc:p6spy:postgresql://${DB_HOST:127.0.0.1}:${DB_PORT:5432}/${DB_NAME:continew_admin}?options=-c%20TimeZone=Asia/Shanghai&sslmode=prefer&channelBinding=prefer&stringtype=unspecified
   #  username: ${DB_USER:postgres}
@@ -51,7 +50,7 @@ spring.data:
     # 端口（默认 6379）
     port: ${REDIS_PORT:6379}
     # 密码（未设置密码时请注释掉）
-#    password: ${REDIS_PWD:123456}
+    password: ${REDIS_PWD:123456}
     # 数据库索引
     database: ${REDIS_DB:0}
     # 连接超时时间
@@ -117,76 +116,8 @@ logging:
   level:
     top.continew.admin: DEBUG
     top.continew.starter: DEBUG
-    top.codestyle.admin.plugin.newsearch: DEBUG
   file:
     path: ./logs
-
---- ### Elasticsearch 配置
-spring.elasticsearch:
-  uris: ${ES_HOST:127.0.0.1}:${ES_PORT:9200}
-  # 如果需要身份验证
-  # username: ${ES_USER:elastic}
-  # password: ${ES_PWD:changeme}
-spring.data.elasticsearch:
-  # 禁用自动创建索引，避免在 Elasticsearch 不可用时出错
-  repositories.enabled: true
-
---- ### 新搜索模块配置
-codestyle.search:
-  enabled: true
-  cache-expire: 3600  # 普通数据缓存过期时间（秒）
-  hot-key-cache-expire: 14400  # 热点数据缓存过期时间（秒，4小时）
-  batch-size: 100
-  # 热点数据识别配置
-  hot-key:
-    # 热点判定阈值（1小时内访问次数）
-    threshold: 100
-    # 统计时间窗口（秒）
-    window-seconds: 3600
-  # 缓存预热配置
-  warmup:
-    # 是否启用缓存预热
-    enabled: true
-    # 预热的热点关键词数量
-    count: 100
-    # 定时预热间隔（秒）
-    interval-seconds: 1800
-  # 批量处理器配置
-  bulk:
-    # 批量操作数量阈值（每达到此数量执行一次批量处理）
-    bulk-actions: 3 # 测试的时候可以调小阈值
-    # 批量刷新间隔（毫秒，10秒）
-    flush-interval-ms: 10000
-    # 并发请求数
-    concurrent-requests: 1
-  # 查询配置
-  query:
-    # 最大返回结果数
-    max-results: 1
-    # multi_match查询类型（best_fields, most_fields, cross_fields, phrase, phrase_prefix）
-    multi-match-type: cross_fields
-    # 字段权重配置
-    field-weights:
-      # groupId字段权重
-      group-id: 1.0
-      # artifactId字段权重
-      artifact-id: 2.0
-      # description字段权重
-      description: 3.0
-  # 聚合配置
-  aggregation:
-    # groupId聚合配置
-    group-ids:
-      # 聚合字段名（包含.keyword后缀）
-      field: groupId.keyword
-      # 聚合桶数量
-      size: 1000
-    # artifactId聚合配置
-    artifact-ids:
-      # 聚合字段名（包含.keyword后缀）
-      field: artifactId.keyword
-      # 聚合桶数量
-      size: 1000
 
 --- ### 加密配置：密码编码器配置
 continew-starter.encrypt.password-encoder:
@@ -242,83 +173,6 @@ captcha:
     length: 6
     # 过期时间
     expirationInMinutes: 5
-
---- ### Kafka配置
-spring.kafka:
-  bootstrap-servers: ${KAFKA_HOST:localhost}:${KAFKA_PORT:9094}
-  producer:
-    key-serializer: org.apache.kafka.common.serialization.StringSerializer
-    value-serializer: org.apache.kafka.common.serialization.StringSerializer
-    acks: 1
-    retries: 3
-    batch-size: 3
-  consumer:
-    group-id: ${KAFKA_GROUP_ID:codestyle-search}
-    key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-    value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-    auto-offset-reset: earliest
-    enable-auto-commit: false
-    max-poll-records: 100
-  retry:
-    topic:
-      attempts: 3
-
---- ### Canal配置
-# 企业级架构：Canal Server独立部署（Docker），直连Kafka模式
-# 
-# 架构流程：
-# MySQL Binlog → Canal Server (Docker) → Kafka → 应用层消费者 → ES
-#
-# 配置说明：
-# - canal.enabled=false: 使用Canal Server直连Kafka模式（企业级推荐）
-#   - Canal Server独立部署在Docker Desktop中，配置canal.serverMode=kafka
-#   - 自动监听MySQL Binlog并发送到Kafka
-#   - 应用层只消费Kafka消息，使用CanalKafkaMessageConsumer
-#   - 详细Docker部署请参考：docker/canal-server/README.md
-#
-# - canal.enabled=true: 应用层Canal配置（TCP模式，不推荐）
-#   - 应用层通过TCP连接Canal Server拉取消息
-#   - 使用MultiDatabaseCanalListener监听
-#
-canal:
-  # 应用层Canal配置
-  # false: 使用Canal Server直连Kafka模式（推荐）
-  # true: 使用应用层TCP拉取模式（不推荐）
-  enabled: false
-  hostname: ${CANAL_HOST:localhost}
-  port: ${CANAL_PORT:11111}
-  username:
-  password:
-  destination: ${CANAL_DESTINATION:example} # canal服务的名称
-  batch-size: 1
-  timeout: 3000
-
---- ### Kafka配置（兼容插件）
-kafka:
-  enabled: true
-  # Kafka服务器地址（用于KafkaConfigProperties绑定，与spring.kafka.bootstrap-servers保持一致）
-  # 注意：宿主机应用需要使用9094端口（EXTERNAL listener），Docker内部使用9092
-  bootstrap-servers: ${KAFKA_HOST:localhost}:${KAFKA_PORT:9094}
-  # 数据变更主题（用于KafkaConfigProperties绑定）
-  data-change-topic: ${KAFKA_TOPIC_DATA_CHANGE:data-change}
-  # 消费者组ID（用于KafkaConfigProperties绑定）
-  group-id: ${KAFKA_GROUP_ID:codestyle-search}
-  # 死信队列主题
-  dead-letter-topic: ${KAFKA_TOPIC_DLQ:search.data.change.dlq}
-  # 批量消费大小
-  max-poll-records: ${KAFKA_MAX_POLL_RECORDS:3}
-  # 消费者并发数
-  concurrency: ${KAFKA_CONCURRENCY:3}
-  # 主题配置（用于@KafkaListener注解直接读取）
-  topics:
-    data-change: ${KAFKA_TOPIC_DATA_CHANGE:data-change}
-  # 消费者组配置（用于@KafkaListener注解直接读取）
-  group:
-    id: ${KAFKA_GROUP_ID:codestyle-search}
-
---- ### 搜索模块配置
-search:
-  enabled: true
 
 --- ### 短信配置
 ## 提示：配置文件方式和 [系统管理/系统配置/短信配置] 功能可任选其一方式使用，也可共同使用，但实际开发时建议选择一种，注释或删除另一方
@@ -379,8 +233,6 @@ sa-token.extension:
     - /*/api-docs/**
     # 本地存储资源
     - /file/**
-    # 搜索接口
-    - /api/mcp/search
 
 --- ### Just Auth 配置
 justauth:

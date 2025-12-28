@@ -31,6 +31,8 @@
         <module>codestyle-plugin</module>
         <module>codestyle-common</module>
         <module>codestyle-extension</module>
+        <module>codestyle-search</module>
+        <module>codeStyle-remote-search</module>
     </modules>
 
     <properties>
@@ -87,13 +89,6 @@
             <dependency>
                 <groupId>top.codestyle.admin</groupId>
                 <artifactId>codestyle-plugin-generator</artifactId>
-                <version>${revision}</version>
-            </dependency>
-            
-            <!-- 搜索插件 -->
-            <dependency>
-                <groupId>top.codestyle.admin</groupId>
-                <artifactId>codestyle-plugin-search</artifactId>
                 <version>${revision}</version>
             </dependency>
         </dependencies>

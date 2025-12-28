@@ -42,7 +42,7 @@
     <!-- 输出日志到文件 -->
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <!-- 正在记录的日志文件的路径及文件名 -->
-        <fileInfo>${LOG_PATH}/${APP_NAME}.log</fileInfo>
+        <file>${LOG_PATH}/${APP_NAME}.log</file>
         <!-- 滚动策略：基于文件大小和时间归档日志文件 -->
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
             <!-- 日志文件的路径及文件名 -->

@@ -1,0 +1,90 @@
+spring:
+  elasticsearch:
+    uris: http://localhost:9200 # 需要配置为es服务的地址
+    #    username: elastic
+    #    password: changeme
+    connection-timeout: 5s
+    socket-timeout: 30s
+
+  # 应用配置
+  application:
+    name: code-template-search
+
+# 服务器配置
+server:
+  port: 9001
+  tomcat:
+    # 最大连接数
+    max-connections: 10000
+    # 连接超时时间，单位毫秒，适当延长
+    connection-timeout: 60000
+    # 保持连接的超时时间
+    keep-alive-timeout: 30000
+    # 最大保持连接请求数
+    max-keep-alive-requests: 1000
+    threads:
+      max: 500
+      min-spare: 10
+  servlet:
+    context-path: /api
+
+
+# ES检索的一些配置
+elasticsearch:
+  search:
+    async:
+      thread:
+        pool:
+          core-pool-size: 12 # 异步查询的核心线程数 建议保证为CPU核心数目的2倍
+          max-pool-size:  24    # 异步查询的最大线程数 建议保证为CPU核心数目的4倍
+          queue-capacity: 400  # 异步查询的等待队列容量
+    use-connection-init-query: true # 使用测试查询进行预热查询策略
+    pre-heat-word: redis # 预热查询采用的关键字
+    properties:
+      # 搜索相关性配置
+      minimum-should-match: "75%"  # 从75%调整为90%
+      timeout-ms: 400 # 单位是毫秒
+      track-total-hits: true # 为true则保证正常分页 获取检索文档的总数 为false则不统计总命中数目 踩坑了!
+      # 字段权重配置
+      boost-factors:
+        name-ch-boost: 3.0
+        name-en-boost: 2.0
+        description-boost: 2.5
+        search-tags-boost: 1.5
+      phrase-slops:
+          name-ch-slop: 2
+          name-en-slop: 2
+          description-slop: 2
+          search-tags-slop: 1
+      # 用户行为排序权重（用于 totalLikeCount、totalFavoriteCount 排序）
+      user-action-sort:
+          total-like-count-weight: 1.0
+          total-favorite-count-weight: 1.0
+      hotScoreWeight: 10 # 人为控分的权重大小
+      # 版本排序
+      version-sort-config:
+        # 默认版本号
+        default-version: "1.0"
+        # 最大搜索数量
+        max-candidate-results: 20
+        # 是否开启严格比较
+        strict-version-comparison: true
+      # 查询配置
+      query-config:
+        # 是否包含逻辑删除的模板
+        include-deleted-templates: false
+        # 是否仅搜索公开模板
+        search-only-public-templates: true
+
+
+
+#      source-includes: # 按照需求返回的字段 已经弃用
+#        - "fileName"
+#        - "description"
+#        - "projectDescription"
+#        - "filePath"
+#        - "version"
+#        - "fileId"
+#        - "groupId"
+#        - "artifactId"
+
