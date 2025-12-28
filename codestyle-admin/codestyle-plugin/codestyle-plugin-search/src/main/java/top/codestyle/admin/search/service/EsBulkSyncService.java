@@ -14,19 +14,33 @@
  * limitations under the License.
  */
 
-package top.codestyle.admin.search.mapper;
+package top.codestyle.admin.search.service;
 
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import org.apache.ibatis.annotations.Mapper;
-import top.codestyle.admin.search.entity.RemoteMetaDO;
+import top.codestyle.admin.search.model.dto.DataChangeMessage;
 
 /**
  * 
- * RemoteMetaInfoMapper接口用于操作remote_meta_info表的Mapper
+ * Elasticsearch批量同步服务接口
  * 
  * @author ChonghaoGao
  * @date 2025/12/22
  */
-@Mapper
-public interface RemoteMetaInfoMapper extends BaseMapper<RemoteMetaDO> {
+public interface EsBulkSyncService {
+
+    /**
+     * 处理数据变更消息
+     * 
+     * @param message 数据变更消息
+     */
+    void processDataChangeMessage(DataChangeMessage message);
+
+    /**
+     * 刷新批量处理器
+     */
+    void flushBulkProcessor();
+
+    /**
+     * 关闭批量处理器
+     */
+    void closeBulkProcessor();
 }

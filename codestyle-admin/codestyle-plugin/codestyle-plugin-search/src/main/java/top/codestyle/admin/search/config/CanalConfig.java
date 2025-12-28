@@ -22,74 +22,65 @@ import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.net.InetSocketAddress;
-import java.util.List;
 
 /**
- * Canal连接配置类
- * 专门负责Canal连接池的创建和管理
- * 与消息监听逻辑分离，降低耦合度
- *
- * @author ChonghaoGao
- * @date 2025/12/13
+ * Canal配置类
+ * 负责Canal连接池的创建和管理
  */
 @Slf4j
 @Configuration
+@EnableConfigurationProperties(CanalConfigProperties.class)
 @ConditionalOnClass(name = "com.alibaba.otter.canal.client.CanalConnector")
 @ConditionalOnProperty(name = "canal.enabled", havingValue = "true", matchIfMissing = false)
-public class CanalConnectionConfig {
+public class CanalConfig {
 
     @Resource
     private CanalConfigProperties canalConfigProperties;
 
     /**
      * 创建Canal连接器
-     *
+     * 
      * @return CanalConnector实例
      */
     @Bean(destroyMethod = "disconnect")
     public CanalConnector canalConnector() {
-        log.info("初始化Canal连接器，地址: {}:{}", canalConfigProperties.getHostname(), canalConfigProperties.getPort());
+        if (!canalConfigProperties.isEnabled()) {
+            log.info("Canal已禁用，跳过初始化");
+            return null;
+        }
+
+        log.info("初始化Canal连接器，地址: {}:{}, 实例: {}", canalConfigProperties.getHostname(), canalConfigProperties
+            .getPort(), canalConfigProperties.getDestination());
 
         // 创建连接器
         CanalConnector connector = CanalConnectors.newSingleConnector(new InetSocketAddress(canalConfigProperties
             .getHostname(), canalConfigProperties.getPort()), canalConfigProperties
                 .getDestination(), canalConfigProperties.getUsername(), canalConfigProperties.getPassword());
 
-        // 连接
-        connector.connect();
-        log.info("Canal连接器连接成功");
+        try {
+            // 连接
+            connector.connect();
+            log.info("Canal连接器连接成功");
 
-        // 构建订阅表达式
-        String subscribeExpr = buildSubscribeExpression();
-        // 订阅表
-        connector.subscribe(subscribeExpr);
-        log.info("Canal连接器订阅表成功: {}", subscribeExpr);
+            // 构建订阅表达式
+            String subscribeExpr = canalConfigProperties.getSubscribe();
+            // 订阅表
+            connector.subscribe(subscribeExpr);
+            log.info("Canal连接器订阅表成功: {}", subscribeExpr);
 
-        // 回滚到上一条确认的位置
-        connector.rollback();
-        log.info("Canal连接器初始化完成");
+            // 回滚到上一条确认的位置
+            connector.rollback();
+            log.info("Canal连接器初始化完成");
+        } catch (Exception e) {
+            log.error("Canal连接器初始化失败: {}", e.getMessage(), e);
+            throw e;
+        }
 
         return connector;
-    }
-
-    /**
-     * 构建订阅表达式
-     * 如果配置了subscribeTables，则订阅指定的表；如果没有配置，则订阅当前库中所有的表
-     *
-     * @return 订阅表达式
-     */
-    private String buildSubscribeExpression() {
-        List<String> subscribeTables = canalConfigProperties.getSubscribeTables();
-        if (subscribeTables != null && !subscribeTables.isEmpty()) {
-            // 配置了具体的表，使用指定的表名
-            return String.join(",", subscribeTables);
-        } else {
-            // 没有配置具体的表，订阅所有表
-            return "codestyle.*";
-        }
     }
 }

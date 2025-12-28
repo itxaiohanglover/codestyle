@@ -14,19 +14,27 @@
  * limitations under the License.
  */
 
-package top.codestyle.admin.search.mapper;
-
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import org.apache.ibatis.annotations.Mapper;
-import top.codestyle.admin.search.entity.RemoteMetaDO;
+package top.codestyle.admin.search.service;
 
 /**
  * 
- * RemoteMetaInfoMapper接口用于操作remote_meta_info表的Mapper
+ * ES同步服务接口
+ * 
+ * <p><b>注意：</b>增量同步通过Canal+Kafka实现，不需要在此接口中定义。</p>
+ * <p>架构流程：MySQL Binlog → Canal Server → Kafka → Kafka消费者 → ES</p>
  * 
  * @author ChonghaoGao
  * @date 2025/12/22
  */
-@Mapper
-public interface RemoteMetaInfoMapper extends BaseMapper<RemoteMetaDO> {
+public interface SyncService {
+
+    /**
+     * 全量同步：将MySQL中所有数据同步到ES
+     * 
+     * <p>注意：此方法会先删除ES中的所有数据，然后重新载入，不应频繁调用。</p>
+     * <p>通常在应用启动时执行一次，后续增量同步通过Canal+Kafka实现。</p>
+     * 
+     * @return 同步成功的数量
+     */
+    int fullSync();
 }

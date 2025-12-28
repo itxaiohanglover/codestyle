@@ -50,6 +50,7 @@ spring:
     active: dev
     include:
       - generator
+      - newsearch
   main:
     # 允许定义重名的 bean 对象覆盖原有的 bean
     allow-bean-definition-overriding: true
@@ -215,6 +216,7 @@ continew-starter.tenant:
     - sys_sms_log # 短信日志表
     - sys_client # 客户端表
     - sys_app # 应用表
+    - remote_meta_info # 远程元信息表（搜索模块使用，不需要租户隔离）
   # 忽略菜单 ID（租户不能使用的菜单）
   ignore-menus:
     - 1050 # 菜单管理
@@ -333,21 +335,6 @@ cosid:
           radix:
             char-size: 11
             pad-start: true
-
---- ### Canal 配置
-canal:
-  client:
-    instances:
-      example:
-        host: localhost
-        port: 11111
-        instance: example
-        batch-size: 100
-        timeout: 30000
-        db:
-          username: ${DB_USER:root}
-          password: ${DB_PWD:root}
-        subscribe-tables: ${DB_NAME:codestyle}.remote_meta_info # 默认表名称 需要同步的数据库+表配置，格式为dbName.tableName，多个配置用逗号分隔
 
 --- ### 认证配置
 auth:

@@ -19,17 +19,14 @@ package top.codestyle.admin.search.vo;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import top.codestyle.admin.search.model.es.entity.RemoteMetaDoc;
 
-/**
- * @author ChonghaoGao
- * @date 2025/12/1 19:07)
- */
+import java.util.List;
+import java.util.Map;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class RemoteMetaConfigVO {
-
     /**
      * 组织名(用户名)
      */
@@ -48,6 +45,53 @@ public class RemoteMetaConfigVO {
     /**
      * 单个版本配置对象
      */
-    private RemoteMetaDoc.Config config;
+    private Config config;
 
+    /**
+     * topK个groupId的Map - key为groupId，value为count，按count大小降序排列
+     */
+    private Map<String, Long> aggGroupIds;
+
+    /**
+     * topK个artifactId的Map - key为artifactId，value为count，按count大小降序排列
+     */
+    private Map<String, Long> aggArtifactIds;
+
+    /**
+     * 配置内部类
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Config {
+        private String version;
+        private List<FileInfo> files;
+    }
+
+    /**
+     * 文件信息内部类
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class FileInfo {
+        private String filePath;
+        private String description;
+        private String filename;
+        private List<InputVariable> inputVariables;
+        private String sha256;
+    }
+
+    /**
+     * 输入变量内部类
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class InputVariable {
+        private String variableName;
+        private String variableType;
+        private String variableComment;
+        private String example;
+    }
 }

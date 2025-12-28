@@ -14,19 +14,18 @@
  * limitations under the License.
  */
 
-package top.codestyle.admin.search.mapper;
+package top.codestyle.admin.search.service;
 
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import org.apache.ibatis.annotations.Mapper;
-import top.codestyle.admin.search.entity.RemoteMetaDO;
+import top.codestyle.admin.search.vo.RemoteMetaConfigVO;
 
-/**
- * 
- * RemoteMetaInfoMapper接口用于操作remote_meta_info表的Mapper
- * 
- * @author ChonghaoGao
- * @date 2025/12/22
- */
-@Mapper
-public interface RemoteMetaInfoMapper extends BaseMapper<RemoteMetaDO> {
+import java.util.Optional;
+
+public interface RemoteMetaSearchService {
+    /**
+     * 简单关键词搜索
+     * 
+     * @param query 搜索关键词
+     * @return 搜索结果
+     */
+    Optional<RemoteMetaConfigVO> search(String query);
 }

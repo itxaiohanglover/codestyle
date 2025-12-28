@@ -1,0 +1,64 @@
+server:
+  port: 8081
+spring:
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+    default-property-inclusion: non_null
+
+canal.conf:
+  mode: tcp  # TCP连接模式
+  flatMessage: true  # 开启扁平消息格式
+  zookeeperHosts:  # 不使用ZooKeeper
+  servers: 127.0.0.1:11111  # Canal Server地址
+  destinations: example  # 订阅的实例名
+  username:  # Canal Server用户名（如果有）
+  passwd:  # Canal Server密码（如果有）
+  clusterId:  # 集群ID
+  batchSize: 500
+  syncBatchSize: 1000
+  retries: 0
+  timeout: 1000
+  accessKey:  # 阿里云相关配置（可选）
+  secretKey:  # 阿里云相关配置（可选）
+  consumerProperties:
+    # Canal Server的TCP配置
+    canal.tcp.server.host: canal-sync-mysql-server
+    canal.tcp.server.port: 11111
+    canal.tcp.zookeeper.hosts:
+    canal.tcp.batch.size: 500
+    canal.tcp.username:
+    canal.tcp.password:
+
+  # 适配器配置
+  adapters:
+  - name: kafka
+    key: kafka-adapter
+    properties:
+      # Kafka连接配置
+      bootstrap.servers: canal-kafka:9092
+      key.serializer: org.apache.kafka.common.serialization.StringSerializer
+      value.serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      retries: 0
+      batch.size: 16384
+      linger.ms: 1
+      buffer.memory: 33554432
+    # 表映射配置
+    groups:
+    - groupId: g1
+      outerAdapters:
+      - name: kafka
+        key: kafka-key
+        properties:
+          bootstrap.servers: canal-kafka:9092
+          topic: data-change  # 默认主题
+          partition: 0
+          key.serializer: org.apache.kafka.common.serialization.StringSerializer
+          value.serializer: org.apache.kafka.common.serialization.StringSerializer
+          acks: all
+          retries: 0
+          batch.size: 16384
+          linger.ms: 1
+          buffer.memory: 33554432
+      - name: logger  # 日志适配器，用于调试

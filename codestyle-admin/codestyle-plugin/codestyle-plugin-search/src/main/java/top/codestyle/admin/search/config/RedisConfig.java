@@ -14,19 +14,22 @@
  * limitations under the License.
  */
 
-package top.codestyle.admin.search.mapper;
+package top.codestyle.admin.search.config;
 
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import org.apache.ibatis.annotations.Mapper;
-import top.codestyle.admin.search.entity.RemoteMetaDO;
+import org.springframework.context.annotation.Configuration;
 
-/**
- * 
- * RemoteMetaInfoMapper接口用于操作remote_meta_info表的Mapper
- * 
- * @author ChonghaoGao
- * @date 2025/12/22
- */
-@Mapper
-public interface RemoteMetaInfoMapper extends BaseMapper<RemoteMetaDO> {
+@Configuration
+public class RedisConfig {
+
+    // Spring Boot 3.x 自动配置
+    // 不需要手动配置 RedisTemplate
+    // 配置可以通过 application.yml 中的 spring.redis.* 属性进行设置
+
+    // 示例配置：
+    // spring:
+    //   redis:
+    //     host: localhost
+    //     port: 6379
+    //     password:
+    //     database: 0
 }

@@ -14,19 +14,28 @@
  * limitations under the License.
  */
 
-package top.codestyle.admin.search.mapper;
+package top.codestyle.admin.search.repository;
 
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import org.apache.ibatis.annotations.Mapper;
-import top.codestyle.admin.search.entity.RemoteMetaDO;
+import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
+import org.springframework.stereotype.Repository;
+import top.codestyle.admin.search.entity.SearchEntity;
+import top.codestyle.admin.search.vo.RemoteMetaConfigVO;
+
+import java.util.Optional;
 
 /**
- * 
- * RemoteMetaInfoMapper接口用于操作remote_meta_info表的Mapper
+ * Elasticsearch搜索仓库接口
  * 
  * @author ChonghaoGao
  * @date 2025/12/22
  */
-@Mapper
-public interface RemoteMetaInfoMapper extends BaseMapper<RemoteMetaDO> {
+@Repository
+public interface RemoteSearchESRepository extends ElasticsearchRepository<SearchEntity, String> {
+    /**
+     * 执行带聚合的搜索查询
+     * 
+     * @param query 搜索关键词
+     * @return 搜索结果VO，包含聚合信息
+     */
+    Optional<RemoteMetaConfigVO> searchWithAggregations(String query);
 }
