@@ -2,7 +2,7 @@
  * Copyright (c) 2022-present Charles7c Authors. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this fileInfo except in compliance with the License.
+ * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
@@ -28,7 +28,7 @@ import java.util.Map;
  * Canal消息转换器
  * 将Canal Server发送的JSON消息格式转换为应用层的DataChangeMessage格式
  * 
- * @author AI Assistant
+ * @author chonghaoGao
  * @date 2025/12/23
  */
 @Slf4j
