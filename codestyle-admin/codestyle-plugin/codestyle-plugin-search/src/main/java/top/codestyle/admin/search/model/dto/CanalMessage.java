@@ -2,7 +2,7 @@
  * Copyright (c) 2022-present Charles7c Authors. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this fileInfo except in compliance with the License.
+ * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
@@ -23,24 +23,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Canal Server发送到Kafka的消息格式
  * 
- * <p>Canal Server在Kafka模式下，会将binlog变更转换为JSON格式发送到Kafka。</p>
- * <p>此POJO用于反序列化Canal Server发送的JSON消息。</p>
- * 
- * <p><b>消息格式示例：</b></p>
- * <pre>
- * {
- * "type": "INSERT",
- * "database": "codestyle",
- * "table": "meta_info",
- * "data": [{"id": 1, "groupId": "com.example", ...}],
- * "old": null,
- * "ts": 1234567890123
- * }
- * </pre>
- * 
- * @author AI Assistant
+ * @author chonghaoGao
  * @date 2025/12/23
  */
 @Data

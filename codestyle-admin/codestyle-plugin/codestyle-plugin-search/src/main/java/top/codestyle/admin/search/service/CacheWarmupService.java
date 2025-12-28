@@ -2,7 +2,7 @@
  * Copyright (c) 2022-present Charles7c Authors. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this fileInfo except in compliance with the License.
+ * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
@@ -22,8 +22,8 @@ import java.util.Set;
  * 缓存预热服务接口
  * 系统启动时和定时任务预热热点数据缓存
  * 
- * @author AI Assistant
- * @date 2025/12/23
+ * @author chonghaoGao
+ * @date 2025/12/24
  */
 public interface CacheWarmupService {
 
