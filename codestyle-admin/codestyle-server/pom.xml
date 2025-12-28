@@ -57,6 +57,12 @@
             <groupId>top.codestyle.admin</groupId>
             <artifactId>codestyle-plugin-generator</artifactId>
         </dependency>
+        
+        <!-- 搜索插件 -->
+        <dependency>
+            <groupId>top.codestyle.admin</groupId>
+            <artifactId>codestyle-plugin-search</artifactId>
+        </dependency>
 
         <!-- ContiNew Starter 链路追踪模块 -->
         <dependency>

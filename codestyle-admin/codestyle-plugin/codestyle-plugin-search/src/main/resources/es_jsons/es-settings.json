@@ -1,0 +1,99 @@
+{
+  "settings": {
+    "number_of_shards": 2,
+    "number_of_replicas": 1,
+    "analysis": {
+      "filter": {
+        "pinyin_filter": {
+          "keep_joined_full_pinyin": true,
+          "keep_none_chinese_in_first_letter": true,
+          "type": "pinyin"
+        }
+      },
+      "analyzer": {
+        "ik_pinyin_mix_analyzer": {
+          "filter": ["lowercase", "pinyin_filter"],
+          "tokenizer": "ik_max_word"
+        },
+        "pinyin_analyzer": {
+          "filter": ["lowercase", "pinyin_filter"],
+          "tokenizer": "pinyin_tokenizer"
+        }
+      },
+      "tokenizer": {
+        "pinyin_tokenizer": {
+          "keep_joined_full_pinyin": true,
+          "lowercase": true,
+          "keep_original": false,
+          "trim_whitespace": true,
+          "type": "pinyin",
+          "keep_none_chinese": true,
+          "keep_full_pinyin": true
+        },
+        "ik_max_word": {
+          "type": "ik_max_word"
+        }
+      }
+    }
+  },
+  "mappings": {
+    "dynamic": "strict",
+    "_source": {
+      "enabled": true
+    },
+    "properties": {
+      "id": {
+        "index": false,
+        "type": "long",
+        "doc_values": false
+      },
+      "groupId": {
+        "search_analyzer": "ik_smart",
+        "analyzer": "ik_max_word",
+        "type": "text",
+        "fields": {
+          "pinyin": {
+            "analyzer": "pinyin_analyzer",
+            "type": "text"
+          },
+          "keyword": {
+            "ignore_above": 256,
+            "type": "keyword"
+          }
+        }
+      },
+      "description": {
+        "search_analyzer": "ik_smart",
+        "analyzer": "ik_max_word",
+        "type": "text",
+        "fields": {
+          "pinyin": {
+            "analyzer": "pinyin_analyzer",
+            "type": "text"
+          }
+        }
+      },
+      "artifactId": {
+        "search_analyzer": "ik_smart",
+        "analyzer": "ik_max_word",
+        "type": "text",
+        "fields": {
+          "pinyin": {
+            "analyzer": "pinyin_analyzer",
+            "type": "text"
+          },
+          "keyword": {
+            "ignore_above": 256,
+            "type": "keyword"
+          }
+        }
+      },
+
+      "config": {
+        "type": "object",
+        "enabled": true,
+        "dynamic": false
+      }
+    }
+  }
+}
