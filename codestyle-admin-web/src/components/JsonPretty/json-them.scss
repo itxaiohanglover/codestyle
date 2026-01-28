@@ -1,0 +1,43 @@
+.vscode-light {
+  background: var(--color-bg-3,#ffffff);
+  color: #1f2328;
+  font-size: 14px;
+  font-family: 'Fira Code', 'Consolas', monospace;
+
+  :deep(.jv-key) { color: #0550ae; font-weight: 600; }
+  :deep(.jv-string) { color: #0c5460; }
+  :deep(.jv-number) { color: #116329; }
+  :deep(.jv-boolean) { color: #c24038; font-weight: 600; }
+  :deep(.jv-null) { color: #6f42c1; font-style: italic; }
+  :deep(.jv-undefined) { color: #e36209; }
+  :deep(.jv-function) { color: #795548; }
+  :deep(.jv-button) { color: #0969da; }
+  :deep(.jv-ellipsis) {
+    color: #6a737d;
+    background-color: #f6f8fa;
+    border-radius: 4px;
+    padding: 0 4px;
+  }
+}
+
+.vscode-dark {
+  background: var(--color-bg-3,#17171A);
+  color: #d4d4d4;
+  font-size: 14px;
+  font-family: 'Fira Code', 'Consolas', monospace;
+
+  :deep(.jv-key) { color: #9cdcfe; font-weight: 600; }
+  :deep(.jv-string) { color: #ce9178; }
+  :deep(.jv-number) { color: #b5cea8; }
+  :deep(.jv-boolean) { color: #569cd6; font-weight: 600; }
+  :deep(.jv-null) { color: #c586c0; font-style: italic; }
+  :deep(.jv-undefined) { color: #e08331; }
+  :deep(.jv-function) { color: #dcdcaa; }
+  :deep(.jv-button) { color: #4fc1ff; }
+  :deep(.jv-ellipsis) {
+    color: #999;
+    background-color: #333;
+    border-radius: 4px;
+    padding: 0 4px;
+  }
+}
