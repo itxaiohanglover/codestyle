@@ -1,8 +1,7 @@
 # CodeStyle（码蜂）
 
 <div align="center">
-
-<img src="codestyle-web/assets/image/codestyle-logo.png" alt="CodeStyle Logo" width="120" />
+<img src="images/logo.png" alt="CodeStyle Logo" width="120" />
 
 **让历史代码活起来，让 AI 写的更对味！**
 
