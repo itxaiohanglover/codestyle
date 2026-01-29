@@ -1,0 +1,52 @@
+/*
+ * Copyright (c) 2022-present Charles7c Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package top.codestyle.admin.search.service;
+
+import top.codestyle.admin.search.model.SearchResult;
+
+import java.util.List;
+
+/**
+ * 重排服务接口
+ * <p>
+ * 使用 BGE-Rerank 模型对检索结果进行重排序
+ *
+ * @author CodeStyle Team
+ * @since 1.0.0
+ */
+public interface RerankService {
+
+    /**
+     * 对检索结果进行重排序
+     *
+     * @param query   查询文本
+     * @param results 原始检索结果
+     * @return 重排后的结果
+     */
+    List<SearchResult> rerank(String query, List<SearchResult> results);
+
+    /**
+     * 对检索结果进行重排序（指定返回数量）
+     *
+     * @param query   查询文本
+     * @param results 原始检索结果
+     * @param topK    返回结果数量
+     * @return 重排后的结果
+     */
+    List<SearchResult> rerank(String query, List<SearchResult> results, int topK);
+}
+

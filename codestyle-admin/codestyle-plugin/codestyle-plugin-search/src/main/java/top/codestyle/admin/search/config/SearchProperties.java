@@ -21,208 +21,95 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 /**
- * 搜索配置属性
+ * 检索模块配置
+ *
+ * @author CodeStyle Team
+ * @since 1.0.0
  */
 @Data
 @Component
-@ConfigurationProperties(prefix = "codestyle.search")
+@ConfigurationProperties(prefix = "search")
 public class SearchProperties {
 
     /**
-     * 是否启用搜索功能
+     * 是否启用检索模块
      */
     private Boolean enabled = true;
 
     /**
-     * 缓存过期时间（秒）
+     * Elasticsearch 配置
      */
-    private Integer cacheExpire = 300;
+    private ElasticsearchProperties elasticsearch = new ElasticsearchProperties();
 
     /**
-     * 热门键缓存过期时间（秒）
+     * Milvus 配置
      */
-    private Integer hotKeyCacheExpire = 14400; // 默认4小时
+    private MilvusProperties milvus = new MilvusProperties();
 
     /**
-     * 最大缓存大小
+     * 混合检索配置
      */
-    private Integer maxCacheSize = 1000;
+    private HybridProperties hybrid = new HybridProperties();
 
     /**
-     * 热点数据识别配置
+     * 重排配置
      */
-    private HotKeyConfig hotKey = new HotKeyConfig();
+    private RerankProperties rerank = new RerankProperties();
 
     /**
-     * 缓存预热配置
+     * 缓存配置
      */
-    private WarmupConfig warmup = new WarmupConfig();
+    private CacheProperties cache = new CacheProperties();
 
-    /**
-     * 批处理大小
-     */
-    private Integer batchSize = 100;
-
-    /**
-     * 搜索查询配置
-     */
-    private QueryConfig query = new QueryConfig();
-
-    /**
-     * 聚合配置
-     */
-    private AggregationConfig aggregation = new AggregationConfig();
-
-    /**
-     * 批量同步线程池配置
-     */
-    private ThreadPoolConfig threadPool = new ThreadPoolConfig();
-
-    /**
-     * 查询配置
-     */
     @Data
-    public static class QueryConfig {
-        /**
-         * 最大返回结果数
-         */
-        private Integer maxResults = 1;
-
-        /**
-         * multi_match查询类型
-         * 可选值：best_fields, most_fields, cross_fields, phrase, phrase_prefix
-         */
-        private String multiMatchType = "cross_fields";
-
-        /**
-         * 字段权重配置
-         */
-        private FieldWeights fieldWeights = new FieldWeights();
-    }
-
-    /**
-     * 字段权重配置
-     */
-    @Data
-    public static class FieldWeights {
-        /**
-         * groupId字段权重（对应配置中的group-id）
-         */
-        private Float groupId = 3.0f;
-
-        /**
-         * artifactId字段权重（对应配置中的artifact-id）
-         */
-        private Float artifactId = 2.0f;
-
-        /**
-         * description字段权重
-         */
-        private Float description = 1.0f;
-    }
-
-    /**
-     * 聚合配置
-     */
-    @Data
-    public static class AggregationConfig {
-        /**
-         * groupId聚合配置（对应配置中的group-ids）
-         */
-        private TermsAggregationConfig groupIds = new TermsAggregationConfig();
-
-        /**
-         * artifactId聚合配置（对应配置中的artifact-ids）
-         */
-        private TermsAggregationConfig artifactIds = new TermsAggregationConfig();
-    }
-
-    /**
-     * Terms聚合配置
-     */
-    @Data
-    public static class TermsAggregationConfig {
-        /**
-         * 聚合桶数量
-         */
-        private Integer size = 1000;
-
-        /**
-         * 聚合字段名（包含.keyword后缀）
-         */
-        private String field;
-    }
-
-    /**
-     * 热点数据识别配置
-     */
-    @Data
-    public static class HotKeyConfig {
-        /**
-         * 热点判定阈值（1小时内访问次数）
-         */
-        private Long threshold = 100L;
-
-        /**
-         * 统计时间窗口（秒）
-         */
-        private Long windowSeconds = 3600L; // 1小时
-    }
-
-    /**
-     * 缓存预热配置
-     */
-    @Data
-    public static class WarmupConfig {
-        /**
-         * 是否启用缓存预热
-         */
+    public static class ElasticsearchProperties {
         private Boolean enabled = true;
-
-        /**
-         * 预热的热点关键词数量
-         */
-        private Integer count = 100;
-
-        /**
-         * 定时预热间隔（秒）
-         */
-        private Long intervalSeconds = 1800L; // 30分钟
+        private String hosts = "localhost:9200";
+        private String username;
+        private String password;
+        private String index = "codestyle_templates";
     }
 
-    /**
-     * 批量同步线程池配置
-     */
     @Data
-    public static class ThreadPoolConfig {
-        /**
-         * 核心线程数
-         */
-        private Integer corePoolSize = 2;
+    public static class MilvusProperties {
+        private Boolean enabled = false;
+        private String host = "localhost";
+        private Integer port = 19530;
+        private String collection = "codestyle_templates";
+        private Integer dimension = 1024;
+    }
 
-        /**
-         * 最大线程数
-         */
-        private Integer maximumPoolSize = 4;
+    @Data
+    public static class HybridProperties {
+        private Boolean enabled = true;
+        private String fusionStrategy = "RRF";
+    }
 
-        /**
-         * 队列容量（有界队列，避免内存溢出）
-         */
-        private Integer queueCapacity = 100;
+    @Data
+    public static class RerankProperties {
+        private Boolean enabled = false;
+        private String provider = "BGE";
+        private String apiUrl = "http://localhost:8001/rerank";
+        private String model = "BAAI/bge-reranker-v2-m3";
+        private Integer topK = 10;
+    }
 
-        /**
-         * 线程存活时间（秒）
-         */
-        private Long keepAliveSeconds = 60L;
+    @Data
+    public static class CacheProperties {
+        private Boolean enabled = true;
+        private LocalProperties local = new LocalProperties();
+        private RedisProperties redis = new RedisProperties();
 
-        /**
-         * 线程名前缀
-         */
-        private String threadNamePrefix = "search-sync-";
+        @Data
+        public static class LocalProperties {
+            private Integer maxSize = 1000;
+            private Long ttl = 300L; // 5 分钟
+        }
 
-        /**
-         * 等待任务完成超时时间（分钟）
-         */
-        private Long awaitTerminationMinutes = 5L;
+        @Data
+        public static class RedisProperties {
+            private Long ttl = 3600L; // 1 小时
+        }
     }
 }
+

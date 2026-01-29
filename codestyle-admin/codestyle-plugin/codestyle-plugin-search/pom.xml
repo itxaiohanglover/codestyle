@@ -1,82 +1,70 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>top.codestyle.admin</groupId>
         <artifactId>codestyle-plugin</artifactId>
-        <version>4.1.0</version>
+        <version>${revision}</version>
     </parent>
 
     <artifactId>codestyle-plugin-search</artifactId>
+    <packaging>jar</packaging>
 
-    <properties>
-        <elasticsearch.version>8.13.0</elasticsearch.version>
-        <elastucsearch.rest.client.version>8.6.0</elastucsearch.rest.client.version>
-        <kafka.version>4.0.1</kafka.version>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
+    <name>${project.artifactId}</name>
+    <description>检索插件（支持 ES、Milvus 多源混合检索和 BGE-Rerank 重排）</description>
 
     <dependencies>
-
-
-
-        <!-- Kafka -->
-        <dependency>
-            <groupId>org.springframework.kafka</groupId>
-            <artifactId>spring-kafka</artifactId>
-        </dependency>
-        <!-- Apache Kafka Client 4.0.1 -->
-        <dependency>
-            <groupId>org.apache.kafka</groupId>
-            <artifactId>kafka-clients</artifactId>
-            <version>${kafka.version}</version>
-        </dependency>
-
-        <!-- Canal 1.1.7 - 与Docker Server版本保持一致 -->
-        <dependency>
-            <groupId>com.alibaba.otter</groupId>
-            <artifactId>canal.client</artifactId>
-            <version>1.1.7</version>
-        </dependency>
-        <dependency>
-            <groupId>com.alibaba.otter</groupId>
-            <artifactId>canal.common</artifactId>
-            <version>1.1.7</version>
-        </dependency>
-        <dependency>
-            <groupId>com.alibaba.otter</groupId>
-            <artifactId>canal.protocol</artifactId>
-            <version>1.1.7</version>
-        </dependency>
-        <dependency>
-            <groupId>top.continew.starter</groupId>
-            <artifactId>continew-starter-extension-tenant-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>top.codestyle.admin</groupId>
-            <artifactId>codestyle-plugin-tenant</artifactId>
-        </dependency>
-        <!-- Redis -->
-        <dependency>
-            <groupId>top.continew.starter</groupId>
-            <artifactId>continew-starter-cache-redisson</artifactId>
-        </dependency>
-
-        <!-- codestyle-common -->
+        <!-- 公共模块 -->
         <dependency>
             <groupId>top.codestyle.admin</groupId>
             <artifactId>codestyle-common</artifactId>
         </dependency>
+
+        <!-- Elasticsearch -->
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-elasticsearch</artifactId>
+            <groupId>co.elastic.clients</groupId>
+            <artifactId>elasticsearch-java</artifactId>
+            <version>8.13.0</version>
         </dependency>
 
+        <!-- Milvus SDK -->
+        <dependency>
+            <groupId>io.milvus</groupId>
+            <artifactId>milvus-sdk-java</artifactId>
+            <version>2.3.4</version>
+        </dependency>
+
+        <!-- Spring Boot Starter Web -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <!-- Spring Boot Starter Data Redis -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+
+        <!-- ContiNew Starter Web -->
+        <dependency>
+            <groupId>top.continew.starter</groupId>
+            <artifactId>continew-starter-web</artifactId>
+        </dependency>
+
+        <!-- Caffeine 本地缓存 -->
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+        </dependency>
+
+        <!-- Spring Retry 重试机制 -->
+        <dependency>
+            <groupId>org.springframework.retry</groupId>
+            <artifactId>spring-retry</artifactId>
+        </dependency>
     </dependencies>
-
-
 </project>
+

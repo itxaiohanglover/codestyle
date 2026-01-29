@@ -1,0 +1,44 @@
+# 检索模块配置
+search:
+  # 是否启用检索模块
+  enabled: true
+  
+  # Elasticsearch 配置
+  elasticsearch:
+    enabled: true
+    hosts: localhost:9200
+    username: 
+    password: 
+    index: codestyle_templates
+    
+  # Milvus 配置
+  milvus:
+    enabled: false
+    host: localhost
+    port: 19530
+    collection: codestyle_templates
+    dimension: 1024
+    
+  # 混合检索配置
+  hybrid:
+    enabled: true
+    # 融合策略: RRF, WEIGHTED
+    fusion-strategy: RRF
+    
+  # 重排配置
+  rerank:
+    enabled: false
+    provider: BGE
+    api-url: http://localhost:8001/rerank
+    model: BAAI/bge-reranker-v2-m3
+    top-k: 10
+    
+  # 缓存配置
+  cache:
+    enabled: true
+    local:
+      max-size: 1000
+      ttl: 300  # 5分钟
+    redis:
+      ttl: 3600  # 1小时
+
