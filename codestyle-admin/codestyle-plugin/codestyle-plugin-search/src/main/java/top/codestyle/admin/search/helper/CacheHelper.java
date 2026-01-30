@@ -16,16 +16,17 @@
 
 package top.codestyle.admin.search.helper;
 
-import cn.hutool.core.util.StrUtil;
-import cn.hutool.crypto.digest.DigestUtil;
-import top.codestyle.admin.search.model.SearchRequest;
-import top.codestyle.admin.search.model.SearchResult;
-import top.continew.starter.cache.redisson.util.RedisUtils;
-import top.continew.starter.json.jackson.util.JSONUtils;
-
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
+
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.crypto.digest.DigestUtil;
+import cn.hutool.json.JSONUtil;
+import top.codestyle.admin.search.model.SearchRequest;
+import top.codestyle.admin.search.model.SearchResult;
+import top.codestyle.admin.search.model.SearchSourceType;
+import top.continew.starter.cache.redisson.util.RedisUtils;
 
 /**
  * 缓存助手
@@ -52,6 +53,19 @@ public class CacheHelper {
     }
 
     /**
+     * 生成缓存 Key
+     *
+     * @param type    数据源类型
+     * @param request 检索请求
+     * @return 缓存 Key
+     */
+    public static String generateCacheKey(SearchSourceType type, SearchRequest request) {
+        String content = String.format("%s:%s:%d:%b:%s", type.getCode(), request.getQuery(), request.getTopK(), request
+            .getEnableRerank(), JSONUtil.toJsonStr(request.getFilters()));
+        return CACHE_PREFIX + DigestUtil.md5Hex(content);
+    }
+
+    /**
      * 从 Redis 获取缓存
      *
      * @param key 缓存 Key
@@ -62,7 +76,7 @@ public class CacheHelper {
         if (StrUtil.isBlank(json)) {
             return Optional.empty();
         }
-        return Optional.of(JSONUtils.toList(json, SearchResult.class));
+        return Optional.of(JSONUtil.toList(json, SearchResult.class));
     }
 
     /**
@@ -72,7 +86,7 @@ public class CacheHelper {
      * @param results 检索结果
      */
     public static void setToRedis(String key, List<SearchResult> results) {
-        RedisUtils.set(key, JSONUtils.toJsonStr(results), Duration.ofSeconds(CACHE_TTL));
+        RedisUtils.set(key, JSONUtil.toJsonStr(results), Duration.ofSeconds(CACHE_TTL));
     }
 
     /**

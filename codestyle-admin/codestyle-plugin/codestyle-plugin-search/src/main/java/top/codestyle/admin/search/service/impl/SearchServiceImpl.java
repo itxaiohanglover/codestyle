@@ -16,28 +16,26 @@
 
 package top.codestyle.admin.search.service.impl;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+
 import com.github.benmanes.caffeine.cache.Cache;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
+import top.codestyle.admin.search.executor.SearchExecutor;
 import top.codestyle.admin.search.helper.CacheHelper;
 import top.codestyle.admin.search.helper.FallbackHelper;
 import top.codestyle.admin.search.helper.FusionHelper;
 import top.codestyle.admin.search.model.SearchRequest;
 import top.codestyle.admin.search.model.SearchResult;
 import top.codestyle.admin.search.model.SearchSourceType;
-import top.codestyle.admin.search.service.ElasticsearchSearchService;
-import top.codestyle.admin.search.service.MilvusSearchService;
 import top.codestyle.admin.search.service.RerankService;
 import top.codestyle.admin.search.service.SearchService;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 /**
  * 检索服务实现
@@ -50,34 +48,28 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class SearchServiceImpl implements SearchService {
 
-    private final ElasticsearchSearchService esSearchService;
-    private final Optional<MilvusSearchService> milvusSearchService;
+    private final SearchExecutor searchExecutor;
     private final Optional<RerankService> rerankService;
     private final Cache<String, List<SearchResult>> localCache;
 
     @Override
     public List<SearchResult> search(SearchSourceType type, SearchRequest request) {
         // 1. 检查缓存
-        String cacheKey = CacheHelper.generateCacheKey(request);
+        String cacheKey = CacheHelper.generateCacheKey(type, request);
         List<SearchResult> cached = getCachedResults(cacheKey);
         if (cached != null) {
             log.debug("命中缓存，返回缓存结果");
             return cached;
         }
 
-        // 2. 根据类型执行检索
-        List<SearchResult> results = switch (type) {
-            case ELASTICSEARCH -> esSearchService.search(request);
-            case MILVUS -> milvusSearchService.map(service -> service.search(request)).orElseGet(() -> {
-                log.warn("Milvus 检索服务未启用");
-                return Collections.emptyList();
-            });
-            case HYBRID -> hybridSearch(request);
-            case CUSTOM -> {
-                log.warn("自定义数据源检索尚未实现");
-                yield Collections.emptyList();
-            }
-        };
+        // 2. 执行检索
+        List<SearchResult> results;
+        try {
+            results = searchExecutor.execute(type, request);
+        } catch (Exception e) {
+            log.error("检索失败: type={}, query={}", type, request.getQuery(), e);
+            return Collections.emptyList();
+        }
 
         // 3. 写入缓存
         cacheResults(cacheKey, results);
@@ -88,33 +80,27 @@ public class SearchServiceImpl implements SearchService {
     public List<SearchResult> hybridSearch(SearchRequest request) {
         log.info("执行混合检索，查询: {}", request.getQuery());
 
-        // 并行查询多个数据源
-        CompletableFuture<List<SearchResult>> esFuture = FallbackHelper.executeWithTimeout(() -> esSearchService
-            .search(request), request.getTimeout());
+        // 1. 检查缓存
+        String cacheKey = CacheHelper.generateCacheKey(SearchSourceType.HYBRID, request);
+        List<SearchResult> cached = getCachedResults(cacheKey);
+        if (cached != null) {
+            log.debug("命中混合检索缓存");
+            return cached;
+        }
 
-        // 构建查询 Future 列表
-        List<CompletableFuture<List<SearchResult>>> futures = new ArrayList<>();
-        futures.add(esFuture);
+        // 2. 并行执行向量检索和关键词检索
+        List<SearchResult> vectorResults = searchWithFallback(() -> searchExecutor
+            .execute(SearchSourceType.MILVUS, request), Collections.emptyList());
 
-        // 如果 Milvus 服务可用，添加 Milvus 检索
-        milvusSearchService.ifPresent(service -> {
-            CompletableFuture<List<SearchResult>> milvusFuture = FallbackHelper.executeWithTimeout(() -> service
-                .search(request), request.getTimeout());
-            futures.add(milvusFuture);
-        });
+        List<SearchResult> keywordResults = searchWithFallback(() -> searchExecutor
+            .execute(SearchSourceType.ELASTICSEARCH, request), Collections.emptyList());
 
-        // 等待所有查询完成
-        List<SearchResult> allResults = futures.stream().map(future -> {
-            try {
-                return future.get(request.getTimeout(), TimeUnit.MILLISECONDS);
-            } catch (Exception e) {
-                log.warn("检索超时或失败", e);
-                return Collections.<SearchResult>emptyList();
-            }
-        }).flatMap(List::stream).collect(Collectors.toList());
+        // 3. 加权融合
+        List<SearchResult> fusedResults = FusionHelper.weightedFusion(vectorResults, keywordResults, request
+            .getVectorWeight(), request.getKeywordWeight());
 
-        // RRF 融合
-        List<SearchResult> fusedResults = FusionHelper.reciprocalRankFusion(allResults);
+        // 4. 写入缓存
+        cacheResults(cacheKey, fusedResults);
 
         log.info("混合检索完成，返回 {} 条结果", fusedResults.size());
         return fusedResults.stream().limit(request.getTopK()).collect(Collectors.toList());
@@ -171,5 +157,19 @@ public class SearchServiceImpl implements SearchService {
     private void cacheResults(String key, List<SearchResult> results) {
         localCache.put(key, results);
         CacheHelper.setToRedis(key, results);
+    }
+
+    /**
+     * 带降级的检索
+     */
+    private List<SearchResult> searchWithFallback(java.util.function.Supplier<List<SearchResult>> supplier,
+                                                  List<SearchResult> fallback) {
+        try {
+            return FallbackHelper.executeWithTimeout(supplier, 3000L)
+                .get(3000L, java.util.concurrent.TimeUnit.MILLISECONDS);
+        } catch (Exception e) {
+            log.warn("检索失败，使用降级方案", e);
+            return fallback;
+        }
     }
 }
