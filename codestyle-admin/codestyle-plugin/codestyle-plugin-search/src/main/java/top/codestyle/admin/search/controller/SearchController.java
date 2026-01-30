@@ -45,10 +45,7 @@ public class SearchController {
     @Operation(summary = "单源检索", description = "从指定数据源检索")
     @PostMapping("/single")
     public R<List<SearchResult>> singleSearch(@Valid @RequestBody SearchRequest request) {
-        List<SearchResult> results = searchService.search(
-            request.getSourceType(),
-            request
-        );
+        List<SearchResult> results = searchService.search(request.getSourceType(), request);
         return R.ok(results);
     }
 
@@ -78,4 +75,3 @@ public class SearchController {
         return R.ok(results);
     }
 }
-

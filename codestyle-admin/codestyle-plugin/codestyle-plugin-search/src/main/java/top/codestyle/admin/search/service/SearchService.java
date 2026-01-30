@@ -57,4 +57,3 @@ public interface SearchService {
      */
     List<SearchResult> searchWithRerank(SearchRequest request);
 }
-

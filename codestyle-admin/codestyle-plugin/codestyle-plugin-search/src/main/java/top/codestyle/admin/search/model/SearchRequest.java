@@ -51,4 +51,3 @@ public class SearchRequest {
     @Schema(description = "超时时间（毫秒）", example = "5000")
     private Long timeout = 5000L;
 }
-

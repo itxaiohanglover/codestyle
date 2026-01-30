@@ -30,7 +30,6 @@ import top.codestyle.admin.search.service.ElasticsearchSearchService;
 import top.codestyle.admin.search.service.MilvusSearchService;
 import top.codestyle.admin.search.service.RerankService;
 import top.codestyle.admin.search.service.SearchService;
-import top.continew.starter.core.exception.BusinessException;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -69,13 +68,15 @@ public class SearchServiceImpl implements SearchService {
         // 2. 根据类型执行检索
         List<SearchResult> results = switch (type) {
             case ELASTICSEARCH -> esSearchService.search(request);
-            case MILVUS -> milvusSearchService
-                .map(service -> service.search(request))
-                .orElseGet(() -> {
-                    log.warn("Milvus 检索服务未启用");
-                    return Collections.emptyList();
-                });
+            case MILVUS -> milvusSearchService.map(service -> service.search(request)).orElseGet(() -> {
+                log.warn("Milvus 检索服务未启用");
+                return Collections.emptyList();
+            });
             case HYBRID -> hybridSearch(request);
+            case CUSTOM -> {
+                log.warn("自定义数据源检索尚未实现");
+                yield Collections.emptyList();
+            }
         };
 
         // 3. 写入缓存
@@ -88,11 +89,8 @@ public class SearchServiceImpl implements SearchService {
         log.info("执行混合检索，查询: {}", request.getQuery());
 
         // 并行查询多个数据源
-        CompletableFuture<List<SearchResult>> esFuture =
-            FallbackHelper.executeWithTimeout(
-                () -> esSearchService.search(request),
-                request.getTimeout()
-            );
+        CompletableFuture<List<SearchResult>> esFuture = FallbackHelper.executeWithTimeout(() -> esSearchService
+            .search(request), request.getTimeout());
 
         // 构建查询 Future 列表
         List<CompletableFuture<List<SearchResult>>> futures = new ArrayList<>();
@@ -100,34 +98,26 @@ public class SearchServiceImpl implements SearchService {
 
         // 如果 Milvus 服务可用，添加 Milvus 检索
         milvusSearchService.ifPresent(service -> {
-            CompletableFuture<List<SearchResult>> milvusFuture =
-                FallbackHelper.executeWithTimeout(
-                    () -> service.search(request),
-                    request.getTimeout()
-                );
+            CompletableFuture<List<SearchResult>> milvusFuture = FallbackHelper.executeWithTimeout(() -> service
+                .search(request), request.getTimeout());
             futures.add(milvusFuture);
         });
 
         // 等待所有查询完成
-        List<SearchResult> allResults = futures.stream()
-            .map(future -> {
-                try {
-                    return future.get(request.getTimeout(), TimeUnit.MILLISECONDS);
-                } catch (Exception e) {
-                    log.warn("检索超时或失败", e);
-                    return Collections.<SearchResult>emptyList();
-                }
-            })
-            .flatMap(List::stream)
-            .collect(Collectors.toList());
+        List<SearchResult> allResults = futures.stream().map(future -> {
+            try {
+                return future.get(request.getTimeout(), TimeUnit.MILLISECONDS);
+            } catch (Exception e) {
+                log.warn("检索超时或失败", e);
+                return Collections.<SearchResult>emptyList();
+            }
+        }).flatMap(List::stream).collect(Collectors.toList());
 
         // RRF 融合
         List<SearchResult> fusedResults = FusionHelper.reciprocalRankFusion(allResults);
 
         log.info("混合检索完成，返回 {} 条结果", fusedResults.size());
-        return fusedResults.stream()
-            .limit(request.getTopK())
-            .collect(Collectors.toList());
+        return fusedResults.stream().limit(request.getTopK()).collect(Collectors.toList());
     }
 
     @Override
@@ -183,4 +173,3 @@ public class SearchServiceImpl implements SearchService {
         CacheHelper.setToRedis(key, results);
     }
 }
-

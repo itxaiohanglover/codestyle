@@ -42,8 +42,7 @@ public class CacheConfig {
 
     @Bean
     public Cache<String, List<SearchResult>> searchLocalCache() {
-        SearchProperties.CacheProperties.LocalProperties local =
-            searchProperties.getCache().getLocal();
+        SearchProperties.CacheProperties.LocalProperties local = searchProperties.getCache().getLocal();
 
         return Caffeine.newBuilder()
             .maximumSize(local.getMaxSize())
@@ -52,4 +51,3 @@ public class CacheConfig {
             .build();
     }
 }
-

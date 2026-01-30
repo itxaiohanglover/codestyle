@@ -49,7 +49,7 @@ public class EmbeddingServiceImpl implements EmbeddingService {
         // 当前使用简单的哈希算法生成模拟向量
         int hash = text.hashCode();
         for (int i = 0; i < dimension; i++) {
-            vector[i] = (float) Math.sin(hash + i);
+            vector[i] = (float)Math.sin(hash + i);
         }
 
         // 归一化向量
@@ -87,4 +87,3 @@ public class EmbeddingServiceImpl implements EmbeddingService {
         }
     }
 }
-

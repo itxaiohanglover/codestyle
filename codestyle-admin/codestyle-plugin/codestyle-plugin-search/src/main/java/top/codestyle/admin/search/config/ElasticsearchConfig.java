@@ -47,27 +47,21 @@ public class ElasticsearchConfig {
         SearchProperties.ElasticsearchProperties es = searchProperties.getElasticsearch();
 
         // 创建 RestClient
-        RestClient restClient = RestClient.builder(
-            HttpHost.create(es.getHosts())
-        ).setHttpClientConfigCallback(httpClientBuilder -> {
-            if (es.getUsername() != null && es.getPassword() != null) {
-                BasicCredentialsProvider credentialsProvider = new BasicCredentialsProvider();
-                credentialsProvider.setCredentials(
-                    AuthScope.ANY,
-                    new UsernamePasswordCredentials(es.getUsername(), es.getPassword())
-                );
-                httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
-            }
-            return httpClientBuilder;
-        }).build();
+        RestClient restClient = RestClient.builder(HttpHost.create(es.getHosts()))
+            .setHttpClientConfigCallback(httpClientBuilder -> {
+                if (es.getUsername() != null && es.getPassword() != null) {
+                    BasicCredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+                    credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(es
+                        .getUsername(), es.getPassword()));
+                    httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
+                }
+                return httpClientBuilder;
+            })
+            .build();
 
         // 创建 Transport
-        RestClientTransport transport = new RestClientTransport(
-            restClient,
-            new JacksonJsonpMapper()
-        );
+        RestClientTransport transport = new RestClientTransport(restClient, new JacksonJsonpMapper());
 
         return new ElasticsearchClient(transport);
     }
 }
-

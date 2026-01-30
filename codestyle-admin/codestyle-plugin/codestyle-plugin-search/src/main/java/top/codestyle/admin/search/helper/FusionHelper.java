@@ -67,7 +67,8 @@ public class FusionHelper {
         });
 
         // 按融合分数排序
-        return scoreMap.entrySet().stream()
+        return scoreMap.entrySet()
+            .stream()
             .sorted(Map.Entry.<String, Double>comparingByValue().reversed())
             .map(entry -> {
                 SearchResult result = resultMap.get(entry.getKey());
@@ -84,10 +85,7 @@ public class FusionHelper {
      * @param weights 权重配置
      * @return 融合后的结果
      */
-    public static List<SearchResult> weightedFusion(
-        List<SearchResult> results,
-        Map<SearchSourceType, Double> weights
-    ) {
+    public static List<SearchResult> weightedFusion(List<SearchResult> results, Map<SearchSourceType, Double> weights) {
         Map<String, Double> scoreMap = new HashMap<>();
         Map<String, SearchResult> resultMap = new HashMap<>();
 
@@ -101,7 +99,8 @@ public class FusionHelper {
         });
 
         // 按加权分数排序
-        return scoreMap.entrySet().stream()
+        return scoreMap.entrySet()
+            .stream()
             .sorted(Map.Entry.<String, Double>comparingByValue().reversed())
             .map(entry -> {
                 SearchResult result = resultMap.get(entry.getKey());
@@ -111,4 +110,3 @@ public class FusionHelper {
             .collect(Collectors.toList());
     }
 }
-

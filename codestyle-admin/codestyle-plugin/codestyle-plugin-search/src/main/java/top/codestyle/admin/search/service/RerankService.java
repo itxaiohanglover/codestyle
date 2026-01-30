@@ -49,4 +49,3 @@ public interface RerankService {
      */
     List<SearchResult> rerank(String query, List<SearchResult> results, int topK);
 }
-

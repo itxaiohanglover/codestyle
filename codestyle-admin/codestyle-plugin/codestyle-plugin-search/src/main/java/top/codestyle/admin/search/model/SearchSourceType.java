@@ -52,4 +52,3 @@ public enum SearchSourceType {
     private final String code;
     private final String description;
 }
-

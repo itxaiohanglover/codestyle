@@ -37,4 +37,3 @@ public interface ElasticsearchSearchService {
      */
     List<SearchResult> search(SearchRequest request);
 }
-

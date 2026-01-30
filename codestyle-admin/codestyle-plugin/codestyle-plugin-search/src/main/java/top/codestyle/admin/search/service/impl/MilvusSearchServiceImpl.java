@@ -108,7 +108,7 @@ public class MilvusSearchServiceImpl implements MilvusSearchService {
         }
 
         // 获取结果数量
-        int numResults = (int) searchResults.getResults().getTopK();
+        int numResults = (int)searchResults.getResults().getTopK();
 
         for (int i = 0; i < numResults; i++) {
             try {
@@ -130,4 +130,3 @@ public class MilvusSearchServiceImpl implements MilvusSearchService {
         return results;
     }
 }
-

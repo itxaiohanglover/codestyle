@@ -73,11 +73,7 @@ public class RerankClient {
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
 
         // 调用 API
-        RerankResponse response = restTemplate.postForObject(
-            apiUrl,
-            request,
-            RerankResponse.class
-        );
+        RerankResponse response = restTemplate.postForObject(apiUrl, request, RerankResponse.class);
 
         if (response == null || response.getScores() == null) {
             log.warn("BGE-Rerank API 返回空结果");
@@ -98,4 +94,3 @@ public class RerankClient {
         private Integer usage;
     }
 }
-

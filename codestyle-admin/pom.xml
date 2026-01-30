@@ -120,8 +120,16 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
                 <configuration>
                     <compilerArgument>-parameters</compilerArgument>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>${lombok.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
                 </configuration>
             </plugin>
             <!-- 单元测试相关插件 -->
@@ -149,10 +157,10 @@
                     <java>
                         <removeUnusedImports/>
                         <eclipse>
-                            <file>.style/p3c-codestyle.xml</file>
+                            <file>${session.executionRootDirectory}/.style/p3c-codestyle.xml</file>
                         </eclipse>
                         <licenseHeader>
-                            <file>.style/license-header</file>
+                            <file>${session.executionRootDirectory}/.style/license-header</file>
                         </licenseHeader>
                     </java>
                 </configuration>
