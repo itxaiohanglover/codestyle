@@ -56,25 +56,13 @@ public class ElasticsearchSearchServiceImpl implements ElasticsearchSearchServic
             log.info("Elasticsearch 检索开始，索引: {}, 查询: {}", index, request.getQuery());
 
             // 构建 ES 查询
-            SearchResponse<Document> response = esClient.search(s -> s
-                    .index(index)
-                    .query(q -> q
-                        .multiMatch(m -> m
-                            .query(request.getQuery())
-                            .fields("title^3", "content^2", "tags")
-                        )
-                    )
-                    .size(request.getTopK())
-                    .highlight(h -> h
-                        .fields("content", f -> f
-                            .preTags("<em>")
-                            .postTags("</em>")
-                            .numberOfFragments(3)
-                            .fragmentSize(150)
-                        )
-                    ),
-                Document.class
-            );
+            SearchResponse<Document> response = esClient.search(s -> s.index(index)
+                .query(q -> q.multiMatch(m -> m.query(request.getQuery()).fields("title^3", "content^2", "tags")))
+                .size(request.getTopK())
+                .highlight(h -> h.fields("content", f -> f.preTags("<em>")
+                    .postTags("</em>")
+                    .numberOfFragments(3)
+                    .fragmentSize(150))), Document.class);
 
             // 转换结果
             List<SearchResult> results = convertToSearchResults(response);
@@ -92,9 +80,7 @@ public class ElasticsearchSearchServiceImpl implements ElasticsearchSearchServic
      * 转换 ES 响应为检索结果
      */
     private List<SearchResult> convertToSearchResults(SearchResponse<Document> response) {
-        return response.hits().hits().stream()
-            .map(this::convertHit)
-            .collect(Collectors.toList());
+        return response.hits().hits().stream().map(this::convertHit).collect(Collectors.toList());
     }
 
     /**
@@ -136,4 +122,3 @@ public class ElasticsearchSearchServiceImpl implements ElasticsearchSearchServic
         private String metaJson;
     }
 }
-

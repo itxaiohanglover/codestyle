@@ -42,4 +42,3 @@ public interface EmbeddingService {
      */
     float[][] encodeBatch(String[] texts);
 }
-

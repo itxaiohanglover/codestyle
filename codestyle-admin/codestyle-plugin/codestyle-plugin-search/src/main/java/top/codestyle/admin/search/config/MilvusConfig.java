@@ -52,4 +52,3 @@ public class MilvusConfig {
         return new MilvusServiceClient(connectParam);
     }
 }
-

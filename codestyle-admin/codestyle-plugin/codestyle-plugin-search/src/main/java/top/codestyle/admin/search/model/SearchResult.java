@@ -64,4 +64,3 @@ public class SearchResult {
     @Schema(description = "高亮片段")
     private String highlight;
 }
-

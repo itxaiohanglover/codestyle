@@ -67,7 +67,8 @@ public class FusionHelper {
         });
 
         // 按融合分数排序
-        return scoreMap.entrySet().stream()
+        return scoreMap.entrySet()
+            .stream()
             .sorted(Map.Entry.<String, Double>comparingByValue().reversed())
             .map(entry -> {
                 SearchResult result = resultMap.get(entry.getKey());
@@ -84,10 +85,7 @@ public class FusionHelper {
      * @param weights 权重配置
      * @return 融合后的结果
      */
-    public static List<SearchResult> weightedFusion(
-        List<SearchResult> results,
-        Map<SearchSourceType, Double> weights
-    ) {
+    public static List<SearchResult> weightedFusion(List<SearchResult> results, Map<SearchSourceType, Double> weights) {
         Map<String, Double> scoreMap = new HashMap<>();
         Map<String, SearchResult> resultMap = new HashMap<>();
 
@@ -101,7 +99,8 @@ public class FusionHelper {
         });
 
         // 按加权分数排序
-        return scoreMap.entrySet().stream()
+        return scoreMap.entrySet()
+            .stream()
             .sorted(Map.Entry.<String, Double>comparingByValue().reversed())
             .map(entry -> {
                 SearchResult result = resultMap.get(entry.getKey());
@@ -110,5 +109,72 @@ public class FusionHelper {
             })
             .collect(Collectors.toList());
     }
-}
 
+    /**
+     * 加权融合算法
+     * <p>
+     * 根据配置的权重融合向量和关键词检索结果
+     *
+     * @param vectorResults  向量检索结果
+     * @param keywordResults 关键词检索结果
+     * @param vectorWeight   向量检索权重（0-1）
+     * @param keywordWeight  关键词检索权重（0-1）
+     * @return 融合后的结果
+     */
+    public static List<SearchResult> weightedFusion(List<SearchResult> vectorResults,
+                                                    List<SearchResult> keywordResults,
+                                                    double vectorWeight,
+                                                    double keywordWeight) {
+        Map<String, SearchResult> resultMap = new HashMap<>();
+
+        // 处理向量检索结果
+        for (SearchResult result : vectorResults) {
+            String id = result.getId();
+            double weightedScore = result.getScore() * vectorWeight;
+
+            SearchResult merged = resultMap.get(id);
+            if (merged == null) {
+                merged = SearchResult.builder()
+                    .id(id)
+                    .title(result.getTitle())
+                    .content(result.getContent())
+                    .snippet(result.getSnippet())
+                    .metadata(result.getMetadata())
+                    .build();
+                resultMap.put(id, merged);
+            }
+            merged.setScore(merged.getScore() + weightedScore);
+        }
+
+        // 处理关键词检索结果
+        for (SearchResult result : keywordResults) {
+            String id = result.getId();
+            double weightedScore = result.getScore() * keywordWeight;
+
+            SearchResult merged = resultMap.get(id);
+            if (merged == null) {
+                merged = SearchResult.builder()
+                    .id(id)
+                    .title(result.getTitle())
+                    .content(result.getContent())
+                    .snippet(result.getSnippet())
+                    .highlight(result.getHighlight())
+                    .metadata(result.getMetadata())
+                    .build();
+                resultMap.put(id, merged);
+            } else {
+                merged.setScore(merged.getScore() + weightedScore);
+                // 优先使用关键词检索的高亮
+                if (result.getHighlight() != null) {
+                    merged.setHighlight(result.getHighlight());
+                }
+            }
+        }
+
+        // 按融合分数排序
+        return resultMap.values()
+            .stream()
+            .sorted((a, b) -> Double.compare(b.getScore(), a.getScore()))
+            .collect(Collectors.toList());
+    }
+}

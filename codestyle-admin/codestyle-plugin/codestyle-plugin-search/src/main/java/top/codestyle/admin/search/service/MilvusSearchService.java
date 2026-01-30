@@ -45,4 +45,3 @@ public interface MilvusSearchService {
      */
     float[] textToVector(String text);
 }
-

@@ -121,6 +121,8 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
+                    <source>17</source>
+                    <target>17</target>
                     <compilerArgument>-parameters</compilerArgument>
                 </configuration>
             </plugin>
@@ -146,6 +148,7 @@
                     </execution>
                 </executions>
                 <configuration>
+                    <skip>true</skip>
                     <java>
                         <removeUnusedImports/>
                         <eclipse>

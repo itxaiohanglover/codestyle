@@ -49,22 +49,14 @@ public class RerankServiceImpl implements RerankService {
     private final SearchProperties searchProperties;
 
     @Override
-    @Retryable(
-        value = {RestClientException.class},
-        maxAttempts = 3,
-        backoff = @Backoff(delay = 1000, multiplier = 2)
-    )
+    @Retryable(value = {RestClientException.class}, maxAttempts = 3, backoff = @Backoff(delay = 1000, multiplier = 2))
     public List<SearchResult> rerank(String query, List<SearchResult> results) {
         int topK = searchProperties.getRerank().getTopK();
         return rerank(query, results, topK);
     }
 
     @Override
-    @Retryable(
-        value = {RestClientException.class},
-        maxAttempts = 3,
-        backoff = @Backoff(delay = 1000, multiplier = 2)
-    )
+    @Retryable(value = {RestClientException.class}, maxAttempts = 3, backoff = @Backoff(delay = 1000, multiplier = 2))
     public List<SearchResult> rerank(String query, List<SearchResult> results, int topK) {
         if (results == null || results.isEmpty()) {
             log.debug("检索结果为空，跳过重排");
@@ -110,4 +102,3 @@ public class RerankServiceImpl implements RerankService {
         }
     }
 }
-

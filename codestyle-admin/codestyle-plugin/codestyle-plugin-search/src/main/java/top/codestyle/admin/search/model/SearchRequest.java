@@ -50,5 +50,10 @@ public class SearchRequest {
 
     @Schema(description = "超时时间（毫秒）", example = "5000")
     private Long timeout = 5000L;
-}
 
+    @Schema(description = "向量检索权重（混合检索时，0-1之间）", example = "0.6")
+    private Double vectorWeight = 0.6;
+
+    @Schema(description = "关键词检索权重（混合检索时，0-1之间）", example = "0.4")
+    private Double keywordWeight = 0.4;
+}

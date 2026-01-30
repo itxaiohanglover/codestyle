@@ -41,18 +41,13 @@ public class FallbackHelper {
      * @param <T>      返回类型
      * @return CompletableFuture
      */
-    public static <T> CompletableFuture<T> executeWithTimeout(
-        Supplier<T> supplier,
-        long timeout
-    ) {
-        return CompletableFuture.supplyAsync(supplier)
-            .orTimeout(timeout, TimeUnit.MILLISECONDS)
-            .exceptionally(ex -> {
-                if (ex.getCause() instanceof TimeoutException) {
-                    throw new BusinessException("检索超时");
-                }
-                throw new BusinessException("检索失败: " + ex.getMessage());
-            });
+    public static <T> CompletableFuture<T> executeWithTimeout(Supplier<T> supplier, long timeout) {
+        return CompletableFuture.supplyAsync(supplier).orTimeout(timeout, TimeUnit.MILLISECONDS).exceptionally(ex -> {
+            if (ex.getCause() instanceof TimeoutException) {
+                throw new BusinessException("检索超时");
+            }
+            throw new BusinessException("检索失败: " + ex.getMessage());
+        });
     }
 
     /**
@@ -63,10 +58,7 @@ public class FallbackHelper {
      * @param <T>           返回类型
      * @return 操作结果或降级值
      */
-    public static <T> T executeWithFallback(
-        Supplier<T> supplier,
-        T fallbackValue
-    ) {
+    public static <T> T executeWithFallback(Supplier<T> supplier, T fallbackValue) {
         try {
             return supplier.get();
         } catch (Exception e) {
@@ -82,10 +74,7 @@ public class FallbackHelper {
      * @param <T>        返回类型
      * @return 操作结果
      */
-    public static <T> T executeWithRetry(
-        Supplier<T> supplier,
-        int maxRetries
-    ) {
+    public static <T> T executeWithRetry(Supplier<T> supplier, int maxRetries) {
         int attempts = 0;
         Exception lastException = null;
 
@@ -109,4 +98,3 @@ public class FallbackHelper {
         throw new BusinessException("操作失败，已重试 " + maxRetries + " 次", lastException);
     }
 }
-

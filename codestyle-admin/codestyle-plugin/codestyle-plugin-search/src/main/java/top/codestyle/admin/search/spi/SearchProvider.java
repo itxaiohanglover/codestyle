@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package top.codestyle.admin.search.service;
+package top.codestyle.admin.search.spi;
 
 import top.codestyle.admin.search.model.SearchRequest;
 import top.codestyle.admin.search.model.SearchResult;
@@ -23,37 +23,49 @@ import top.codestyle.admin.search.model.SearchSourceType;
 import java.util.List;
 
 /**
- * 检索服务接口
+ * 检索提供者 SPI 接口
  * <p>
- * 提供单源检索、混合检索、检索并重排等功能
+ * 用于支持运行时动态注册新的数据源检索能力
+ * 自定义数据源实现此接口并通过 SPI 注册即可被自动发现和使用
  *
  * @author CodeStyle Team
- * @since 1.0.0
+ * @since 2.0.0
  */
-public interface SearchService {
+public interface SearchProvider {
 
     /**
-     * 单源检索
+     * 判断是否支持指定的数据源类型
      *
-     * @param type    数据源类型
-     * @param request 检索请求
-     * @return 检索结果列表
+     * @param type 数据源类型
+     * @return 是否支持
      */
-    List<SearchResult> search(SearchSourceType type, SearchRequest request);
+    boolean supports(SearchSourceType type);
 
     /**
-     * 混合检索（ES + Milvus）
-     *
-     * @param request 检索请求
-     * @return 检索结果列表
-     */
-    List<SearchResult> hybridSearch(SearchRequest request);
-
-    /**
-     * 检索并重排
+     * 执行检索
      *
      * @param request 检索请求
      * @return 检索结果列表
      */
-    List<SearchResult> searchWithRerank(SearchRequest request);
+    List<SearchResult> search(SearchRequest request);
+
+    /**
+     * 获取 Provider 优先级（数值越小优先级越高）
+     * <p>
+     * 当多个 Provider 支持同一类型时，使用优先级最高的
+     *
+     * @return 优先级，默认 100
+     */
+    default int getPriority() {
+        return 100;
+    }
+
+    /**
+     * 获取 Provider 名称，用于日志和监控
+     *
+     * @return Provider 名称
+     */
+    default String getName() {
+        return this.getClass().getSimpleName();
+    }
 }
