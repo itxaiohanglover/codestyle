@@ -54,6 +54,12 @@
             <artifactId>continew-starter-web</artifactId>
         </dependency>
 
+        <!-- ContiNew Starter JSON 模块 - Jackson -->
+        <dependency>
+            <groupId>top.continew.starter</groupId>
+            <artifactId>continew-starter-json-jackson</artifactId>
+        </dependency>
+
         <!-- Caffeine 本地缓存 -->
         <dependency>
             <groupId>com.github.ben-manes.caffeine</groupId>
