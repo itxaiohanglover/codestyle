@@ -48,7 +48,7 @@
           <div class="content">
             <p v-if="item.type === 'PUSH'">
               推送到了 <a-link :href="item.repo.url" target="_blank" rel="noopener">{{ item.repo.alias }}</a-link>
-              {{ `的 ${item.payload.branch} 分支 ${item.payload.commits.length} 个提交` }}
+              {{ `的 ${item.payload.branch} 分支 ${item.payload.commits?.length || 0} 个提交` }}
               <a-comment
                 v-for="(commit, idx) in item.payload.commits"
                 :key="idx"
@@ -112,8 +112,26 @@ import qs from 'query-string'
 
 dayjs.extend(relativeTime)
 dayjs.locale('zh-cn')
+
+interface Commit {
+  sha: string
+  message: string
+  url: string
+}
+
+interface Payload {
+  branch?: string
+  commits?: Commit[]
+  url?: string
+  title?: string
+  stateString?: string
+  refType?: string
+  ref?: string
+}
+
 export interface DataItem {
   type: string
+  platform: string
   actor: {
     username: string
     nickname: string
@@ -125,7 +143,7 @@ export interface DataItem {
     alias: string
     url: string
   }
-  payload: object
+  payload: Payload
   createTime: string
   createTimeString: string
 }
@@ -153,8 +171,8 @@ const loading = ref(false)
 const getDataList = async () => {
   try {
     loading.value = true
-    const { data } = await get('https://api.charles7c.top/git/orgs/events/continew')
-    data.forEach((item) => {
+    const { data } = await get<DataItem[]>('https://api.charles7c.top/git/orgs/events/continew')
+    data?.forEach((item) => {
       dataList.value.push({
         ...item,
         createTimeString: dayjs(new Date(item.createTime)).fromNow(),
