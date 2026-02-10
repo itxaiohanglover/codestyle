@@ -548,13 +548,12 @@ Apache 2.0 是一种 permissive 开源协议，允许你：
 - 🌐 **官网**：[https://codestyle.top](https://codestyle.top)
 
 ---
-
-<div align="center">
-
+<p align="center">
 **如果这个项目对你有帮助，请给我们一个 ⭐ Star！**
-你的支持是我们持续前进的动力！
-
+</p>
+<iframe style="width:100%;height:500px;min-width:800px;" src="https://api.star-history.com/svg?repos=itxaiohanglover/codestyle&type=date&legend=top-left" frameBorder="0"></iframe>
+<p align="center">
+你的支持是我们持续前进的动力！<br>
 Made with ❤️ by CodeStyle Team
-
-</div>
+</p>
 
