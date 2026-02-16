@@ -21,6 +21,7 @@
         <module>codestyle-plugin-schedule</module>
         <module>codestyle-plugin-generator</module>
         <module>codestyle-plugin-search</module>
+        <module>codestyle-plugin-wiki</module>
     </modules>
 
     <dependencies>
