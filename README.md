@@ -359,7 +359,7 @@ docker-compose up -d
 
 ## 🌟 Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=codestyle-team/codestyle&type=Date)](https://star-history.com/#codestyle-team/codestyle&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=itxaiohanglover/codestyle&type=date&legend=top-left)](https://www.star-history.com/#itxaiohanglover/codestyle&type=date&legend=top-left)
 
 ---
 
