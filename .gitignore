@@ -51,9 +51,6 @@ build/
 **/config/application-local.yml
 reference/
 
-# Ignore .github directory
-.github/
-
 # Ignore CHANGELOG.md file
 CHANGELOG.md
 
@@ -92,3 +89,24 @@ coverage
 *.njsproj
 *.sln
 *.sw?
+
+# Archive directory (development documents and historical files)
+/archive/
+**/archive/
+
+# Reference directory (third-party reference projects)
+/reference/
+
+# # Docs directory (internal documentation)
+# /docs/
+
+# Development documentation (keep in repo but ignore in releases)
+PRE_COMMIT_CHECK.md
+*_REPORT.md
+*_TEST.md
+*_GUIDE.md
+*_PLAN.md
+*_SUMMARY.md
+*_CHECKLIST.md
+*_NOTES.md
+*_STATUS.md

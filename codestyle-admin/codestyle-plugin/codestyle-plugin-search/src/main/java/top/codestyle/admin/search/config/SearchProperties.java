@@ -18,7 +18,6 @@ package top.codestyle.admin.search.config;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.stereotype.Component;
 
 /**
  * 检索模块配置
@@ -27,7 +26,6 @@ import org.springframework.stereotype.Component;
  * @since 1.0.0
  */
 @Data
-@Component
 @ConfigurationProperties(prefix = "search")
 public class SearchProperties {
 

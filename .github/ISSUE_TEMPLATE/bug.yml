@@ -1,0 +1,110 @@
+name: "🐛 Bug 报告"
+description: 报告项目中的 Bug 或问题
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢您使用 CodeStyle！请花些时间填写这份 Bug 报告。
+        
+        **提示**：提交前请先搜索是否有类似的 Issue。
+
+  - type: checkboxes
+    id: checkboxes
+    attributes:
+      label: 确认事项
+      options:
+        - label: 我已搜索过 [Issues](https://github.com/codestyle-team/codestyle/issues)，没有类似的问题
+          required: true
+        - label: 我已阅读过 [README](https://github.com/codestyle-team/codestyle/blob/main/README.md) 和项目文档
+          required: true
+        - label: 我确认重启后仍能复现此问题
+          required: true
+
+  - type: dropdown
+    attributes:
+      label: 版本信息
+      description: 您使用的版本
+      multiple: false
+      options:
+        - v1.0.0
+        - main 分支（最新代码）
+        - 其他版本
+    validations:
+      required: true
+
+  - type: dropdown
+    attributes:
+      label: 使用模块
+      description: 您使用的功能模块
+      multiple: false
+      options:
+        - 代码检索（Search）
+        - 知识库（Wiki）
+        - 代码生成器（Generator）
+        - MCP 集成
+        - 其他
+    validations:
+      required: true
+
+  - type: textarea
+    id: bug-description
+    attributes:
+      label: Bug 描述
+      description: 清楚简洁地描述遇到的问题
+      placeholder: 例如：在搜索模板时出现错误...
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: 复现步骤
+      description: 详细的复现步骤，建议附上截图或日志
+      placeholder: |
+        1. 执行命令 xxx
+        2. 输入参数 xxx
+        3. 看到错误 xxx
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: 预期结果
+      description: 您期望的正确结果
+      placeholder: 应该返回 xxx
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: 环境信息
+      description: 系统环境信息
+      placeholder: |
+        - 操作系统: Windows 11 / macOS 14 / Ubuntu 22.04
+        - Java 版本: 17
+        - Git 版本: 2.40
+      render: markdown
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: 错误日志
+      description: 相关的错误日志或堆栈信息
+      placeholder: 请粘贴完整的错误日志
+      render: shell
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: 补充信息
+      description: 其他有助于定位问题的信息
+    validations:
+      required: false

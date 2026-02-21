@@ -1,0 +1,44 @@
+name: "❓ 问题咨询"
+description: 使用过程中的疑问
+labels:
+  - question
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢您使用 CodeStyle！
+        
+        **提示**：
+        - 提交前请先查阅 [README](https://github.com/codestyle-team/codestyle/blob/main/README.md) 和项目文档
+        - 搜索是否有类似的问题已被解答
+
+  - type: checkboxes
+    id: checkboxes
+    attributes:
+      label: 确认事项
+      options:
+        - label: 我已搜索过 [Issues](https://github.com/codestyle-team/codestyle/issues) 和 [Discussions](https://github.com/codestyle-team/codestyle/discussions)
+          required: true
+        - label: 我已阅读过 [README](https://github.com/codestyle-team/codestyle/blob/main/README.md)
+          required: true
+
+  - type: textarea
+    id: question
+    attributes:
+      label: 问题描述
+      description: 清楚简洁地描述您的问题
+      placeholder: 我想了解 xxx...
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: 相关信息
+      description: 提供有助于回答问题的背景信息
+      placeholder: |
+        - 使用场景：xxx
+        - 已尝试的方法：xxx
+        - 参考的文档：xxx
+    validations:
+      required: false

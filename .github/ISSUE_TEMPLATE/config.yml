@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 讨论区
+    url: https://github.com/codestyle-team/codestyle/discussions
+    about: 一般性讨论、想法交流、使用心得
+  - name: 📖 文档
+    url: https://github.com/codestyle-team/codestyle/blob/main/README.md
+    about: 查看项目文档和使用指南

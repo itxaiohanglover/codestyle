@@ -23,37 +23,22 @@ import top.codestyle.admin.search.model.SearchSourceType;
 import java.util.List;
 
 /**
- * 检索服务接口
+ * 检索服务接口（简化版）
  * <p>
- * 提供单源检索、混合检索、检索并重排等功能
+ * 提供混合检索功能（ES + Milvus + RRF 融合）
  *
  * @author CodeStyle Team
- * @since 1.0.0
+ * @since 2.0.0
  */
 public interface SearchService {
 
     /**
-     * 单源检索
-     *
-     * @param type    数据源类型
-     * @param request 检索请求
-     * @return 检索结果列表
-     */
-    List<SearchResult> search(SearchSourceType type, SearchRequest request);
-
-    /**
-     * 混合检索（ES + Milvus）
+     * 混合检索（唯一接口）
+     * <p>
+     * 自动执行 ES + Milvus 并行检索，使用 RRF 算法融合结果
      *
      * @param request 检索请求
      * @return 检索结果列表
      */
-    List<SearchResult> hybridSearch(SearchRequest request);
-
-    /**
-     * 检索并重排
-     *
-     * @param request 检索请求
-     * @return 检索结果列表
-     */
-    List<SearchResult> searchWithRerank(SearchRequest request);
+    List<SearchResult> search(SearchRequest request);
 }

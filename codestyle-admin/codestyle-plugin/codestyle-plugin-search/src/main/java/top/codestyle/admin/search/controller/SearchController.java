@@ -15,7 +15,7 @@
  */
 
 package top.codestyle.admin.search.controller;
-
+import cn.dev33.satoken.annotation.SaIgnore;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -36,42 +36,63 @@ import java.util.List;
  */
 @Tag(name = "检索 API")
 @RestController
-@RequestMapping("/api/search")
 @RequiredArgsConstructor
 public class SearchController {
 
     private final SearchService searchService;
 
-    @Operation(summary = "单源检索", description = "从指定数据源检索")
-    @PostMapping("/single")
-    public R<List<SearchResult>> singleSearch(@Valid @RequestBody SearchRequest request) {
-        List<SearchResult> results = searchService.search(request.getSourceType(), request);
-        return R.ok(results);
-    }
-
-    @Operation(summary = "混合检索", description = "融合多个数据源的检索结果")
-    @PostMapping("/hybrid")
-    public R<List<SearchResult>> hybridSearch(@Valid @RequestBody SearchRequest request) {
-        List<SearchResult> results = searchService.hybridSearch(request);
-        return R.ok(results);
-    }
-
-    @Operation(summary = "检索并重排", description = "检索后使用 BGE-Rerank 重排序")
-    @PostMapping("/rerank")
-    public R<List<SearchResult>> searchWithRerank(@Valid @RequestBody SearchRequest request) {
-        List<SearchResult> results = searchService.searchWithRerank(request);
+    /**
+     * 模板检索接口（唯一接口）
+     * <p>
+     * 自动执行混合检索（ES + Milvus + RRF 融合）
+     */
+    @Operation(summary = "模板检索", description = "混合检索代码模板（ES + Milvus + RRF）")
+    @PostMapping("/api/search/templates")
+    public R<List<SearchResult>> searchTemplates(@Valid @RequestBody SearchRequest request) {
+        List<SearchResult> results = searchService.search(request);
         return R.ok(results);
     }
 
     @Operation(summary = "快速检索", description = "简化的检索接口，支持 GET 请求")
-    @GetMapping("/quick")
+    @GetMapping("/api/search/quick")
     public R<List<SearchResult>> quickSearch(@RequestParam String query,
                                              @RequestParam(defaultValue = "10") Integer topK) {
         SearchRequest request = new SearchRequest();
         request.setQuery(query);
         request.setTopK(topK);
 
-        List<SearchResult> results = searchService.hybridSearch(request);
+        List<SearchResult> results = searchService.search(request);
+        return R.ok(results);
+    }
+
+    /**
+     * Open API 检索接口
+     * <p>
+     * 使用 ContiNew 框架的 Open API 签名认证机制
+     * <p>
+     * 业务参数：
+     * - query: 检索关键词
+     * - topK: 返回结果数量（默认 10）
+     *
+     * @param query     检索关键词
+     * @param topK      返回结果数量
+     * @return 检索结果列表
+     */
+    @SaIgnore
+    @Operation(summary = "Open API 检索", description = "基于 ContiNew Open API 签名认证的检索接口")
+    @GetMapping("/open-api/search")
+    public R<List<SearchResult>> openApiSearch(
+            @RequestParam String query,
+            @RequestParam(defaultValue = "10") Integer topK) {
+        // 1. 构建检索请求
+        SearchRequest request = new SearchRequest();
+        request.setQuery(query);
+        request.setTopK(topK);
+
+        // 2. 执行检索
+        List<SearchResult> results = searchService.search(request);
+
+        // 3. 返回结果
         return R.ok(results);
     }
 }

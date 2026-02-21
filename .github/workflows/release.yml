@@ -1,0 +1,138 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-backend:
+    name: Build Backend
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+      
+      - name: Build with Maven
+        run: mvn clean package -DskipTests
+        working-directory: ./codestyle-admin
+      
+      - name: Upload Backend Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-jar
+          path: codestyle-admin/codestyle-server/target/*.jar
+          retention-days: 1
+
+  build-frontend:
+    name: Build Frontend
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      
+      - name: Install dependencies
+        run: pnpm install
+        working-directory: ./codestyle-admin-web
+      
+      - name: Build frontend
+        run: pnpm build
+        working-directory: ./codestyle-admin-web
+      
+      - name: Upload Frontend Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: codestyle-admin-web/dist
+          retention-days: 1
+
+  create-release:
+    name: Create Release
+    needs: [build-backend, build-frontend]
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Download Backend Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-jar
+          path: ./artifacts/backend
+      
+      - name: Download Frontend Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: ./artifacts/frontend
+      
+      - name: Get version
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+      
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            artifacts/backend/*.jar
+          body: |
+            ## CodeStyle ${{ steps.get_version.outputs.VERSION }}
+            
+            ### ✨ 新版本发布
+            
+            CodeStyle（码蜂）企业级代码知识库管理系统新版本已发布！
+            
+            ### 📦 下载说明
+            
+            - **后端服务**: 下载 `codestyle-server-*.jar` 文件
+            - **前端资源**: 请从 Artifacts 下载或自行构建
+            
+            ### 🚀 快速开始
+            
+            ```bash
+            # 运行后端服务
+            java -jar codestyle-server-*.jar
+            
+            # 访问地址
+            http://localhost:8080
+            ```
+            
+            ### 📝 更新日志
+            
+            请查看 [CHANGELOG.md](https://github.com/codestyle-team/codestyle/blob/${{ steps.get_version.outputs.VERSION }}/CHANGELOG.md)
+            
+            ### 📚 文档
+            
+            - [README](https://github.com/codestyle-team/codestyle/blob/main/README.md)
+            - [项目文档](https://github.com/codestyle-team/codestyle/blob/main/Codestyle项目文档.md)
+            - [快速开始指南](https://github.com/codestyle-team/codestyle/blob/main/README.md#快速开始)
+            
+            ### 🐛 问题反馈
+            
+            如遇到问题，请提交 [Issue](https://github.com/codestyle-team/codestyle/issues)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

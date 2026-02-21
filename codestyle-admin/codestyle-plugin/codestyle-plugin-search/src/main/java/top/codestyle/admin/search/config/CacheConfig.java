@@ -20,6 +20,7 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import top.codestyle.admin.search.model.SearchResult;
@@ -31,23 +32,28 @@ import java.util.concurrent.TimeUnit;
  * 缓存配置
  *
  * @author CodeStyle Team
- * @since 1.0.0
+ * @since 2.0.0
  */
 @Configuration
 @RequiredArgsConstructor
+@EnableConfigurationProperties(SearchProperties.class)
 @ConditionalOnProperty(prefix = "search.cache", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class CacheConfig {
 
-    private final SearchProperties searchProperties;
+    private final SearchProperties properties;
 
+    /**
+     * 本地缓存（Caffeine）
+     */
     @Bean
     public Cache<String, List<SearchResult>> searchLocalCache() {
-        SearchProperties.CacheProperties.LocalProperties local = searchProperties.getCache().getLocal();
+        SearchProperties.CacheProperties.LocalProperties local = 
+            properties.getCache().getLocal();
 
         return Caffeine.newBuilder()
             .maximumSize(local.getMaxSize())
             .expireAfterWrite(local.getTtl(), TimeUnit.SECONDS)
-            .recordStats()
+            .recordStats()  // 记录统计信息
             .build();
     }
 }
