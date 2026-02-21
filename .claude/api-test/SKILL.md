@@ -4,6 +4,65 @@
 
 ---
 
+## 🚀 测试前准备（AI 自动化测试）
+
+### 启动后端服务
+
+**推荐方式：使用 IDE 启动**
+
+由于 Maven 命令启动可能存在进程管理问题，强烈建议使用 IDE 启动：
+
+1. 在 IDE 中打开项目
+2. 找到启动类：`codestyle-admin/codestyle-server/src/main/java/top/codestyle/admin/CodestyleApplication.java`
+3. 右键 → Run 'CodestyleApplication'
+4. 等待启动完成（约 30 秒）
+
+**启动成功标志**：
+
+在控制台看到以下日志：
+
+```
+--------------------------------------------------------
+ContiNew Admin server started successfully.
+ContiNew Starter: v2.14.0 (Spring Boot: v3.3.12)
+当前版本: v4.1.0 (Profile: dev)
+服务地址: http://192.168.148.1:8000
+接口文档: http://192.168.148.1:8000/doc.html
+--------------------------------------------------------
+```
+
+---
+
+### 验证服务状态
+
+**验证服务启动成功**：
+
+查看终端输出，确认以下关键信息：
+- ✅ `Started CodestyleApplication in XX seconds`
+- ✅ `Tomcat started on port 8000`
+- ✅ `服务地址: http://192.168.148.1:8000`
+
+看到以上日志即表示服务启动成功，可以开始测试。
+
+---
+
+### 依赖服务检查
+
+**在启动后端之前，确保以下服务已启动**：
+
+| 服务 | 端口 | 检查命令 | 必需性 |
+|------|------|---------|--------|
+| **MySQL** | 3306 | `mysql -h127.0.0.1 -P3306 -uroot -p -e "SELECT 1"` | 必需 ✅ |
+| **Redis** | 6379 | `redis-cli ping` | 必需 ✅ |
+| **Elasticsearch** | 9200 | `curl http://localhost:9200` | 可选 ⚠️ |
+
+**依赖服务未启动的影响**：
+- ❌ MySQL 未启动 → 后端无法启动
+- ❌ Redis 未启动 → 后端无法启动
+- ⚠️ Elasticsearch 未启动 → 搜索功能不可用，其他功能正常
+
+---
+
 ## 📋 使用方法
 
 告诉 AI 你要测试的接口信息，AI 会自动生成测试脚本。
@@ -186,8 +245,8 @@ const crypto = require('crypto');
 // ==================== 配置 ====================
 const CONFIG = {
   baseUrl: 'http://localhost:8000',
-  accessKey: 'YOUR_ACCESS_KEY',
-  secretKey: 'YOUR_SECRET_KEY'
+  accessKey: 'MDYyZDYzZWEwMWQyNDE4MjhhMjUyMT',
+  secretKey: 'NzBmNmE4NGZkZDJlNGRhZGE5MjU0OWUzZWQ3MGYzNDc='
 };
 
 // ==================== 签名算法 ====================
@@ -417,18 +476,51 @@ if ($loginResp.success) {
 ### 常用配置
 
 ```javascript
-// 服务地址
+// 服务地址（确保后端已启动）
 baseUrl: 'http://localhost:8000'
 
-// 登录配置
+// 登录配置（默认管理员账号）
 username: 'admin'
 password: 'admin123'
-clientId: 'ef51c9a3e9046c4f2ea45142c8a8344a'
+clientId: 'ef51c9a3e9046c4f2ea45142c8a8344a'  // 固定值，无需修改
+authType: 'ACCOUNT'  // 账号密码登录
 
-// OpenAPI 配置（从数据库获取）
-accessKey: 'YOUR_ACCESS_KEY'
-secretKey: 'YOUR_SECRET_KEY'
+// OpenAPI 配置（测试用密钥，已预先申请）
+accessKey: 'MDYyZDYzZWEwMWQyNDE4MjhhMjUyMT'
+secretKey: 'NzBmNmE4NGZkZDJlNGRhZGE5MjU0OWUzZWQ3MGYzNDc='
+
+// 注意：如需使用其他密钥，可从数据库查询
+// SQL: SELECT access_key, secret_key FROM sys_open_api WHERE status = 1;
 ```
+
+### 环境检查清单
+
+测试前请确认：
+
+- ✅ **后端服务已启动**：终端显示 `Started CodestyleApplication` 和 `Tomcat started on port 8000`
+- ✅ **MySQL 已启动**：端口 3306 可访问
+- ✅ **Redis 已启动**：端口 6379 可访问
+- ✅ **Elasticsearch 已启动**：端口 9200 可访问（搜索功能需要）
+- ✅ **数据库已初始化**：存在 sys_user 等基础表
+- ✅ **默认账号可用**：admin/admin123 可以登录
+
+### 快速启动命令
+
+**推荐：使用 IDE 启动**
+
+```
+1. 打开 IDE
+2. 找到 CodestyleApplication.java
+3. 右键 → Run
+4. 等待启动完成（约 30 秒）
+5. 验证：查看终端日志，确认显示 "Started CodestyleApplication" 和 "Tomcat started on port 8000"
+6. 运行测试：node test-xxx.js
+```
+
+**注意**：
+- ⚠️ 强烈建议使用 IDE 启动（最稳定）
+- ⚠️ Maven 命令启动可能存在进程管理问题
+- ⚠️ 启动前确保 MySQL 和 Redis 已启动
 
 ### RSA 公钥（固定）
 
@@ -509,17 +601,169 @@ if (response.success) {
 }
 ```
 
+### 4. 调试技巧
+
+**查看详细日志**：
+```javascript
+// 在请求前添加
+console.log('请求数据:', JSON.stringify(requestData, null, 2));
+
+// 在响应后添加
+console.log('响应头:', response.headers);
+console.log('响应体:', JSON.stringify(response.data, null, 2));
+```
+
+**处理登录失败**：
+```javascript
+// 如果提示需要验证码，检查数据库配置
+// SQL: SELECT * FROM sys_option WHERE code = 'LOGIN_CAPTCHA_ENABLED';
+// 如果 value = 1，改为 0 关闭验证码
+// SQL: UPDATE sys_option SET value = '0' WHERE code = 'LOGIN_CAPTCHA_ENABLED';
+```
+
+**处理 Token 过期**：
+```javascript
+// Token 默认有效期 2 小时
+// 如果测试时间较长，需要重新登录获取新 Token
+if (response.code === 401) {
+  console.log('Token 已过期，重新登录...');
+  token = await login();
+}
+```
+
+---
+
+## ⚠️ 常见问题
+
+### 1. 连接被拒绝 (ECONNREFUSED)
+
+**问题**：`Error: connect ECONNREFUSED 127.0.0.1:8000`
+
+**原因**：后端服务未启动或端口不正确
+
+**解决**：
+
+**使用 IDE 启动（推荐）**
+```
+1. 打开 IDE
+2. 找到 CodestyleApplication.java
+3. 右键 → Run 'CodestyleApplication'
+4. 等待启动完成（约 30 秒）
+5. 验证：查看终端日志，确认显示 "Started CodestyleApplication" 和 "Tomcat started on port 8000"
+```
+
+**检查依赖服务**
+```bash
+# 检查 MySQL
+mysql -h127.0.0.1 -P3306 -uroot -p -e "SELECT 1"
+
+# 检查 Redis
+redis-cli ping
+
+# 如果依赖服务未启动，先启动它们
+```
+
+### 2. 登录失败：需要验证码
+
+**问题**：`{"success":false,"msg":"请输入验证码"}`
+
+**原因**：系统开启了登录验证码
+
+**解决**：
+```sql
+-- 方式一：关闭验证码（推荐用于测试环境）
+UPDATE sys_option SET value = '0' WHERE code = 'LOGIN_CAPTCHA_ENABLED';
+
+-- 方式二：重启应用（配置会从数据库重新加载）
+```
+
+### 3. Token 无效或过期
+
+**问题**：`{"success":false,"code":401,"msg":"未授权"}`
+
+**原因**：Token 过期（默认 2 小时）或格式错误
+
+**解决**：
+```javascript
+// 检查 Token 格式
+console.log('Token:', token);  // 应该是长字符串，不包含 "Bearer "
+
+// 重新登录获取新 Token
+const token = await login();
+```
+
+### 4. 数据库连接失败
+
+**问题**：后端启动失败，提示数据库连接错误
+
+**原因**：MySQL 未启动或配置错误
+
+**解决**：
+```bash
+# 检查 MySQL 是否启动
+mysql -h127.0.0.1 -P3306 -uroot -p
+
+# 检查配置文件
+# codestyle-admin/codestyle-server/src/main/resources/application-dev.yml
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/codestyle?...
+    username: root
+    password: your_password
+```
+
+### 5. OpenAPI 签名错误
+
+**问题**：`{"success":false,"msg":"签名验证失败"}`
+
+**原因**：accessKey 或 secretKey 错误，或签名算法不正确
+
+**解决**：
+```javascript
+// 使用测试密钥（已预先申请）
+const CONFIG = {
+  accessKey: 'MDYyZDYzZWEwMWQyNDE4MjhhMjUyMT',
+  secretKey: 'NzBmNmE4NGZkZDJlNGRhZGE5MjU0OWUzZWQ3MGYzNDc='
+};
+
+// 如需使用其他密钥，从数据库查询
+// SQL: SELECT access_key, secret_key FROM sys_open_api WHERE status = 1;
+
+// 确认签名算法：参数排序 → 拼接字符串 → 追加 secretKey → MD5 加密
+```
+
+### 6. Elasticsearch 连接失败
+
+**问题**：搜索接口报错，提示 ES 连接失败
+
+**原因**：Elasticsearch 未启动
+
+**解决**：
+```bash
+# 检查 ES 是否启动
+curl http://localhost:9200
+
+# 如果未启动，启动 ES
+# Windows: elasticsearch.bat
+# Linux: ./bin/elasticsearch
+```
+
 ---
 
 ## 📚 相关文档
 
-- [API 测试指南](../archive/v1.0.0/api-testing/API测试指南.md)
-- [OpenAPI 认证机制](../archive/v1.0.0/api-testing/OpenAPI认证机制.md)
-- [测试脚本示例](../archive/scripts/testing/)
+- [API 测试指南](../../archive/v1.0.0/api-testing/API测试指南.md)
+- [OpenAPI 认证机制](../../archive/v1.0.0/api-testing/OpenAPI认证机制.md)
+- [测试脚本示例](../../archive/scripts/testing/)
 
 ---
 
 ## 🔄 版本历史
 
+- **v1.0.5** (2026-02-21): 简化为 AI 自动化测试专用，推荐 IDE 启动
+- **v1.0.4** (2026-02-21): 重构启动方案，推荐 IDE 启动，提供三种启动方式
+- **v1.0.3** (2026-02-21): 添加编译步骤，验证启动命令可行性
+- **v1.0.2** (2026-02-21): 优化为面向 AI 的文档，简化启动流程，添加测试密钥
+- **v1.0.1** (2026-02-21): 新增后端启动指南、环境检查、常见问题
 - **v1.0.0** (2026-02-21): 初始版本，包含 3 种测试模板
 

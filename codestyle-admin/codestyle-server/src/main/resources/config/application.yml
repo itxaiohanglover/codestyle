@@ -1,24 +1,24 @@
 --- ### 应用配置
 application:
-  id: continew-admin
+  id: codestyle-admin
   # 名称
-  name: ContiNew Admin
+  name: CodeStyle Admin
   # 描述
-  description: 持续迭代优化的前后端分离中后台管理系统框架，开箱即用，持续提供舒适的开发体验。
+  description: 基于 ContiNew Admin 的代码风格管理系统，提供代码审查、规范检查、团队协作等功能。
   # 版本
   version: 4.1.0
   starter: 2.14.0
   # 基本包
-  base-package: top.continew.admin
+  base-package: top.codestyle.admin
   ## 作者信息配置
   contact:
-    name: Charles7c
-    email: charles7c@126.com
-    url: https://charles7c.top
+    name: CodeStyle Team
+    email: admin@codestyle.top
+    url: https://codestyle.top
   ## 许可协议信息配置
   license:
     name: Apache-2.0
-    url: https://github.com/continew-org/continew-admin/blob/dev/LICENSE
+    url: https://github.com/codestyle/codestyle-admin/blob/main/LICENSE
 
 --- ### 服务器配置
 server:
