@@ -103,6 +103,12 @@ avatar:
   # 支持的后缀
   support-suffix: jpg,jpeg,png,gif
 
+--- ### 模板存储配置
+template:
+  storage:
+    # 模板文件存储根目录（支持绝对路径和相对路径）
+    path: ./templates
+
 --- ### 接口文档配置
 springdoc:
   api-docs:
