@@ -29,11 +29,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import top.codestyle.admin.search.model.resp.TemplateUploadResp;
+import top.codestyle.admin.search.service.TemplateFileService;
 import top.continew.starter.core.util.validation.CheckUtils;
+import top.continew.starter.core.util.validation.ValidationUtils;
 import top.continew.starter.log.annotation.Log;
+import top.continew.starter.web.model.R;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -62,6 +65,8 @@ public class TemplateFileController {
      */
     @Value("${template.storage.path:./templates}")
     private String templateBasePath;
+
+    private final TemplateFileService templateFileService;
 
     /**
      * 下载模板文件
@@ -133,6 +138,54 @@ public class TemplateFileController {
                 log.debug("清理临时 ZIP 文件: {}", zipFile.getAbsolutePath());
             }
         }
+    }
+
+    /**
+     * 上传模板
+     * <p>
+     * 接收 ZIP 文件，自动解压并上传到存储系统
+     * </p>
+     *
+     * @param file       模板 ZIP 文件
+     * @param groupId    组ID（如：top.codestyle）
+     * @param artifactId 项目ID（如：crud-template）
+     * @param version    版本号（如：1.0.0）
+     * @return 模板上传响应
+     * @throws IOException IO 异常
+     */
+    @Log(ignore = true)
+    @SaIgnore
+    @Operation(summary = "上传模板", description = "上传模板 ZIP 包，自动解压并索引")
+    @Parameter(name = "file", description = "模板 ZIP 文件", required = true)
+    @Parameter(name = "groupId", description = "组ID", example = "top.codestyle", in = ParameterIn.QUERY)
+    @Parameter(name = "artifactId", description = "项目ID", example = "crud-template", in = ParameterIn.QUERY)
+    @Parameter(name = "version", description = "版本号", example = "1.0.0", in = ParameterIn.QUERY)
+    @PostMapping("/open-api/template/upload")
+    public R<TemplateUploadResp> upload(
+            @RequestPart MultipartFile file,
+            @RequestParam String groupId,
+            @RequestParam String artifactId,
+            @RequestParam String version) throws IOException {
+
+        log.info("开始上传模板: groupId={}, artifactId={}, version={}", groupId, artifactId, version);
+
+        // 1. 参数校验
+        ValidationUtils.throwIf(file::isEmpty, "文件不能为空");
+        ValidationUtils.throwIfBlank(groupId, "groupId 不能为空");
+        ValidationUtils.throwIfBlank(artifactId, "artifactId 不能为空");
+        ValidationUtils.throwIfBlank(version, "version 不能为空");
+
+        // 2. 验证文件类型
+        String filename = file.getOriginalFilename();
+        CheckUtils.throwIf(filename == null || !filename.endsWith(".zip"), "只支持 ZIP 文件");
+
+        // 3. 上传并解压（复用 FileService）
+        TemplateUploadResp resp = templateFileService.uploadTemplate(
+            file, groupId, artifactId, version
+        );
+
+        log.info("模板上传成功: templateId={}", resp.getTemplateId());
+        return R.ok(resp);
     }
 }
 

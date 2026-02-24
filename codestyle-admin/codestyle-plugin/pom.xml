@@ -22,6 +22,7 @@
         <module>codestyle-plugin-generator</module>
         <module>codestyle-plugin-search</module>
         <module>codestyle-plugin-wiki</module>
+        <module>codestyle-plugin-research</module>
     </modules>
 
     <dependencies>

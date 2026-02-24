@@ -96,6 +96,13 @@
                 <artifactId>codestyle-plugin-search</artifactId>
                 <version>${revision}</version>
             </dependency>
+
+            <!-- 深度研究插件 -->
+            <dependency>
+                <groupId>top.codestyle.admin</groupId>
+                <artifactId>codestyle-plugin-research</artifactId>
+                <version>${revision}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 

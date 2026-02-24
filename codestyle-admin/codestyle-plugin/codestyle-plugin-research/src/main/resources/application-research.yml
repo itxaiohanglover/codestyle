@@ -1,0 +1,45 @@
+# 深度研究配置
+research:
+  # 是否启用深度研究功能
+  enabled: true
+  
+  # 研究任务超时时间（秒）
+  task-timeout-seconds: 600
+  
+  # 最大并行研究任务数
+  max-concurrent-tasks: 5
+  
+  # SSE 心跳间隔（秒）
+  sse-heartbeat-seconds: 30
+  
+  # 模型配置
+  model:
+    # 默认模型名称
+    default-model: qwen-plus
+    # 强模型（用于关键节点）
+    strong-model: qwen-max
+    # 小模型（用于简单任务）
+    small-model: qwen-turbo
+    # 最大 Token 数
+    max-tokens: 4096
+    # 温度参数
+    temperature: 0.7
+  
+  # GitHub 配置
+  github:
+    # GitHub Token（用于提高 API 限流）
+    token: ${GITHUB_TOKEN:}
+    # 克隆超时时间（秒）
+    clone-timeout-seconds: 300
+    # 最大文件大小（MB）
+    max-file-size-mb: 10
+  
+  # 模板生成配置
+  template:
+    # 模板存储路径
+    storage-path: ${TEMPLATE_STORAGE_PATH:./templates}
+    # 是否自动索引到 ES
+    auto-index: true
+    # 是否自动生成向量
+    auto-vectorize: true
+

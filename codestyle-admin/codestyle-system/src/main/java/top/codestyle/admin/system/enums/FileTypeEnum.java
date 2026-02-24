@@ -64,7 +64,30 @@ public enum FileTypeEnum implements BaseEnum<Integer> {
     /**
      * 音频
      */
-    AUDIO(5, "音频", List.of("mp3", "flac", "wav", "ogg", "midi", "m4a", "aac", "amr", "ac3", "aiff")),;
+    AUDIO(5, "音频", List.of("mp3", "flac", "wav", "ogg", "midi", "m4a", "aac", "amr", "ac3", "aiff")),
+
+    /**
+     * 模板文件
+     */
+    TEMPLATE(6, "模板", List.of("ftl", "vm", "tpl")),
+
+    /**
+     * 代码文件
+     */
+    CODE(7, "代码", List.of(
+        "java", "py", "js", "ts", "go", "rs", "c", "cpp", "h", "hpp",
+        "cs", "php", "rb", "swift", "kt", "scala", "sh", "bat", "ps1"
+    )),
+
+    /**
+     * 配置文件
+     */
+    CONFIG(8, "配置", List.of("yml", "yaml", "xml", "json", "properties", "conf", "ini", "toml")),
+
+    /**
+     * 文档文件
+     */
+    MARKDOWN(9, "文档", List.of("md", "markdown", "rst", "adoc")),;
 
     private final Integer value;
     private final String description;

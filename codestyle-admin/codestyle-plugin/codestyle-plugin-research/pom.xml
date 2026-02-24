@@ -9,11 +9,11 @@
         <version>${revision}</version>
     </parent>
 
-    <artifactId>codestyle-plugin-search</artifactId>
+    <artifactId>codestyle-plugin-research</artifactId>
     <packaging>jar</packaging>
 
     <name>${project.artifactId}</name>
-    <description>检索插件（支持 ES、Milvus 多源混合检索和 BGE-Rerank 重排）</description>
+    <description>深度研究插件（基于 Spring AI Alibaba Graph 的 DeepResearch Agent）</description>
 
     <dependencies>
         <!-- 公共模块 -->
@@ -22,30 +22,17 @@
             <artifactId>codestyle-common</artifactId>
         </dependency>
 
-        <!-- 系统模块（FileService） -->
+        <!-- 检索插件（TemplateUploadResp） -->
         <dependency>
             <groupId>top.codestyle.admin</groupId>
-            <artifactId>codestyle-system</artifactId>
+            <artifactId>codestyle-plugin-search</artifactId>
         </dependency>
 
-        <!-- Spring Test（MockMultipartFile） -->
+        <!-- Spring AI Alibaba Graph -->
         <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-test</artifactId>
-        </dependency>
-
-        <!-- Elasticsearch -->
-        <dependency>
-            <groupId>co.elastic.clients</groupId>
-            <artifactId>elasticsearch-java</artifactId>
-            <version>8.13.0</version>
-        </dependency>
-
-        <!-- Milvus SDK -->
-        <dependency>
-            <groupId>io.milvus</groupId>
-            <artifactId>milvus-sdk-java</artifactId>
-            <version>2.3.4</version>
+            <groupId>com.alibaba.cloud.ai</groupId>
+            <artifactId>spring-ai-alibaba-starter</artifactId>
+            <version>1.0.0-M3.2</version>
         </dependency>
 
         <!-- Spring Boot Starter Web -->
@@ -72,16 +59,29 @@
             <artifactId>continew-starter-json-jackson</artifactId>
         </dependency>
 
-        <!-- Caffeine 本地缓存 -->
-        <dependency>
-            <groupId>com.github.ben-manes.caffeine</groupId>
-            <artifactId>caffeine</artifactId>
-        </dependency>
-
         <!-- Spring Retry 重试机制 -->
         <dependency>
             <groupId>org.springframework.retry</groupId>
             <artifactId>spring-retry</artifactId>
+        </dependency>
+
+        <!-- OkHttp（用于 HTTP 请求） -->
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>okhttp</artifactId>
+        </dependency>
+
+        <!-- JGit（用于 Git 仓库操作） -->
+        <dependency>
+            <groupId>org.eclipse.jgit</groupId>
+            <artifactId>org.eclipse.jgit</artifactId>
+            <version>6.8.0.202311291450-r</version>
+        </dependency>
+
+        <!-- FreeMarker（模板引擎） -->
+        <dependency>
+            <groupId>org.freemarker</groupId>
+            <artifactId>freemarker</artifactId>
         </dependency>
     </dependencies>
 </project>
