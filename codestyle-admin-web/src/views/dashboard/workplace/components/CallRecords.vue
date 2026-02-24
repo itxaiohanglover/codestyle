@@ -47,7 +47,7 @@ const tableData = ref<CallRecord[]>([
     status: 'success',
     statusText: '成功',
     duration: '156ms',
-    time: '14:32:15'
+    time: '14:32:15',
   },
   {
     type: 'Skill',
@@ -56,7 +56,7 @@ const tableData = ref<CallRecord[]>([
     status: 'success',
     statusText: '成功',
     duration: '89ms',
-    time: '14:31:42'
+    time: '14:31:42',
   },
   {
     type: 'MCP',
@@ -65,7 +65,7 @@ const tableData = ref<CallRecord[]>([
     status: 'processing',
     statusText: '执行中',
     duration: '-',
-    time: '14:31:20'
+    time: '14:31:20',
   },
   {
     type: 'Skill',
@@ -74,7 +74,7 @@ const tableData = ref<CallRecord[]>([
     status: 'success',
     statusText: '成功',
     duration: '234ms',
-    time: '14:30:55'
+    time: '14:30:55',
   },
   {
     type: 'MCP',
@@ -83,15 +83,15 @@ const tableData = ref<CallRecord[]>([
     status: 'error',
     statusText: '失败',
     duration: '1.52s',
-    time: '14:30:12'
-  }
+    time: '14:30:12',
+  },
 ])
 
 const getStatusType = (status: string) => {
   const statusMap: Record<string, 'success' | 'processing' | 'danger' | 'warning' | 'normal'> = {
     success: 'success',
     processing: 'processing',
-    error: 'danger'
+    error: 'danger',
   }
   return statusMap[status] || 'normal'
 }

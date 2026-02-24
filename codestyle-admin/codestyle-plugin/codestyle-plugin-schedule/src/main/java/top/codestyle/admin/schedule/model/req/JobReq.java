@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-present Charles7c Authors. All Rights Reserved.
+ * Copyright (c) 2022-present CodeStyle Authors. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import org.hibernate.validator.constraints.Length;
-import top.codestyle.admin.schedule.enums.*;
 import top.codestyle.admin.schedule.enums.*;
 
 import java.io.Serial;

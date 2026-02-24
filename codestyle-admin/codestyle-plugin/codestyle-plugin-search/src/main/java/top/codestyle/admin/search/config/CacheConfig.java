@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-present Charles7c Authors. All Rights Reserved.
+ * Copyright (c) 2022-present CodeStyle Authors. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,8 +47,7 @@ public class CacheConfig {
      */
     @Bean
     public Cache<String, List<SearchResult>> searchLocalCache() {
-        SearchProperties.CacheProperties.LocalProperties local = 
-            properties.getCache().getLocal();
+        SearchProperties.CacheProperties.LocalProperties local = properties.getCache().getLocal();
 
         return Caffeine.newBuilder()
             .maximumSize(local.getMaxSize())

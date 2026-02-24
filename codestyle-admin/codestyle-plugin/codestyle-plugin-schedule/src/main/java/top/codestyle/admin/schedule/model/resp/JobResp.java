@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-present Charles7c Authors. All Rights Reserved.
+ * Copyright (c) 2022-present CodeStyle Authors. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package top.codestyle.admin.schedule.model.resp;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
-import top.codestyle.admin.schedule.enums.*;
 import top.codestyle.admin.schedule.enums.*;
 
 import java.io.Serial;

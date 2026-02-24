@@ -1,6 +1,6 @@
 -- liquibase formatted sql
 
--- changeset charles7c:1
+-- changeset codestyle:1
 -- comment 初始化代码生成插件数据表
 -- 初始化表结构
 CREATE TABLE IF NOT EXISTS `gen_config` (

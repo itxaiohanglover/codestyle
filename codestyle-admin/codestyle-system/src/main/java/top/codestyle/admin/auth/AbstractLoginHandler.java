@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-present Charles7c Authors. All Rights Reserved.
+ * Copyright (c) 2022-present CodeStyle Authors. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package top.codestyle.admin.auth;
 
 import cn.dev33.satoken.stp.StpUtil;
 import cn.dev33.satoken.stp.parameter.SaLoginParameter;
+import cn.dev33.satoken.stp.parameter.enums.SaLogoutMode;
+import cn.dev33.satoken.stp.parameter.enums.SaReplacedRange;
 import cn.hutool.core.bean.BeanUtil;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
@@ -120,8 +122,17 @@ public abstract class AbstractLoginHandler<T extends LoginReq> implements LoginH
         loginParameter.setActiveTimeout(client.getActiveTimeout());
         loginParameter.setTimeout(client.getTimeout());
         loginParameter.setDeviceType(client.getClientType());
-        userContext.setClientType(client.getClientType());
         loginParameter.setExtra(CLIENT_ID, client.getClientId());
+        // 设置并发登录配置参数
+        loginParameter.setIsConcurrent(client.getIsConcurrent());
+        if (Boolean.FALSE.equals(client.getIsConcurrent())) {
+            loginParameter.setReplacedRange(SaReplacedRange.valueOf(client.getReplacedRange().getValue()));
+        }
+        loginParameter.setMaxLoginCount(client.getMaxLoginCount());
+        if (client.getMaxLoginCount() != -1) {
+            loginParameter.setOverflowLogoutMode(SaLogoutMode.valueOf(client.getOverflowLogoutMode().getValue()));
+        }
+        userContext.setClientType(client.getClientType());
         userContext.setClientId(client.getClientId());
         userContext.setTenantId(tenantId);
         // 登录并缓存用户信息

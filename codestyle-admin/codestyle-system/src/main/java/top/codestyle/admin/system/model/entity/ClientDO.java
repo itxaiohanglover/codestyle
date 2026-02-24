@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-present Charles7c Authors. All Rights Reserved.
+ * Copyright (c) 2022-present CodeStyle Authors. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,10 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import lombok.Data;
-import top.codestyle.admin.common.enums.DisEnableStatusEnum;
 import top.codestyle.admin.common.base.model.entity.BaseDO;
+import top.codestyle.admin.common.enums.DisEnableStatusEnum;
+import top.codestyle.admin.system.enums.LogoutModeEnum;
+import top.codestyle.admin.system.enums.ReplacedRangeEnum;
 
 import java.io.Serial;
 import java.util.List;
@@ -65,6 +67,26 @@ public class ClientDO extends BaseDO {
      * Token 有效期（单位：秒，-1：永不过期）
      */
     private Long timeout;
+
+    /**
+     * 是否允许同一账号多地同时登录（true：允许；false：新登录挤掉旧登录）
+     */
+    private Boolean isConcurrent;
+
+    /**
+     * 顶人下线的范围
+     */
+    private ReplacedRangeEnum replacedRange;
+
+    /**
+     * 同一账号最大登录数量（-1：不限制，只有在 isConcurrent=true，isShare=false 时才有效）
+     */
+    private Integer maxLoginCount;
+
+    /**
+     * 溢出人数的下线方式
+     */
+    private LogoutModeEnum overflowLogoutMode;
 
     /**
      * 状态

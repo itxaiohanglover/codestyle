@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-present Charles7c Authors. All Rights Reserved.
+ * Copyright (c) 2022-present CodeStyle Authors. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 
 package top.codestyle.admin.search.controller;
+
 import cn.dev33.satoken.annotation.SaIgnore;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -47,14 +48,14 @@ public class SearchController {
      * 自动执行混合检索（ES + Milvus + RRF 融合）
      */
     @Operation(summary = "模板检索", description = "混合检索代码模板（ES + Milvus + RRF）")
-    @PostMapping("/api/search/templates")
+    @PostMapping("/search/template")
     public R<List<SearchResult>> searchTemplates(@Valid @RequestBody SearchRequest request) {
         List<SearchResult> results = searchService.search(request);
         return R.ok(results);
     }
 
     @Operation(summary = "快速检索", description = "简化的检索接口，支持 GET 请求")
-    @GetMapping("/api/search/quick")
+    @GetMapping("/search/quick")
     public R<List<SearchResult>> quickSearch(@RequestParam String query,
                                              @RequestParam(defaultValue = "10") Integer topK) {
         SearchRequest request = new SearchRequest();
@@ -74,16 +75,15 @@ public class SearchController {
      * - query: 检索关键词
      * - topK: 返回结果数量（默认 10）
      *
-     * @param query     检索关键词
-     * @param topK      返回结果数量
+     * @param query 检索关键词
+     * @param topK  返回结果数量
      * @return 检索结果列表
      */
     @SaIgnore
     @Operation(summary = "Open API 检索", description = "基于 ContiNew Open API 签名认证的检索接口")
     @GetMapping("/open-api/search")
-    public R<List<SearchResult>> openApiSearch(
-            @RequestParam String query,
-            @RequestParam(defaultValue = "10") Integer topK) {
+    public R<List<SearchResult>> openApiSearch(@RequestParam String query,
+                                               @RequestParam(defaultValue = "10") Integer topK) {
         // 1. 构建检索请求
         SearchRequest request = new SearchRequest();
         request.setQuery(query);

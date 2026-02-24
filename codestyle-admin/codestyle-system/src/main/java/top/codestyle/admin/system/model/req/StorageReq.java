@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-present Charles7c Authors. All Rights Reserved.
+ * Copyright (c) 2022-present CodeStyle Authors. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,7 +96,7 @@ public class StorageReq implements Serializable {
     /**
      * Bucket/存储路径
      */
-    @Schema(description = "Bucket/存储路径", example = "continew-admin")
+    @Schema(description = "Bucket/存储路径", example = "codestyle-admin")
     @Length(max = 255, message = "Bucket长度不能超过 {max} 个字符", groups = ValidationGroup.Storage.OSS.class)
     @Length(max = 255, message = "存储路径长度不能超过 {max} 个字符", groups = ValidationGroup.Storage.Local.class)
     @NotBlank(message = "Bucket不能为空", groups = ValidationGroup.Storage.OSS.class)
@@ -106,7 +106,7 @@ public class StorageReq implements Serializable {
     /**
      * 域名/访问路径
      */
-    @Schema(description = "域名/访问路径", example = "https://continew-admin.file.continew.top/")
+    @Schema(description = "域名/访问路径", example = "https://codestyle-admin.file.codestyle.top/")
     @Length(max = 255, message = "域名长度不能超过 {max} 个字符", groups = ValidationGroup.Storage.OSS.class)
     @Length(max = 255, message = "访问路径长度不能超过 {max} 个字符", groups = ValidationGroup.Storage.Local.class)
     @NotBlank(message = "访问路径不能为空", groups = ValidationGroup.Storage.Local.class)

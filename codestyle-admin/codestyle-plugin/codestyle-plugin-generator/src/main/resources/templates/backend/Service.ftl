@@ -1,6 +1,6 @@
 package ${packageName}.${subPackageName};
 
-import top.codestyle.admin.common.base.service.BaseService;
+import top.continew.admin.common.base.service.BaseService;
 import ${packageName}.model.entity.${classNamePrefix}DO;
 import ${packageName}.model.query.${classNamePrefix}Query;
 import ${packageName}.model.req.${classNamePrefix}Req;

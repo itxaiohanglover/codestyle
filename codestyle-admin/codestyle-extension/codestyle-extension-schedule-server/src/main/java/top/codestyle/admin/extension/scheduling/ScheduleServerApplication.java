@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-present Charles7c Authors. All Rights Reserved.
+ * Copyright (c) 2022-present CodeStyle Authors. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,13 @@ package top.codestyle.admin.extension.scheduling;
 import cn.hutool.core.net.NetUtil;
 import cn.hutool.core.util.URLUtil;
 import cn.hutool.extra.spring.SpringUtil;
+import com.aizuda.snailjob.common.core.util.SnailJobVersion;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
+import org.springframework.boot.SpringBootVersion;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.web.ServerProperties;
 
@@ -50,10 +52,14 @@ public class ScheduleServerApplication extends com.aizuda.snailjob.server.SnailJ
         Integer port = serverProperties.getPort();
         String contextPath = serverProperties.getServlet().getContextPath();
         String baseUrl = URLUtil.normalize("%s:%s%s".formatted(hostAddress, port, contextPath));
-        log.info("----------------------------------------------");
-        log.info("{} service started successfully.", SpringUtil.getApplicationName());
-        log.info("访问地址：{}", baseUrl);
-        log.info("在线文档：https://snailjob.opensnail.com");
-        log.info("----------------------------------------------");
+        log.info("------------------------------------------------------");
+        log.info("{} started successfully.", SpringUtil.getApplicationName());
+        log.info("Snail Job: v{} (Spring Boot: v{})", SnailJobVersion.getVersion(), SpringBootVersion.getVersion());
+        log.info("服务地址: {}", baseUrl);
+        log.info("服务文档: https://snailjob.opensnail.com");
+        log.info("注意: 此服务为 Snail Job 服务端 (为方便本地开发使用而特意提供)");
+        log.info("注意: 实际生产环境，部署 Snail Job 服务端可根据官方文档进行操作");
+        log.info("注意: 此服务非 ContiNew Admin 服务端!!!");
+        log.info("------------------------------------------------------");
     }
 }

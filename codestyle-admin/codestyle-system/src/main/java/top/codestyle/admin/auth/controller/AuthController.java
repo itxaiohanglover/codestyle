@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-present Charles7c Authors. All Rights Reserved.
+ * Copyright (c) 2022-present CodeStyle Authors. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ package top.codestyle.admin.auth.controller;
 import cn.dev33.satoken.annotation.SaIgnore;
 import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.core.bean.BeanUtil;
-import com.xkcoding.justauth.autoconfigure.JustAuthProperties;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -27,10 +26,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import me.zhyd.oauth.AuthRequestBuilder;
-import me.zhyd.oauth.config.AuthConfig;
 import me.zhyd.oauth.request.AuthRequest;
 import me.zhyd.oauth.utils.AuthStateUtils;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import top.codestyle.admin.auth.model.req.LoginReq;
 import top.codestyle.admin.auth.model.resp.LoginResp;
@@ -40,10 +38,12 @@ import top.codestyle.admin.auth.model.resp.UserInfoResp;
 import top.codestyle.admin.auth.service.AuthService;
 import top.codestyle.admin.common.context.UserContext;
 import top.codestyle.admin.common.context.UserContextHolder;
+import top.codestyle.admin.system.enums.SocialSourceEnum;
 import top.codestyle.admin.system.model.resp.user.UserDetailResp;
 import top.codestyle.admin.system.service.UserService;
-import top.continew.starter.core.exception.BadRequestException;
+import top.continew.starter.auth.justauth.AuthRequestFactory;
 import top.continew.starter.log.annotation.Log;
+import top.continew.starter.validation.constraints.EnumValue;
 
 import java.util.List;
 
@@ -55,6 +55,7 @@ import java.util.List;
  */
 @Tag(name = "认证 API")
 @Log(module = "登录")
+@Validated
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/auth")
@@ -62,7 +63,7 @@ public class AuthController {
 
     private final AuthService authService;
     private final UserService userService;
-    private final JustAuthProperties authProperties;
+    private final AuthRequestFactory authRequestFactory;
 
     @SaIgnore
     @Operation(summary = "登录", description = "用户登录")
@@ -84,8 +85,8 @@ public class AuthController {
     @Operation(summary = "三方账号登录授权", description = "三方账号登录授权")
     @Parameter(name = "source", description = "来源", example = "gitee", in = ParameterIn.PATH)
     @GetMapping("/{source}")
-    public SocialAuthAuthorizeResp authorize(@PathVariable String source) {
-        AuthRequest authRequest = this.getAuthRequest(source);
+    public SocialAuthAuthorizeResp authorize(@PathVariable @EnumValue(value = SocialSourceEnum.class, message = "第三方平台无效") String source) {
+        AuthRequest authRequest = authRequestFactory.getAuthRequest(source);
         return SocialAuthAuthorizeResp.builder()
             .authorizeUrl(authRequest.authorize(AuthStateUtils.createState()))
             .build();
@@ -109,14 +110,5 @@ public class AuthController {
     @GetMapping("/user/route")
     public List<RouteResp> listRoute() {
         return authService.buildRouteTree(UserContextHolder.getUserId());
-    }
-
-    private AuthRequest getAuthRequest(String source) {
-        try {
-            AuthConfig authConfig = authProperties.getType().get(source.toUpperCase());
-            return AuthRequestBuilder.builder().source(source).authConfig(authConfig).build();
-        } catch (Exception e) {
-            throw new BadRequestException("暂不支持 [%s] 平台账号登录".formatted(source));
-        }
     }
 }

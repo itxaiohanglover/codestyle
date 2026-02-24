@@ -1,6 +1,6 @@
 -- liquibase formatted sql
 
--- changeset snail-job-server:1.5.0
+-- changeset snail-job-server:1.8.0
 -- sj_namespace
 CREATE TABLE sj_namespace
 (

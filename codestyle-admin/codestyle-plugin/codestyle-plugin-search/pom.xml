@@ -16,73 +16,29 @@
     <description>检索插件（支持 ES、Milvus 多源混合检索和 BGE-Rerank 重排）</description>
 
     <dependencies>
-        <!-- 公共模块 -->
-        <dependency>
-            <groupId>top.codestyle.admin</groupId>
-            <artifactId>codestyle-common</artifactId>
-        </dependency>
-
-        <!-- 系统模块（FileService） -->
         <dependency>
             <groupId>top.codestyle.admin</groupId>
             <artifactId>codestyle-system</artifactId>
         </dependency>
 
-        <!-- Spring Test（MockMultipartFile） -->
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-test</artifactId>
-        </dependency>
-
-        <!-- Elasticsearch -->
         <dependency>
             <groupId>co.elastic.clients</groupId>
             <artifactId>elasticsearch-java</artifactId>
-            <version>8.13.0</version>
         </dependency>
 
-        <!-- Milvus SDK -->
         <dependency>
             <groupId>io.milvus</groupId>
             <artifactId>milvus-sdk-java</artifactId>
-            <version>2.3.4</version>
         </dependency>
 
-        <!-- Spring Boot Starter Web -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-
-        <!-- Spring Boot Starter Data Redis -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-redis</artifactId>
-        </dependency>
-
-        <!-- ContiNew Starter Web -->
-        <dependency>
-            <groupId>top.continew.starter</groupId>
-            <artifactId>continew-starter-web</artifactId>
-        </dependency>
-
-        <!-- ContiNew Starter JSON 模块 - Jackson -->
-        <dependency>
-            <groupId>top.continew.starter</groupId>
-            <artifactId>continew-starter-json-jackson</artifactId>
-        </dependency>
-
-        <!-- Caffeine 本地缓存 -->
         <dependency>
             <groupId>com.github.ben-manes.caffeine</groupId>
             <artifactId>caffeine</artifactId>
         </dependency>
 
-        <!-- Spring Retry 重试机制 -->
         <dependency>
             <groupId>org.springframework.retry</groupId>
             <artifactId>spring-retry</artifactId>
         </dependency>
     </dependencies>
 </project>
-

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-present Charles7c Authors. All Rights Reserved.
+ * Copyright (c) 2022-present CodeStyle Authors. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,21 +84,21 @@ public class SearchResult {
      * 获取文件路径（从 metadata 中提取）
      */
     public String getFilePath() {
-        return metadata != null ? (String) metadata.get("filePath") : null;
+        return metadata != null ? (String)metadata.get("filePath") : null;
     }
 
     /**
      * 获取文件名（从 metadata 中提取）
      */
     public String getFilename() {
-        return metadata != null ? (String) metadata.get("filename") : null;
+        return metadata != null ? (String)metadata.get("filename") : null;
     }
 
     /**
      * 获取 SHA256 哈希值（从 metadata 中提取）
      */
     public String getSha256() {
-        return metadata != null ? (String) metadata.get("sha256") : null;
+        return metadata != null ? (String)metadata.get("sha256") : null;
     }
 
     /**
@@ -106,8 +106,8 @@ public class SearchResult {
      */
     public String getDownloadUrl() {
         if (groupId != null && artifactId != null && version != null) {
-            return String.format("/api/file/download?groupId=%s&artifactId=%s&version=%s",
-                groupId, artifactId, version);
+            return String
+                .format("/api/file/download?groupId=%s&artifactId=%s&version=%s", groupId, artifactId, version);
         }
         return null;
     }

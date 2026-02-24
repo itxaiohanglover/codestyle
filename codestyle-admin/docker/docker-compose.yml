@@ -22,19 +22,6 @@ services:
       --collation-server=utf8mb4_general_ci
       --explicit_defaults_for_timestamp=true
       --lower_case_table_names=1
-#  postgresql:
-#    image: postgres:14.2
-#    container_name: postgresql
-#    restart: always
-#    ports:
-#      - '5432:5432'
-#    volumes:
-#      - /docker/postgresql/data/:/var/lib/postgresql/data/
-#    environment:
-#      TZ: Asia/Shanghai
-#      POSTGRES_USER: 你的用户名
-#      POSTGRES_PASSWORD: 你的用户密码
-#      POSTGRES_DB: continew_admin
   redis:
     image: redis:7.2.8
     container_name: redis
@@ -49,12 +36,13 @@ services:
       TZ: Asia/Shanghai
     command: 'redis-server /usr/local/redis/config/redis.conf --appendonly yes'
   continew-server:
-    build: codestyle-admin
+    build: ./continew-admin
+    image: continew-server:4.2.0-SNAPSHOT
     container_name: continew-server
     restart: always
     ports:
       - '18000:18000'
-      - '1789:1789'
+      - '17889:17889'
     volumes:
       - /docker/continew-admin/config/:/app/config/
       - /docker/continew-admin/data/file/:/app/data/file/
@@ -62,6 +50,7 @@ services:
       - /docker/continew-admin/lib/:/app/lib/
     environment:
       TZ: Asia/Shanghai
+      PROFILES_ACTIVE: prod
       DB_HOST: 172.17.0.1
       DB_PORT: 3306
       DB_USER: 你的数据库用户名
@@ -94,11 +83,12 @@ services:
       TZ: Asia/Shanghai
   schedule-server:
     build: ./schedule-server
+    image: schedule-server:1.8.0
     container_name: schedule-server
     restart: always
     ports:
       - '18001:18001'
-      - '1788:1788'
+      - '17888:17888'
     volumes:
       - /docker/schedule-server/logs/:/app/logs/
     environment:

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-present Charles7c Authors. All Rights Reserved.
+ * Copyright (c) 2022-present CodeStyle Authors. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 package top.codestyle.admin.system.controller;
 
-import com.xkcoding.justauth.autoconfigure.JustAuthProperties;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -24,8 +23,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
-import me.zhyd.oauth.AuthRequestBuilder;
-import me.zhyd.oauth.config.AuthConfig;
 import me.zhyd.oauth.model.AuthCallback;
 import me.zhyd.oauth.model.AuthResponse;
 import me.zhyd.oauth.model.AuthUser;
@@ -46,10 +43,11 @@ import top.codestyle.admin.system.model.resp.AvatarResp;
 import top.codestyle.admin.system.model.resp.user.UserSocialBindResp;
 import top.codestyle.admin.system.service.UserService;
 import top.codestyle.admin.system.service.UserSocialService;
+import top.continew.starter.auth.justauth.AuthRequestFactory;
 import top.continew.starter.cache.redisson.util.RedisUtils;
-import top.continew.starter.core.exception.BadRequestException;
 import top.continew.starter.core.util.CollUtils;
 import top.continew.starter.core.util.validation.ValidationUtils;
+import top.continew.starter.validation.constraints.EnumValue;
 
 import java.io.IOException;
 import java.util.List;
@@ -71,7 +69,7 @@ public class UserProfileController {
     private static final String CAPTCHA_EXPIRED = "验证码已失效";
     private final UserService userService;
     private final UserSocialService userSocialService;
-    private final JustAuthProperties authProperties;
+    private final AuthRequestFactory authRequestFactory;
 
     @Operation(summary = "修改头像", description = "用户修改个人头像")
     @PatchMapping("/avatar")
@@ -135,8 +133,9 @@ public class UserProfileController {
     @Operation(summary = "绑定三方账号", description = "绑定三方账号")
     @Parameter(name = "source", description = "来源", example = "gitee", in = ParameterIn.PATH)
     @PostMapping("/social/{source}")
-    public void bindSocial(@PathVariable String source, @RequestBody AuthCallback callback) {
-        AuthRequest authRequest = this.getAuthRequest(source);
+    public void bindSocial(@PathVariable @EnumValue(value = SocialSourceEnum.class, message = "第三方平台无效") String source,
+                           @RequestBody AuthCallback callback) {
+        AuthRequest authRequest = authRequestFactory.getAuthRequest(source);
         AuthResponse<AuthUser> response = authRequest.login(callback);
         ValidationUtils.throwIf(!response.ok(), response.getMsg());
         AuthUser authUser = response.getData();
@@ -148,14 +147,5 @@ public class UserProfileController {
     @DeleteMapping("/social/{source}")
     public void unbindSocial(@PathVariable String source) {
         userSocialService.deleteBySourceAndUserId(source, UserContextHolder.getUserId());
-    }
-
-    private AuthRequest getAuthRequest(String source) {
-        try {
-            AuthConfig authConfig = authProperties.getType().get(source.toUpperCase());
-            return AuthRequestBuilder.builder().source(source).authConfig(authConfig).build();
-        } catch (Exception e) {
-            throw new BadRequestException("暂不支持 [%s] 平台账号登录".formatted(source));
-        }
     }
 }

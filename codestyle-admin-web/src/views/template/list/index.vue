@@ -49,7 +49,7 @@
               </div>
               <a-button
                 type="text"
-                :class="['favorite-btn', { active: item.isFavorite }]"
+                class="favorite-btn" :class="[{ active: item.isFavorite }]"
                 @click.stop="onToggleFavorite(item)"
               >
                 <icon-star-fill v-if="item.isFavorite" />
@@ -76,31 +76,17 @@
 </template>
 
 <script setup lang="ts">
+import { onMounted, reactive, ref } from 'vue'
+import { Message } from '@arco-design/web-vue'
 import PreviewModal from './PreviewModal.vue'
 import { usePagination } from '@/hooks'
+import { type TemplateItem, type TemplateQuery, listTemplate, toggleFavorite } from '@/apis/template'
+
 defineOptions({ name: 'TemplateList' })
 
-interface TagItem {
-  label: string
-  color: string
-}
-
-interface TemplateItem {
-  id: number
-  name: string
-  icon: string
-  author: string
-  description: string
-  tags: TagItem[]
-  downloadCount: string
-  rating: number
-  isFavorite: boolean
-}
-
-const queryForm = reactive<{ keyword?: string }>({})
+const queryForm = reactive<TemplateQuery>({})
 const loading = ref(false)
 const dataList = ref<TemplateItem[]>([])
-const { pagination } = usePagination(() => getDataList())
 
 // 图标渐变色列表
 const iconGradients = [
@@ -124,136 +110,33 @@ const getIconStyle = (icon: string) => {
   return { background: iconGradients[index] }
 }
 
-// Mock 数据
-const mockData: TemplateItem[] = [
-  {
-    id: 1,
-    name: 'Spring Boot CRUD',
-    icon: 'SB',
-    author: 'Charles7c',
-    description: '标准的 Spring Boot 增删改查模板，包含 Controller、Service、Repository 完整代码结构，支持分页和高级查询。',
-    tags: [{ label: 'Java', color: 'blue' }, { label: 'Spring Boot', color: 'green' }, { label: '后端', color: 'purple' }],
-    downloadCount: '1,892',
-    rating: 4.8,
-    isFavorite: true,
-  },
-  {
-    id: 2,
-    name: 'Vue3 组件模板',
-    icon: 'V3',
-    author: '官方团队',
-    description: 'Vue 3 Composition API 组件模板，包含 TypeScript 类型定义、Props、Emits、生命周期钩子等完整结构。',
-    tags: [{ label: 'Vue3', color: 'green' }, { label: 'TypeScript', color: 'blue' }, { label: '前端', color: 'purple' }],
-    downloadCount: '1,543',
-    rating: 4.9,
-    isFavorite: true,
-  },
-  {
-    id: 3,
-    name: 'MyBatis Mapper',
-    icon: 'MB',
-    author: '张三',
-    description: 'MyBatis Mapper 映射文件模板，包含常用的 SQL 语句、动态查询、结果映射等配置，支持 MyBatis-Plus。',
-    tags: [{ label: 'MyBatis', color: 'blue' }, { label: '数据库', color: 'green' }],
-    downloadCount: '987',
-    rating: 4.7,
-    isFavorite: false,
-  },
-  {
-    id: 4,
-    name: 'RESTful API',
-    icon: 'API',
-    author: '李四',
-    description: '标准的 RESTful API 接口模板，包含统一响应格式、异常处理、参数校验、Swagger 文档注解等。',
-    tags: [{ label: 'API', color: 'blue' }, { label: 'Spring Boot', color: 'green' }, { label: '后端', color: 'purple' }],
-    downloadCount: '1,234',
-    rating: 4.6,
-    isFavorite: false,
-  },
-  {
-    id: 5,
-    name: '表单页面',
-    icon: 'FM',
-    author: '王五',
-    description: '基于 Arco Design 的表单页面模板，包含表单验证、动态表单、级联选择、文件上传等常用功能。',
-    tags: [{ label: 'Vue3', color: 'green' }, { label: 'Arco Design', color: 'blue' }, { label: '前端', color: 'purple' }],
-    downloadCount: '1,765',
-    rating: 4.8,
-    isFavorite: true,
-  },
-  {
-    id: 6,
-    name: 'JWT 认证',
-    icon: 'JWT',
-    author: '赵六',
-    description: 'JWT Token 认证鉴权模板，包含用户登录、Token 生成与验证、权限控制、刷新机制等完整实现。',
-    tags: [{ label: 'Security', color: 'blue' }, { label: 'JWT', color: 'green' }, { label: '后端', color: 'purple' }],
-    downloadCount: '1,456',
-    rating: 4.9,
-    isFavorite: false,
-  },
-  {
-    id: 7,
-    name: '数据报表',
-    icon: 'RPT',
-    author: '孙七',
-    description: '数据报表展示模板，集成 ECharts 图表库，包含折线图、柱状图、饼图等常用图表及数据导出功能。',
-    tags: [{ label: 'Vue3', color: 'green' }, { label: 'ECharts', color: 'blue' }, { label: '可视化', color: 'purple' }],
-    downloadCount: '1,123',
-    rating: 4.7,
-    isFavorite: false,
-  },
-  {
-    id: 8,
-    name: '定时任务',
-    icon: 'TSK',
-    author: '周八',
-    description: 'Spring Boot 定时任务模板，支持 Cron 表达式配置、任务动态管理、执行记录查询、失败重试等功能。',
-    tags: [{ label: 'Spring Boot', color: 'blue' }, { label: 'Task', color: 'green' }, { label: '后端', color: 'purple' }],
-    downloadCount: '987',
-    rating: 4.5,
-    isFavorite: false,
-  },
-  {
-    id: 9,
-    name: '消息推送',
-    icon: 'WS',
-    author: '官方团队',
-    description: '实时消息推送模板，支持 WebSocket 长连接、消息队列、多端同步、离线消息存储等功能。',
-    tags: [{ label: 'WebSocket', color: 'blue' }, { label: 'Redis', color: 'green' }, { label: '实时通信', color: 'purple' }],
-    downloadCount: '1,543',
-    rating: 4.8,
-    isFavorite: true,
-  },
-]
+const { pagination, setTotal } = usePagination(() => getDataList())
 
-// 查询列表（目前使用 Mock 数据，后续替换为 API 调用）
-const getDataList = async () => {
+// 查询列表
+async function getDataList() {
   try {
     loading.value = true
-    // TODO: 替换为真实 API 调用
-    // const { data } = await listTemplate(queryForm)
-    await new Promise((resolve) => setTimeout(resolve, 300))
-    let list = [...mockData]
-    if (queryForm.keyword) {
-      const keyword = queryForm.keyword.toLowerCase()
-      list = list.filter(
-        (item) =>
-          item.name.toLowerCase().includes(keyword)
-          || item.description.toLowerCase().includes(keyword)
-          || item.author.toLowerCase().includes(keyword),
-      )
-    }
-    dataList.value = list
-    pagination.total = list.length
+    const res = await listTemplate({
+      ...queryForm,
+      page: pagination.current,
+      size: pagination.pageSize,
+    })
+    dataList.value = res.data.list
+    setTotal(res.data.total)
   } finally {
     loading.value = false
   }
 }
 
 // 切换收藏
-const onToggleFavorite = (item: TemplateItem) => {
-  item.isFavorite = !item.isFavorite
+const onToggleFavorite = async (item: TemplateItem) => {
+  try {
+    const res = await toggleFavorite(item.id)
+    item.isFavorite = res.data
+    Message.success(item.isFavorite ? '已收藏' : '已取消收藏')
+  } catch {
+    Message.error('操作失败')
+  }
 }
 
 // 预览

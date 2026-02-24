@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-present Charles7c Authors. All Rights Reserved.
+ * Copyright (c) 2022-present CodeStyle Authors. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,17 @@
 
 package top.codestyle.admin.system.model.req;
 
+import cn.sticki.spel.validator.constrain.SpelNotNull;
+import cn.sticki.spel.validator.jakarta.SpelValid;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import org.hibernate.validator.constraints.Length;
 import top.codestyle.admin.common.enums.DisEnableStatusEnum;
+import top.codestyle.admin.system.enums.LogoutModeEnum;
+import top.codestyle.admin.system.enums.ReplacedRangeEnum;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -35,6 +40,7 @@ import java.util.List;
  * @since 2024/12/03 16:04
  */
 @Data
+@SpelValid
 @Schema(description = "客户端创建或修改请求参数")
 public class ClientReq implements Serializable {
 
@@ -60,13 +66,43 @@ public class ClientReq implements Serializable {
      * Token 最低活跃频率（单位：秒，-1：不限制，永不冻结）
      */
     @Schema(description = "Token 最低活跃频率（单位：秒，-1：不限制，永不冻结）", example = "1800")
+    @NotNull(message = "Token 最低活跃频率不能为空")
     private Long activeTimeout;
 
     /**
      * Token 有效期（单位：秒，-1：永不过期）
      */
     @Schema(description = "Token 有效期（单位：秒，-1：永不过期）", example = "86400")
+    @NotNull(message = "Token 有效期不能为空")
     private Long timeout;
+
+    /**
+     * 是否允许同一账号多地同时登录（true：允许；false：新登录挤掉旧登录）
+     */
+    @Schema(description = "是否允许同一账号多地同时登录", example = "true")
+    @NotNull(message = "是否允许同一账号多地同时登录不能为空")
+    private Boolean isConcurrent;
+
+    /**
+     * 顶人下线的范围
+     */
+    @Schema(description = "顶人下线的范围", example = "ALL_DEVICE_TYPE")
+    @SpelNotNull(condition = "#this.isConcurrent == false", message = "顶人下线的范围无效")
+    private ReplacedRangeEnum replacedRange;
+
+    /**
+     * 同一账号最大登录数量（-1：不限制，只有在 isConcurrent=true，isShare=false 时才有效）
+     */
+    @Schema(description = "同一账号最大登录数量", example = "-1")
+    @NotNull(message = "同一账号最大登录数量不能为空")
+    private Integer maxLoginCount;
+
+    /**
+     * 溢出人数的下线方式
+     */
+    @Schema(description = "溢出人数的下线方式", example = "KICKOUT")
+    @SpelNotNull(condition = "#this.maxLoginCount != -1", message = "溢出人数的下线方式无效")
+    private LogoutModeEnum overflowLogoutMode;
 
     /**
      * 状态

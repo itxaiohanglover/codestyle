@@ -1,6 +1,6 @@
 -- liquibase formatted sql
 
--- changeset snail-job-server:1.5.0
+-- changeset snail-job-server:1.8.0
 -- 默认用户：admin/admin
 INSERT INTO `sj_system_user` (username, password, role)
 VALUES ('admin', '465c194afb65670f38322df087f0a9bb225cc257e43eb4ac5a0c98ef5b3173ac', 2);

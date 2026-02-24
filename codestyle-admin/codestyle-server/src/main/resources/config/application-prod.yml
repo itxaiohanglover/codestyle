@@ -13,16 +13,11 @@ server:
 --- ### 数据源配置
 spring.datasource:
   type: com.zaxxer.hikari.HikariDataSource
-  # 请务必提前创建好名为 continew_admin 的数据库，如果使用其他数据库名请注意同步修改 DB_NAME 配置
-  url: jdbc:mysql://${DB_HOST:127.0.0.1}:${DB_PORT:3306}/${DB_NAME:codestyle}?serverTimezone=Asia/Shanghai&useSSL=true&useUnicode=true&characterEncoding=utf8&rewriteBatchedStatements=true&autoReconnect=true&allowPublicKeyRetrieval=true&nullCatalogMeansCurrent=true
+  # 请务必提前创建好名为 codestyle_admin 的数据库，如果使用其他数据库名请注意同步修改 DB_NAME 配置
+  url: jdbc:mysql://${DB_HOST:127.0.0.1}:${DB_PORT:3306}/${DB_NAME:codestyle_admin}?serverTimezone=Asia/Shanghai&useSSL=true&useUnicode=true&characterEncoding=utf8&rewriteBatchedStatements=true&autoReconnect=true&allowPublicKeyRetrieval=true&nullCatalogMeansCurrent=true
   username: ${DB_USER:root}
-  password: "${DB_PWD:1234566}"
+  password: ${DB_PWD:123456}
   driver-class-name: com.mysql.cj.jdbc.Driver
-  #  # PostgreSQL 配置
-  #  url: jdbc:postgresql://${DB_HOST:127.0.0.1}:${DB_PORT:5432}/${DB_NAME:continew_admin}?options=-c%20TimeZone=Asia/Shanghai&sslmode=prefer&channelBinding=prefer&stringtype=unspecified
-  #  username: ${DB_USER:postgres}
-  #  password: ${DB_PWD:123456}
-  #  driver-class-name: org.postgresql.Driver
   # Hikari 连接池配置
   hikari:
     # 最大连接数量（默认 10，根据实际环境调整）
@@ -52,7 +47,7 @@ spring.data:
     # 端口（默认 6379）
     port: ${REDIS_PORT:6379}
     # 密码（未设置密码时请注释掉）
-#    password: ${REDIS_PWD:123456}
+    password: ${REDIS_PWD:123456}
     # 数据库索引
     database: ${REDIS_DB:0}
     # 连接超时时间
@@ -97,7 +92,7 @@ jetcache:
 
 --- ### 接口文档配置
 ## 接口文档增强配置
-knife4j:
+nextdoc4j:
   # 开启生产环境屏蔽
   production: ${application.production}
 
@@ -123,7 +118,7 @@ continew-starter.log:
 ## 项目日志配置（配置重叠部分，优先级高于 logback-spring.xml 中的配置）
 logging:
   level:
-    top.continew.admin: INFO
+    top.codestyle.admin: INFO
     top.continew.starter: INFO
   file:
     path: ../logs
@@ -222,22 +217,8 @@ continew-starter.messaging.websocket:
   allowed-origins:
     - ${application.url}
 
---- ### Sa-Token 扩展配置
-sa-token.extension:
-  # 安全配置：排除（放行）路径配置
-  security.excludes:
-    - /error
-    # 静态资源
-    - /*.html
-    - /*/*.html
-    - /*/*.css
-    - /*/*.js
-    - /websocket/**
-    # 本地存储资源
-    - /file/**
-
 --- ### Just Auth 配置
-justauth:
+continew-starter.justauth:
   enabled: true
   type:
     WECHAT_OPEN:
@@ -255,29 +236,49 @@ justauth:
   cache:
     type: REDIS
 
+--- ### Sa-Token 扩展配置
+sa-token.extension:
+  # 安全配置：排除（放行）路径配置
+  security.excludes:
+    - /error
+    # 静态资源
+    - /*.html
+    - /*/*.html
+    - /*/*.css
+    - /*/*.js
+    - /websocket/**
+    # 本地存储资源
+    - /file/**
+
 --- ### Snail Job 配置
 snail-job:
-  # 客户端地址（默认自动获取本机 IP）
-  #host: 127.0.0.1
-  # 客户端端口（默认：1789）
-  port: 1789
-  # 命名空间 ID
-  namespace: ${SCHEDULE_NAMESPACE:764d604ec6fc45f68cd92514c40e9e1a}
-  # 分组名
-  group: ${SCHEDULE_GROUP:continew-admin}
-  # 令牌
-  token: ${SCHEDULE_TOKEN:SJ_Wyz3dmsdbDOkDujOTSSoBjGQP1BMsVnj}
+  enabled: true
   ## 服务端配置（任务调度中心）
   server:
-    # 服务端地址，若服务端集群部署则此处配置域名
+    # 服务端地址
     host: ${SCHEDULE_HOST:127.0.0.1}
-    # Netty 端口号
-    port: ${SCHEDULE_PORT:1788}
+    # 服务端通讯端口
+    port: ${SCHEDULE_PORT:17888}
     # API 配置
     api:
       # URL
       url: http://127.0.0.1:8001/snail-job
       # 用户名
-      username:  ${SCHEDULE_USERNAME:admin}
+      username: ${SCHEDULE_USERNAME:admin}
       # 密码
-      password:  ${SCHEDULE_PASSWORD:admin}
+      password: ${SCHEDULE_PASSWORD:admin}
+  ## OpenAPI 配置
+  openapi:
+    # 服务端 Web 端口（默认：8080，如果你部署的服务端改动了端口，这里也需要对应改动）
+    # continew-extension/continew-extension-schedule-server
+    port: 18001
+  # 客户端地址（默认：自动推断。必须确保服务端可以访问到，在服务端无法调度客户端时需要手动配置）
+  #host: 127.0.0.1
+  # 客户端端口（默认：17889）
+  port: 17889
+  # 命名空间
+  namespace: ${SCHEDULE_NAMESPACE:764d604ec6fc45f68cd92514c40e9e1a}
+  # 接入组名
+  group: ${SCHEDULE_GROUP:codestyle-admin}
+  # 接入组 token
+  token: ${SCHEDULE_TOKEN:SJ_Wyz3dmsdbDOkDujOTSSoBjGQP1BMsVnj}

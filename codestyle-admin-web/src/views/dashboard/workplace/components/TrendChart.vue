@@ -30,20 +30,20 @@ const chartDataMap = {
     xAxis: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'],
     codeGen: [120, 80, 150, 320, 450, 380, 200],
     knowledge: [80, 60, 120, 260, 350, 300, 150],
-    mcp: [60, 40, 80, 180, 250, 200, 100]
+    mcp: [60, 40, 80, 180, 250, 200, 100],
   },
   week: {
     xAxis: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'],
     codeGen: [856, 1024, 980, 1150, 1320, 680, 420],
     knowledge: [620, 780, 850, 920, 1050, 520, 380],
-    mcp: [420, 560, 620, 680, 780, 350, 280]
+    mcp: [420, 560, 620, 680, 780, 350, 280],
   },
   month: {
     xAxis: ['第1周', '第2周', '第3周', '第4周'],
     codeGen: [5680, 6240, 7120, 6850],
     knowledge: [4120, 4680, 5240, 4920],
-    mcp: [2860, 3240, 3680, 3420]
-  }
+    mcp: [2860, 3240, 3680, 3420],
+  },
 }
 
 const currentData = computed(() => chartDataMap[timeRange.value as keyof typeof chartDataMap])
@@ -55,8 +55,8 @@ const { chartOption } = useChart((isDark): EChartsOption => {
       data: ['代码生成', '知识库查询', 'MCP调用'],
       bottom: 0,
       textStyle: {
-        color: isDark ? 'rgba(255,255,255,0.7)' : '#4E5969'
-      }
+        color: isDark ? 'rgba(255,255,255,0.7)' : '#4E5969',
+      },
     },
     grid: { left: 40, right: 20, top: 10, bottom: 40 },
     animationDuration: 1000,
@@ -65,14 +65,14 @@ const { chartOption } = useChart((isDark): EChartsOption => {
       type: 'category',
       data: currentData.value.xAxis,
       axisLine: { lineStyle: { color: isDark ? '#333' : '#e8e8e8' } },
-      axisLabel: { color: isDark ? 'rgba(255,255,255,0.7)' : '#999' }
+      axisLabel: { color: isDark ? 'rgba(255,255,255,0.7)' : '#999' },
     },
     yAxis: {
       type: 'value',
       axisLine: { show: false },
       axisTick: { show: false },
       splitLine: { lineStyle: { color: isDark ? '#333' : '#f0f0f0' } },
-      axisLabel: { color: isDark ? 'rgba(255,255,255,0.7)' : '#999' }
+      axisLabel: { color: isDark ? 'rgba(255,255,255,0.7)' : '#999' },
     },
     series: [
       {
@@ -83,7 +83,7 @@ const { chartOption } = useChart((isDark): EChartsOption => {
         lineStyle: { width: 2 },
         showSymbol: false,
         itemStyle: { color: '#165DFF' },
-        animationDelay: (idx: number) => idx * 50
+        animationDelay: (idx: number) => idx * 50,
       },
       {
         name: '知识库查询',
@@ -93,7 +93,7 @@ const { chartOption } = useChart((isDark): EChartsOption => {
         lineStyle: { width: 2 },
         showSymbol: false,
         itemStyle: { color: '#14C9C9' },
-        animationDelay: (idx: number) => idx * 50 + 100
+        animationDelay: (idx: number) => idx * 50 + 100,
       },
       {
         name: 'MCP调用',
@@ -103,9 +103,9 @@ const { chartOption } = useChart((isDark): EChartsOption => {
         lineStyle: { width: 2 },
         showSymbol: false,
         itemStyle: { color: '#722ED1' },
-        animationDelay: (idx: number) => idx * 50 + 200
-      }
-    ]
+        animationDelay: (idx: number) => idx * 50 + 200,
+      },
+    ],
   }
 })
 </script>

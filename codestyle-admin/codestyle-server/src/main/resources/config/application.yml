@@ -4,21 +4,20 @@ application:
   # 名称
   name: CodeStyle Admin
   # 描述
-  description: 基于 ContiNew Admin 的代码风格管理系统，提供代码审查、规范检查、团队协作等功能。
+  description: 让历史代码活起来，让 AI 写的更对味！
   # 版本
-  version: 4.1.0
-  starter: 2.14.0
+  version: 1.0.0
   # 基本包
   base-package: top.codestyle.admin
   ## 作者信息配置
   contact:
-    name: CodeStyle Team
-    email: admin@codestyle.top
+    name: CodeStyle
+    email: codestyle@126.com
     url: https://codestyle.top
   ## 许可协议信息配置
   license:
     name: Apache-2.0
-    url: https://github.com/codestyle/codestyle-admin/blob/main/LICENSE
+    url: https://github.com/codestyle-team/codestyle/blob/main/LICENSE
 
 --- ### 服务器配置
 server:
@@ -47,10 +46,9 @@ spring:
   ## 环境配置
   profiles:
     # 启用的环境
-    active: dev
+    active: ${PROFILES_ACTIVE:dev}
     include:
       - generator
-      - newsearch
   main:
     # 允许定义重名的 bean 对象覆盖原有的 bean
     allow-bean-definition-overriding: true
@@ -103,12 +101,6 @@ avatar:
   # 支持的后缀
   support-suffix: jpg,jpeg,png,gif
 
---- ### 模板存储配置
-template:
-  storage:
-    # 模板文件存储根目录（支持绝对路径和相对路径）
-    path: ./templates
-
 --- ### 接口文档配置
 springdoc:
   api-docs:
@@ -130,15 +122,29 @@ springdoc:
         name: ${sa-token.token-name}
         scheme: ${sa-token.token-prefix}
 ## 接口文档增强配置
-knife4j:
-  enable: true
-  setting:
-    # 是否显示默认的 footer（默认 true，显示）
-    enable-footer: false
-    # 是否自定义 footer（默认 false，非自定义）
-    enable-footer-custom: true
-    # 自定义 footer 内容，支持 Markdown 语法
-    footer-custom-content: 'Copyright © 2022-present [${application.contact.name}](${application.contact.url})&nbsp;⋅&nbsp;[${application.name}](${application.url}) v${application.version}'
+nextdoc4j:
+  # 启用开关
+  enabled: true
+  # 扩展配置
+  extension:
+    # 扩展开关
+    enabled: true
+    # 品牌配置
+    brand:
+      # logo 展示
+      logo: classpath:favicon.ico
+      # 标题
+      title: ${application.name}
+      # 自定义 footer 内容
+      footer-text: 'Copyright © 2022-present [${application.contact.name}](${application.contact.url})&nbsp;⋅&nbsp;[${application.name}](${application.url}) v${application.version}'
+  # 插件配置
+  plugin:
+    # 枚举展示开关
+    enum:
+      enabled: true
+    # 认证展示和 sa-token 权限码展示开关
+    security:
+      enabled: true
 
 --- ### 全局响应配置
 continew-starter.web.response:
@@ -222,7 +228,13 @@ continew-starter.tenant:
     - sys_sms_log # 短信日志表
     - sys_client # 客户端表
     - sys_app # 应用表
-    - remote_meta_info # 远程元信息表（搜索模块使用，不需要租户隔离）
+    - remote_meta_info # 模板元数据表
+    - template # 代码模板表
+    - template_tag # 模板标签表
+    - template_favorite # 模板收藏表
+    - chat_session # 对话会话表
+    - chat_message # 对话消息表
+    - code_snippet # 代码片段表
   # 忽略菜单 ID（租户不能使用的菜单）
   ignore-menus:
     - 1050 # 菜单管理
@@ -246,17 +258,24 @@ sa-token:
   token-name: Authorization
   # 是否启用动态 activeTimeout 功能
   dynamic-active-timeout: true
-  ## 提示：请通过页面功能 [系统管理/系统配置/客户端配置] 动态调整 timeout、active-timeout 配置项
-  ## 如果不需要动态配置，请将 dynamic-active-timeout 设为 false，并取消下方 timeout 和 active-timeout 配置的注释，最好再移除相关登录处理代码
+  ## 提示：请通过页面功能 [系统管理/系统配置/客户端配置] 动态调整下方注释的配置项
+  ## 如果不需要动态配置，请取消下方配置注释，再移除相关登录处理代码
 #  # Token 有效期（单位：秒，默认 30 天，-1 代表永不过期）
 #  timeout: 86400
 #  # Token 最低活跃频率（单位：秒，默认 -1，代表不限制，永不冻结。如果 token 超过此时间没有访问系统就会被冻结）
 #  active-timeout: 1800
-  # 是否打开自动续签（如果此值为 true，框架会在每次直接或间接调用 getLoginId() 时进行一次过期检查与续签操作）
-  auto-renew: true
-  # 是否允许同一账号多地同时登录（为 true 时允许一起登录，为 false 时新登录挤掉旧登录）
-  is-concurrent: true
-  # 在多人登录同一账号时，是否共用一个 Token（为 true 时所有登录共用一个 Token，为 false 时每次登录新建一个 Token）
+#  # 是否打开自动续签（true：每次直接或间接调用 getLoginId() 时进行一次过期检查与续签操作）
+#  auto-renew: true
+#  # 是否允许同一账号多地同时登录（true：允许；false：新登录挤掉旧登录）
+#  is-concurrent: true
+#  # 顶人下线的范围（ALL_DEVICE_TYPE：所有设备类型端）
+#  replaced-range: ALL_DEVICE_TYPE
+#  # 同一账号最大登录数量（-1：不限制，只有在 isConcurrent=true，isShare=false 时才有效）
+#  max-login-count: -1
+#  # 溢出人数的下线方式（KICKOUT：踢人下线）
+#  overflow-logout-mode: KICKOUT
+  # 在多人登录同一账号时，是否共用一个 Token（true：所有登录共用一个 Token；false：每次登录新建一个 Token）
+  # 使用 jwt-simple 模式后，is-share 恒等于 false（目前本项目使用 jwt-simple 模式，可通过 sa-token.extension.enableJwt: false 关闭并自行提供 StpLogic 配置）
   is-share: false
   # 是否输出操作日志
   is-log: false
@@ -351,4 +370,71 @@ auth:
       - /auth/user/info
       - /auth/logout
       - /system/user/password
+
+--- ### Spring AI DashScope 配置
+spring:
+  ai:
+    dashscope:
+      api-key: ${DASHSCOPE_API_KEY:sk-a993666e75d14ba6a8e69809e66f074b}
+      chat:
+        options:
+          model: qwen-plus
+
+--- ### 模板存储配置
+template:
+  storage:
+    path: ${TEMPLATE_STORAGE_PATH:./templates}
+
+--- ### 深度研究配置
+research:
+  enabled: true
+  task-timeout-seconds: 600
+  max-concurrent-tasks: 5
+  sse-heartbeat-seconds: 30
+  model:
+    default-model: qwen-plus
+    strong-model: qwen-max
+    small-model: qwen-turbo
+    max-tokens: 4096
+    temperature: 0.7
+  github:
+    token: ${GITHUB_TOKEN:}
+    clone-timeout-seconds: 300
+    max-file-size-mb: 10
+  template:
+    storage-path: ${TEMPLATE_STORAGE_PATH:./templates}
+    auto-index: true
+    auto-vectorize: true
+
+--- ### 检索模块配置
+search:
+  enabled: true
+  elasticsearch:
+    enabled: true
+    hosts: localhost:9200
+    username: 
+    password: 
+    index: codestyle_templates
+  milvus:
+    enabled: false
+    host: localhost
+    port: 19530
+    collection: codestyle_templates
+    dimension: 1024
+  hybrid:
+    enabled: true
+    fusion-strategy: RRF
+  rerank:
+    enabled: false
+    provider: BGE
+    api-url: http://localhost:8001/rerank
+    model: BAAI/bge-reranker-v2-m3
+    top-k: 10
+  cache:
+    enabled: true
+    local:
+      max-size: 1000
+      ttl: 300
+    redis:
+      ttl: 3600
 

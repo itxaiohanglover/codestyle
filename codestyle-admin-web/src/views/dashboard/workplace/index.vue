@@ -6,14 +6,12 @@
       </div>
       <div style="margin-top: 14px">
         <a-grid :cols="24" :col-gap="14" :row-gap="14">
-          <!-- 图表行 -->
           <a-grid-item :span="16">
             <TrendChart />
           </a-grid-item>
           <a-grid-item :span="8">
             <TechStackChart />
           </a-grid-item>
-          <!-- 调用记录 -->
           <a-grid-item :span="24">
             <CallRecords />
           </a-grid-item>

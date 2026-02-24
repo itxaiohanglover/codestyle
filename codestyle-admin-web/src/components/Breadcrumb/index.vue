@@ -19,11 +19,13 @@
 import type { RouteLocationMatched } from 'vue-router'
 import { findTree } from 'xe-utils'
 import { useRouteStore } from '@/stores'
+import { useRouteListener } from '@/hooks'
 
 const route = useRoute()
 const router = useRouter()
 const { routes } = useRouteStore()
 const attrs = useAttrs()
+const { listenerRouteChange } = useRouteListener()
 
 let home: RouteLocationMatched | null = null
 const getHome = () => {
@@ -47,10 +49,11 @@ function getBreadcrumbList() {
 }
 getBreadcrumbList()
 
-watchEffect(() => {
-  if (route.path.startsWith('/redirect/')) return
+/** 监听路由变化 */
+listenerRouteChange(({ to }) => {
+  if (to.path.startsWith('/redirect/')) return
   getBreadcrumbList()
-})
+}, true)
 
 // 路由跳转
 function handleLink(item: RouteLocationMatched) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-present Charles7c Authors. All Rights Reserved.
+ * Copyright (c) 2022-present CodeStyle Authors. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,11 +87,10 @@ public class TemplateFileController {
     @Parameter(name = "artifactId", description = "项目ID", example = "crud-template", in = ParameterIn.QUERY)
     @Parameter(name = "version", description = "版本号", example = "1.0.0", in = ParameterIn.QUERY)
     @GetMapping("/open-api/template/download")
-    public void download(
-            @RequestParam String groupId,
-            @RequestParam String artifactId,
-            @RequestParam String version,
-            HttpServletResponse response) throws IOException {
+    public void download(@RequestParam String groupId,
+                         @RequestParam String artifactId,
+                         @RequestParam String version,
+                         HttpServletResponse response) throws IOException {
 
         log.info("开始下载模板: groupId={}, artifactId={}, version={}", groupId, artifactId, version);
 
@@ -120,8 +119,7 @@ public class TemplateFileController {
             response.setContentLengthLong(zipFile.length());
 
             // 6. 写入响应流
-            try (FileInputStream fis = new FileInputStream(zipFile);
-                 OutputStream os = response.getOutputStream()) {
+            try (FileInputStream fis = new FileInputStream(zipFile); OutputStream os = response.getOutputStream()) {
                 IoUtil.copy(fis, os);
                 os.flush();
             }
@@ -161,11 +159,10 @@ public class TemplateFileController {
     @Parameter(name = "artifactId", description = "项目ID", example = "crud-template", in = ParameterIn.QUERY)
     @Parameter(name = "version", description = "版本号", example = "1.0.0", in = ParameterIn.QUERY)
     @PostMapping("/open-api/template/upload")
-    public R<TemplateUploadResp> upload(
-            @RequestPart MultipartFile file,
-            @RequestParam String groupId,
-            @RequestParam String artifactId,
-            @RequestParam String version) throws IOException {
+    public R<TemplateUploadResp> upload(@RequestPart MultipartFile file,
+                                        @RequestParam String groupId,
+                                        @RequestParam String artifactId,
+                                        @RequestParam String version) throws IOException {
 
         log.info("开始上传模板: groupId={}, artifactId={}, version={}", groupId, artifactId, version);
 
@@ -180,12 +177,9 @@ public class TemplateFileController {
         CheckUtils.throwIf(filename == null || !filename.endsWith(".zip"), "只支持 ZIP 文件");
 
         // 3. 上传并解压（复用 FileService）
-        TemplateUploadResp resp = templateFileService.uploadTemplate(
-            file, groupId, artifactId, version
-        );
+        TemplateUploadResp resp = templateFileService.uploadTemplate(file, groupId, artifactId, version);
 
         log.info("模板上传成功: templateId={}", resp.getTemplateId());
         return R.ok(resp);
     }
 }
-

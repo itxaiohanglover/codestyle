@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-present Charles7c Authors. All Rights Reserved.
+ * Copyright (c) 2022-present CodeStyle Authors. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,7 +68,7 @@ public class LogDetailResp implements Serializable {
     /**
      * 请求 URL
      */
-    @Schema(description = "请求 URL", example = "http://api.continew.top/system/dept")
+    @Schema(description = "请求 URL", example = "http://api.codestyle.top/system/dept")
     private String requestUrl;
 
     /**
@@ -80,7 +80,7 @@ public class LogDetailResp implements Serializable {
     /**
      * 请求头
      */
-    @Schema(description = "请求头", example = "{\"Origin\": [\"https://admin.continew.top\"],...}")
+    @Schema(description = "请求头", example = "{\"Origin\": [\"https://admin.codestyle.top\"],...}")
     private String requestHeaders;
 
     /**

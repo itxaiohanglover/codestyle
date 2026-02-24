@@ -7,7 +7,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
 import cn.idev.excel.annotation.ExcelProperty;
 
-import top.codestyle.admin.common.base.model.resp.BaseDetailResp;
+import top.continew.admin.common.base.model.resp.BaseDetailResp;
 import top.continew.starter.excel.converter.ExcelBaseEnumConverter;
 <#if imports??>
     <#list imports as className>

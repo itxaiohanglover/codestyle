@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-present Charles7c Authors. All Rights Reserved.
+ * Copyright (c) 2022-present CodeStyle Authors. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ public class TenantQuery implements Serializable {
     /**
      * 域名
      */
-    @Schema(description = "域名", example = "admin.continew.top")
+    @Schema(description = "域名", example = "admin.codestyle.top")
     @Query(type = QueryType.LIKE)
     private String domain;
 

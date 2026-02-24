@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-present Charles7c Authors. All Rights Reserved.
+ * Copyright (c) 2022-present CodeStyle Authors. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,11 +24,8 @@ import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.ReUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.xkcoding.justauth.autoconfigure.JustAuthProperties;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import me.zhyd.oauth.AuthRequestBuilder;
-import me.zhyd.oauth.config.AuthConfig;
 import me.zhyd.oauth.model.AuthCallback;
 import me.zhyd.oauth.model.AuthResponse;
 import me.zhyd.oauth.model.AuthUser;
@@ -54,8 +51,8 @@ import top.codestyle.admin.system.service.DeptService;
 import top.codestyle.admin.system.service.MessageService;
 import top.codestyle.admin.system.service.UserRoleService;
 import top.codestyle.admin.system.service.UserSocialService;
+import top.continew.starter.auth.justauth.AuthRequestFactory;
 import top.continew.starter.core.autoconfigure.application.ApplicationProperties;
-import top.continew.starter.core.exception.BadRequestException;
 import top.continew.starter.core.util.validation.ValidationUtils;
 
 import java.time.LocalDateTime;
@@ -72,7 +69,7 @@ import java.util.Collections;
 @RequiredArgsConstructor
 public class SocialLoginHandler extends AbstractLoginHandler<SocialLoginReq> {
 
-    private final JustAuthProperties authProperties;
+    private final AuthRequestFactory authRequestFactory;
     private final UserSocialService userSocialService;
     private final UserRoleService userRoleService;
     private final MessageService messageService;
@@ -83,7 +80,7 @@ public class SocialLoginHandler extends AbstractLoginHandler<SocialLoginReq> {
     @Transactional
     public LoginResp login(SocialLoginReq req, ClientResp client, HttpServletRequest request) {
         // 获取第三方登录信息
-        AuthRequest authRequest = this.getAuthRequest(req.getSource());
+        AuthRequest authRequest = authRequestFactory.getAuthRequest(req.getSource());
         AuthCallback callback = new AuthCallback();
         callback.setCode(req.getCode());
         callback.setState(req.getState());
@@ -151,21 +148,6 @@ public class SocialLoginHandler extends AbstractLoginHandler<SocialLoginReq> {
     @Override
     public AuthTypeEnum getAuthType() {
         return AuthTypeEnum.SOCIAL;
-    }
-
-    /**
-     * 获取 AuthRequest
-     *
-     * @param source 平台名称
-     * @return AuthRequest
-     */
-    private AuthRequest getAuthRequest(String source) {
-        try {
-            AuthConfig authConfig = authProperties.getType().get(source.toUpperCase());
-            return AuthRequestBuilder.builder().source(source).authConfig(authConfig).build();
-        } catch (Exception e) {
-            throw new BadRequestException("暂不支持 [%s] 平台账号登录".formatted(source));
-        }
     }
 
     /**

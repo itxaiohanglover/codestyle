@@ -102,9 +102,9 @@
 </template>
 
 <script setup lang="ts">
-import type { RouteLocationNormalized } from 'vue-router'
 import ReloadIcon from './ReloadIcon.vue'
 import { useAppStore, useTabsStore } from '@/stores'
+import { useRouteListener } from '@/hooks'
 
 defineOptions({ name: 'Tabs' })
 
@@ -112,6 +112,7 @@ const route = useRoute()
 const router = useRouter()
 const appStore = useAppStore()
 const tabsStore = useTabsStore()
+const { listenerRouteChange } = useRouteListener()
 
 // 菜单获取的路径
 const currentContextPath = ref('')
@@ -119,20 +120,14 @@ const currentContextPath = ref('')
 // Initialize tabs
 tabsStore.init()
 
-const handleRouteChange = () => {
-  const item = { ...route } as unknown as RouteLocationNormalized
-  tabsStore.addTabItem(toRaw(item))
-  tabsStore.addCacheItem(toRaw(item))
-}
-
-handleRouteChange()
-
-watch(
-  () => route.fullPath,
-  () => {
-    handleRouteChange()
-  },
-)
+/** 监听路由变化 */
+listenerRouteChange(({ to }) => {
+  if (to.name) {
+    const rawTo = toRaw(to)
+    tabsStore.addTabItem(rawTo)
+    tabsStore.addCacheItem(rawTo)
+  }
+})
 
 const handleTabClick = (key: string | number) => {
   const obj = tabsStore.tabList.find((i) => i.path === key)

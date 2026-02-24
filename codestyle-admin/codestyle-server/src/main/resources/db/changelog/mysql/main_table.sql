@@ -1,6 +1,6 @@
 -- liquibase formatted sql
 
--- changeset charles7c:1
+-- changeset codestyle:1
 -- comment 初始化表结构
 CREATE TABLE IF NOT EXISTS `sys_menu` (
     `id`          bigint(20)   AUTO_INCREMENT              COMMENT 'ID',
@@ -347,6 +347,10 @@ CREATE TABLE IF NOT EXISTS `sys_client` (
     `auth_type`      json         NOT NULL                    COMMENT '认证类型',
     `active_timeout` bigint(20)   DEFAULT -1                  COMMENT 'Token最低活跃频率（单位：秒，-1：不限制，永不冻结）',
     `timeout`        bigint(20)   DEFAULT 2592000             COMMENT 'Token有效期（单位：秒，-1：永不过期）',
+    `is_concurrent` tinyint(1)   DEFAULT 0                   COMMENT '是否支持多设备同时在线（0：否；1：是）',
+    `replaced_range` varchar(50)  DEFAULT NULL                COMMENT '被踢下线范围',
+    `max_login_count` int         DEFAULT -1                  COMMENT '同一账号最大登录数量（-1：不限制）',
+    `overflow_logout_mode` varchar(50) DEFAULT NULL           COMMENT '超出登录限制后处理方式',
     `status`         tinyint(1)   UNSIGNED NOT NULL DEFAULT 1 COMMENT '状态（1：启用；2：禁用）',
     `create_user`    bigint(20)   NOT NULL                    COMMENT '创建人',
     `create_time`    datetime     NOT NULL                    COMMENT '创建时间',

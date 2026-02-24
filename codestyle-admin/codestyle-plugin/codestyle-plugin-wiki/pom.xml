@@ -13,72 +13,27 @@
     <packaging>jar</packaging>
 
     <name>${project.artifactId}</name>
-    <description>Wiki 教程生成插件 - 基于 AI 的代码库知识构建工具</description>
+    <description>Wiki 教程生成插件（基于 AI 的代码库知识构建工具）</description>
 
     <dependencies>
-        <!-- CodeStyle Common -->
-        <dependency>
-            <groupId>top.codestyle.admin</groupId>
-            <artifactId>codestyle-common</artifactId>
-        </dependency>
-
-        <!-- Spring Boot Web -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-
-        <!-- Spring AI Alibaba -->
         <dependency>
             <groupId>com.alibaba.cloud.ai</groupId>
             <artifactId>spring-ai-alibaba-starter</artifactId>
-            <version>1.0.0-M3.2</version>
         </dependency>
 
-        <!-- MyBatis-Plus -->
-        <dependency>
-            <groupId>com.baomidou</groupId>
-            <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
-        </dependency>
-
-        <!-- Redis -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-redis</artifactId>
-        </dependency>
-
-        <!-- JGit (Git 操作) -->
         <dependency>
             <groupId>org.eclipse.jgit</groupId>
             <artifactId>org.eclipse.jgit</artifactId>
-            <version>6.8.0.202311291450-r</version>
         </dependency>
 
-        <!-- OkHttp (HTTP 客户端) -->
         <dependency>
             <groupId>com.squareup.okhttp3</groupId>
             <artifactId>okhttp</artifactId>
         </dependency>
 
-        <!-- Markdown 处理 -->
         <dependency>
             <groupId>com.vladsch.flexmark</groupId>
             <artifactId>flexmark-all</artifactId>
-            <version>0.64.8</version>
-        </dependency>
-
-        <!-- YAML 解析 -->
-        <dependency>
-            <groupId>org.yaml</groupId>
-            <artifactId>snakeyaml</artifactId>
-        </dependency>
-
-        <!-- Lombok -->
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <scope>provided</scope>
         </dependency>
     </dependencies>
 </project>
-

@@ -1,7 +1,7 @@
 {
-  "name": "continew-admin-ui",
+  "name": "codestyle-admin-web",
   "type": "module",
-  "version": "4.2.0-SNAPSHOT",
+  "version": "1.0.0",
   "private": "true",
   "scripts": {
     "bootstrap": "pnpm install --registry=https://registry.npmmirror.com",

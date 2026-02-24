@@ -16,73 +16,40 @@
     <description>深度研究插件（基于 Spring AI Alibaba Graph 的 DeepResearch Agent）</description>
 
     <dependencies>
-        <!-- 公共模块 -->
-        <dependency>
-            <groupId>top.codestyle.admin</groupId>
-            <artifactId>codestyle-common</artifactId>
-        </dependency>
-
-        <!-- 检索插件（TemplateUploadResp） -->
         <dependency>
             <groupId>top.codestyle.admin</groupId>
             <artifactId>codestyle-plugin-search</artifactId>
         </dependency>
 
-        <!-- Spring AI Alibaba Graph -->
         <dependency>
             <groupId>com.alibaba.cloud.ai</groupId>
             <artifactId>spring-ai-alibaba-starter</artifactId>
-            <version>1.0.0-M3.2</version>
         </dependency>
 
-        <!-- Spring Boot Starter Web -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-
-        <!-- Spring Boot Starter Data Redis -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-redis</artifactId>
-        </dependency>
-
-        <!-- ContiNew Starter Web -->
-        <dependency>
-            <groupId>top.continew.starter</groupId>
-            <artifactId>continew-starter-web</artifactId>
-        </dependency>
-
-        <!-- ContiNew Starter JSON 模块 - Jackson -->
-        <dependency>
-            <groupId>top.continew.starter</groupId>
-            <artifactId>continew-starter-json-jackson</artifactId>
-        </dependency>
-
-        <!-- Spring Retry 重试机制 -->
         <dependency>
             <groupId>org.springframework.retry</groupId>
             <artifactId>spring-retry</artifactId>
         </dependency>
 
-        <!-- OkHttp（用于 HTTP 请求） -->
         <dependency>
             <groupId>com.squareup.okhttp3</groupId>
             <artifactId>okhttp</artifactId>
         </dependency>
 
-        <!-- JGit（用于 Git 仓库操作） -->
         <dependency>
             <groupId>org.eclipse.jgit</groupId>
             <artifactId>org.eclipse.jgit</artifactId>
-            <version>6.8.0.202311291450-r</version>
         </dependency>
 
-        <!-- FreeMarker（模板引擎） -->
         <dependency>
             <groupId>org.freemarker</groupId>
             <artifactId>freemarker</artifactId>
         </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 </project>
-

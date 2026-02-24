@@ -32,7 +32,7 @@
               <div class="stats-grid">
                 <div class="stat-card">
                   <icon-star-fill class="stat-icon" style="color: rgb(var(--warning-6))" />
-                  <div class="stat-value">2,543</div>
+                  <div class="stat-value">{{ templateData?.starCount ?? 0 }}</div>
                   <div class="stat-label">收藏数</div>
                 </div>
                 <div class="stat-card">
@@ -45,7 +45,7 @@
               <!-- 版本信息 -->
               <div class="version-section">
                 <span class="version-label">当前版本</span>
-                <span class="version-number">v3.2.0</span>
+                <span class="version-number">{{ templateData?.version || '-' }}</span>
               </div>
 
               <!-- 元数据 -->
@@ -54,21 +54,21 @@
                   <div class="meta-icon"><icon-user /></div>
                   <div class="meta-content">
                     <div class="meta-label">创建者</div>
-                    <div class="meta-value">{{ templateData?.author }}</div>
+                    <div class="meta-value">{{ templateData?.createUserString || templateData?.author }}</div>
                   </div>
                 </div>
                 <div class="meta-item">
                   <div class="meta-icon"><icon-clock-circle /></div>
                   <div class="meta-content">
                     <div class="meta-label">创建时间</div>
-                    <div class="meta-value">2024-01-15</div>
+                    <div class="meta-value">{{ templateData?.createTime || '-' }}</div>
                   </div>
                 </div>
                 <div class="meta-item">
                   <div class="meta-icon"><icon-calendar /></div>
                   <div class="meta-content">
                     <div class="meta-label">更新时间</div>
-                    <div class="meta-value">2026-02-01</div>
+                    <div class="meta-value">{{ templateData?.updateTime || '-' }}</div>
                   </div>
                 </div>
               </div>
@@ -76,58 +76,36 @@
               <!-- 下载按钮 -->
               <a-button type="primary" long @click="onDownload">
                 <template #icon><icon-download /></template>
-                下载压缩包
+                下载模板
               </a-button>
+
+              <div v-if="templateData?.groupId || templateData?.artifactId" class="info-section">
+                <div class="section-title">坐标信息</div>
+                <div class="section-text">
+                  <div v-if="templateData?.groupId">GroupId: {{ templateData.groupId }}</div>
+                  <div v-if="templateData?.artifactId">ArtifactId: {{ templateData.artifactId }}</div>
+                </div>
+              </div>
             </div>
           </a-scrollbar>
         </a-layout-sider>
 
-        <!-- 文件树侧边栏 -->
-        <a-layout-sider :width="280" :resize-directions="['right']" style="min-width: 200px; max-width: 400px">
-          <div class="file-tree-header">
-            <icon-folder />
-            <span>文件目录</span>
-          </div>
-          <a-scrollbar style="height: 660px; overflow: auto">
-            <a-tree
-              ref="treeRef"
-              :data="treeData"
-              show-line
-              block-node
-              :selected-keys="selectedKeys"
-              @select="onSelectFile"
-            >
-              <template #switcher-icon="node, { isLeaf }">
-                <icon-caret-down v-if="!isLeaf" />
-              </template>
-              <template #icon="node">
-                <GiSvgIcon v-if="!node.isLeaf && !node.expanded" :size="16" name="directory-blue" />
-                <GiSvgIcon v-if="!node.isLeaf && node.expanded" :size="16" name="directory-open-blue" />
-                <GiSvgIcon v-if="node.isLeaf && checkFileType(node.node.title, '.java')" :size="16" name="file-java" />
-                <GiSvgIcon v-if="node.isLeaf && checkFileType(node.node.title, '.vue')" :size="16" name="file-vue" />
-                <GiSvgIcon v-if="node.isLeaf && checkFileType(node.node.title, '.ts')" :size="16" name="file-typescript" />
-                <GiSvgIcon v-if="node.isLeaf && checkFileType(node.node.title, '.yml')" :size="16" name="file-json" />
-                <GiSvgIcon v-if="node.isLeaf && checkFileType(node.node.title, '.xml')" :size="16" name="file-xml" />
-                <GiSvgIcon v-if="node.isLeaf && checkFileType(node.node.title, '.md')" :size="16" name="file-txt" />
-              </template>
-            </a-tree>
-          </a-scrollbar>
-        </a-layout-sider>
-
-        <!-- 代码预览区 -->
+        <!-- 模板描述区 -->
         <a-layout-content>
           <a-card :bordered="false">
             <template #title>
-              <a-typography-title :heading="6" ellipsis>{{ currentFile?.title }}</a-typography-title>
+              <a-typography-title :heading="6" ellipsis>模板详情</a-typography-title>
             </template>
             <template #extra>
               <a-link @click="onCopy">
                 <template #icon><icon-copy /></template>
-                复制
+                复制下载链接
               </a-link>
             </template>
             <a-scrollbar style="height: 650px; overflow: auto">
-              <GiCodeView :type="codeType" :code-json="currentFile?.content || ''" />
+              <div class="template-description">
+                <p>{{ templateData?.description }}</p>
+              </div>
             </a-scrollbar>
           </a-card>
         </a-layout-content>
@@ -137,39 +115,18 @@
 </template>
 
 <script setup lang="ts">
-import { Message, type TreeNodeData } from '@arco-design/web-vue'
+import { ref, watch } from 'vue'
+import { Message } from '@arco-design/web-vue'
 import { useClipboard } from '@vueuse/core'
+import type { TemplateDetail, TemplateItem } from '@/apis/template'
+import { getTemplateDetail, recordDownload } from '@/apis/template'
 
 const { copy, copied } = useClipboard()
 
-interface TagItem {
-  label: string
-  color: string
-}
-
-interface TemplateItem {
-  id: number
-  name: string
-  icon: string
-  author: string
-  description: string
-  tags: TagItem[]
-  downloadCount: string
-  rating: number
-  isFavorite: boolean
-}
-
-interface FileNode {
-  title: string
-  key: string
-  content?: string
-  children?: FileNode[]
-  isLeaf?: boolean
-}
-
 const visible = ref(false)
-const templateData = ref<TemplateItem>()
+const templateData = ref<TemplateDetail>()
 const iconStyle = ref<Record<string, string>>({})
+const detailLoading = ref(false)
 
 // 图标渐变色
 const iconGradients = [
@@ -181,114 +138,9 @@ const iconGradients = [
   'linear-gradient(135deg, #2563EB 0%, #60A5FA 100%)',
 ]
 
-// Mock 文件树数据
-const mockTreeData: FileNode[] = [
-  {
-    title: 'README.md',
-    key: 'README.md',
-    isLeaf: true,
-    content: '# Spring Boot CRUD 模板\n\n## 项目简介\n\n这是一个标准的 Spring Boot 增删改查模板，包含完整的 Controller、Service、Repository 层代码结构。\n\n## 功能特性\n\n- 完整的 CRUD 操作\n- 分页查询支持\n- 高级查询条件\n- 参数校验\n- 统一异常处理\n- RESTful API 设计\n\n## 快速开始\n\n```bash\ngit clone https://github.com/example/spring-boot-crud.git\ncd spring-boot-crud\nmvn spring-boot:run\n```',
-  },
-  {
-    title: 'src',
-    key: 'src',
-    children: [
-      {
-        title: 'UserController.java',
-        key: 'UserController.java',
-        isLeaf: true,
-        content: 'package com.example.controller;\n\nimport com.example.entity.User;\nimport com.example.service.UserService;\nimport org.springframework.web.bind.annotation.*;\nimport java.util.List;\n\n@RestController\n@RequestMapping("/api/users")\npublic class UserController {\n\n    private final UserService userService;\n\n    public UserController(UserService userService) {\n        this.userService = userService;\n    }\n\n    @GetMapping\n    public List<User> list() {\n        return userService.list();\n    }\n\n    @GetMapping("/{id}")\n    public User getById(@PathVariable Long id) {\n        return userService.getById(id);\n    }\n\n    @PostMapping\n    public User create(@RequestBody User user) {\n        return userService.save(user);\n    }\n\n    @PutMapping("/{id}")\n    public User update(@PathVariable Long id, @RequestBody User user) {\n        user.setId(id);\n        return userService.update(user);\n    }\n\n    @DeleteMapping("/{id}")\n    public void delete(@PathVariable Long id) {\n        userService.deleteById(id);\n    }\n}',
-      },
-      {
-        title: 'UserService.java',
-        key: 'UserService.java',
-        isLeaf: true,
-        content: 'package com.example.service;\n\nimport com.example.entity.User;\nimport com.example.repository.UserRepository;\nimport org.springframework.stereotype.Service;\nimport java.util.List;\n\n@Service\npublic class UserService {\n\n    private final UserRepository userRepository;\n\n    public UserService(UserRepository userRepository) {\n        this.userRepository = userRepository;\n    }\n\n    public List<User> list() {\n        return userRepository.findAll();\n    }\n\n    public User getById(Long id) {\n        return userRepository.findById(id).orElseThrow();\n    }\n\n    public User save(User user) {\n        return userRepository.save(user);\n    }\n\n    public User update(User user) {\n        return userRepository.save(user);\n    }\n\n    public void deleteById(Long id) {\n        userRepository.deleteById(id);\n    }\n}',
-      },
-      {
-        title: 'UserRepository.java',
-        key: 'UserRepository.java',
-        isLeaf: true,
-        content: 'package com.example.repository;\n\nimport com.example.entity.User;\nimport org.springframework.data.jpa.repository.JpaRepository;\nimport org.springframework.stereotype.Repository;\n\n@Repository\npublic interface UserRepository extends JpaRepository<User, Long> {\n}',
-      },
-      {
-        title: 'User.java',
-        key: 'User.java',
-        isLeaf: true,
-        content: 'package com.example.entity;\n\nimport jakarta.persistence.*;\nimport lombok.Data;\n\n@Data\n@Entity\n@Table(name = "users")\npublic class User {\n\n    @Id\n    @GeneratedValue(strategy = GenerationType.IDENTITY)\n    private Long id;\n\n    @Column(nullable = false)\n    private String username;\n\n    @Column(nullable = false)\n    private String email;\n\n    private String phone;\n\n    private Integer status;\n}',
-      },
-    ],
-  },
-  {
-    title: 'config',
-    key: 'config',
-    children: [
-      {
-        title: 'application.yml',
-        key: 'application.yml',
-        isLeaf: true,
-        content: 'spring:\n  datasource:\n    url: jdbc:mysql://localhost:3306/your_database\n    username: root\n    password: root\n    driver-class-name: com.mysql.cj.jdbc.Driver\n  jpa:\n    hibernate:\n      ddl-auto: update\n    show-sql: true\n\nserver:\n  port: 8080',
-      },
-    ],
-  },
-  {
-    title: 'pom.xml',
-    key: 'pom.xml',
-    isLeaf: true,
-    content: '<?xml version="1.0" encoding="UTF-8"?>\n<project xmlns="http://maven.apache.org/POM/4.0.0">\n    <modelVersion>4.0.0</modelVersion>\n    <parent>\n        <groupId>org.springframework.boot</groupId>\n        <artifactId>spring-boot-starter-parent</artifactId>\n        <version>3.2.0</version>\n    </parent>\n    <groupId>com.example</groupId>\n    <artifactId>spring-boot-crud</artifactId>\n    <version>1.0.0</version>\n\n    <dependencies>\n        <dependency>\n            <groupId>org.springframework.boot</groupId>\n            <artifactId>spring-boot-starter-web</artifactId>\n        </dependency>\n        <dependency>\n            <groupId>org.springframework.boot</groupId>\n            <artifactId>spring-boot-starter-data-jpa</artifactId>\n        </dependency>\n        <dependency>\n            <groupId>com.mysql</groupId>\n            <artifactId>mysql-connector-j</artifactId>\n            <scope>runtime</scope>\n        </dependency>\n        <dependency>\n            <groupId>org.projectlombok</groupId>\n            <artifactId>lombok</artifactId>\n            <optional>true</optional>\n        </dependency>\n    </dependencies>\n</project>',
-  },
-]
-
-const treeRef = ref()
-const treeData = ref<TreeNodeData[]>([])
-const selectedKeys = ref<string[]>([])
-const currentFile = ref<FileNode>()
-
-// 扁平化文件列表，用于查找
-const flatFiles = ref<FileNode[]>([])
-const flattenTree = (nodes: FileNode[]) => {
-  const result: FileNode[] = []
-  const traverse = (items: FileNode[]) => {
-    for (const item of items) {
-      if (item.isLeaf) {
-        result.push(item)
-      }
-      if (item.children) {
-        traverse(item.children)
-      }
-    }
-  }
-  traverse(nodes)
-  return result
-}
-
-const checkFileType = (title: string, type: string) => {
-  return title.endsWith(type)
-}
-
-const codeType = computed<'javascript' | 'vue'>(() => {
-  const title = currentFile.value?.title || ''
-  if (title.endsWith('.vue')) return 'vue'
-  return 'javascript'
-})
-
-const onSelectFile = (keys: (string | number)[]) => {
-  const key = keys[0] as string
-  if (!key) return
-  const file = flatFiles.value.find((f) => f.key === key)
-  if (file) {
-    currentFile.value = file
-    selectedKeys.value = [key]
-  } else {
-    // 点击的是文件夹，展开/折叠
-    const expandedKeys = treeRef.value?.getExpandedNodes?.()?.map((node: TreeNodeData) => node.key) || []
-    treeRef.value?.expandNode?.(key, !expandedKeys.includes(key))
-  }
-}
-
 const onCopy = () => {
-  if (currentFile.value?.content) {
-    copy(currentFile.value.content)
+  if (templateData.value?.downloadUrl) {
+    copy(templateData.value.downloadUrl)
   }
 }
 
@@ -298,12 +150,21 @@ watch(copied, () => {
   }
 })
 
-const onDownload = () => {
-  Message.info('下载功能开发中')
+const onDownload = async () => {
+  if (!templateData.value) return
+  try {
+    await recordDownload(templateData.value.id)
+    if (templateData.value.downloadUrl) {
+      window.open(templateData.value.downloadUrl, '_blank')
+    }
+    Message.success('下载成功')
+  } catch {
+    Message.error('下载失败')
+  }
 }
 
-const onOpen = (item: TemplateItem) => {
-  templateData.value = item
+const onOpen = async (item: TemplateItem) => {
+  templateData.value = item as TemplateDetail
   // 计算图标样式
   let hash = 0
   for (let i = 0; i < item.icon.length; i++) {
@@ -312,18 +173,17 @@ const onOpen = (item: TemplateItem) => {
   const index = Math.abs(hash) % iconGradients.length
   iconStyle.value = { background: iconGradients[index] }
 
-  // TODO: 根据模板 ID 加载真实文件树，目前使用 Mock 数据
-  treeData.value = mockTreeData
-  flatFiles.value = flattenTree(mockTreeData)
-  // 默认选中第一个文件
-  if (flatFiles.value.length > 0) {
-    currentFile.value = flatFiles.value[0]
-    selectedKeys.value = [flatFiles.value[0].key]
-  }
   visible.value = true
-  nextTick(() => {
-    treeRef.value?.expandAll?.(true)
-  })
+  detailLoading.value = true
+
+  try {
+    const res = await getTemplateDetail(item.id)
+    templateData.value = res.data
+  } catch {
+    Message.error('获取模板详情失败')
+  } finally {
+    detailLoading.value = false
+  }
 }
 
 defineExpose({ onOpen })

@@ -15,18 +15,6 @@
     <name>${project.artifactId}</name>
     <description>API 及打包部署模块</description>
 
-    <properties>
-        <!-- ### 打包配置相关 ### -->
-        <!-- 启动类 -->
-        <main-class>top.continew.admin.ContiNewAdminApplication</main-class>
-        <!-- 程序 jar 输出目录 -->
-        <bin-path>bin/</bin-path>
-        <!-- 配置文件输出目录 -->
-        <config-path>config/</config-path>
-        <!-- 依赖 jar 输出目录 -->
-        <lib-path>lib/</lib-path>
-    </properties>
-
     <dependencies>
         <!-- 系统管理模块 -->
         <dependency>
@@ -57,14 +45,32 @@
             <groupId>top.codestyle.admin</groupId>
             <artifactId>codestyle-plugin-generator</artifactId>
         </dependency>
-        
-        <!-- 搜索插件 -->
+
+        <!-- 检索插件 -->
         <dependency>
             <groupId>top.codestyle.admin</groupId>
             <artifactId>codestyle-plugin-search</artifactId>
         </dependency>
 
-        <!-- ContiNew Starter 链路追踪模块 -->
+        <!-- 深度研究插件 -->
+        <dependency>
+            <groupId>top.codestyle.admin</groupId>
+            <artifactId>codestyle-plugin-research</artifactId>
+        </dependency>
+
+        <!-- 模板管理插件 -->
+        <dependency>
+            <groupId>top.codestyle.admin</groupId>
+            <artifactId>codestyle-plugin-template</artifactId>
+        </dependency>
+
+        <!-- Wiki 插件 -->
+        <dependency>
+            <groupId>top.codestyle.admin</groupId>
+            <artifactId>codestyle-plugin-wiki</artifactId>
+        </dependency>
+
+        <!-- CodeStyle Starter 链路追踪模块 -->
         <dependency>
             <groupId>top.continew.starter</groupId>
             <artifactId>continew-starter-trace</artifactId>
@@ -92,8 +98,17 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
+                    <!-- 是否跳过 Spring Boot 的重新打包操作 -->
+                    <skip>${spring-boot.repackage.skip}</skip>
+                    <!-- 是否将系统作用域的依赖包含进去 -->
                     <includeSystemScope>true</includeSystemScope>
-                    <skip>${skip.boot.repackage}</skip>
+                    <!-- 打包时排除 Lombok 依赖，减小 jar 体积 -->
+                    <excludes>
+                        <exclude>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </exclude>
+                    </excludes>
                 </configuration>
                 <executions>
                     <execution>
@@ -107,34 +122,35 @@
     </build>
 
     <profiles>
-        <!-- 默认 Spring Boot 胖包 模式 -->
+        <!-- 胖包模式：将依赖、配置文件等打包到 jar 包之内 -->
         <profile>
-            <id>fat_jar</id>
+            <id>fat-jar</id>
             <properties>
-                <skip.boot.repackage>false</skip.boot.repackage>
+                <!-- 是否跳过 Spring Boot 的重新打包操作 -->
+                <spring-boot.repackage.skip>false</spring-boot.repackage.skip>
             </properties>
         </profile>
 
-        <!-- 瘦包 模式（可执行 JAR + lib + config） -->
+        <!-- 瘦包模式：将依赖、配置文件等打包到 jar 包之外 -->
         <profile>
-            <id>slim_jar</id>
-            <!--默认-->
+            <id>thin-jar</id>
             <activation>
                 <activeByDefault>true</activeByDefault>
             </activation>
             <properties>
-                <skip.boot.repackage>true</skip.boot.repackage>
-
-                <!-- 路径变量 -->
-                <lib-path>lib/</lib-path>
-                <config-path>config/</config-path>
-                <bin-path>bin/</bin-path>
+                <!-- 是否跳过 Spring Boot 的重新打包操作 -->
+                <spring-boot.repackage.skip>true</spring-boot.repackage.skip>
                 <!-- 启动类 -->
-                <main-class>top.continew.admin.ContiNewAdminApplication</main-class>
+                <main-class>top.codestyle.admin.CodeStyleAdminApplication</main-class>
+                <!-- 程序 jar 输出目录 -->
+                <bin-path>bin/</bin-path>
+                <!-- 配置文件输出目录 -->
+                <config-path>config/</config-path>
+                <!-- 依赖 jar 输出目录 -->
+                <lib-path>lib/</lib-path>
             </properties>
             <build>
                 <plugins>
-                    <!-- 分离打包 JAR（不包含依赖） -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-jar-plugin</artifactId>
@@ -163,7 +179,6 @@
                             <outputDirectory>${project.build.directory}/app/${bin-path}</outputDirectory>
                         </configuration>
                     </plugin>
-
                     <!-- 拷贝依赖 jar -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
@@ -181,7 +196,6 @@
                             </execution>
                         </executions>
                     </plugin>
-
                     <!-- 拷贝配置文件 -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
@@ -212,7 +226,6 @@
                             </execution>
                         </executions>
                     </plugin>
-
                 </plugins>
             </build>
         </profile>

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-present Charles7c Authors. All Rights Reserved.
+ * Copyright (c) 2022-present CodeStyle Authors. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,11 +39,8 @@ public interface TemplateFileService {
      * @return 模板信息
      * @throws IOException IO 异常
      */
-    TemplateUploadResp uploadTemplate(
-        MultipartFile file,
-        String groupId,
-        String artifactId,
-        String version
-    ) throws IOException;
+    TemplateUploadResp uploadTemplate(MultipartFile file,
+                                      String groupId,
+                                      String artifactId,
+                                      String version) throws IOException;
 }
-

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-present Charles7c Authors. All Rights Reserved.
+ * Copyright (c) 2022-present CodeStyle Authors. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,12 @@ import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
 import cn.idev.excel.annotation.ExcelProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
+import top.codestyle.admin.common.base.model.resp.BaseDetailResp;
 import top.codestyle.admin.common.config.excel.DictExcelProperty;
 import top.codestyle.admin.common.config.excel.ExcelDictConverter;
 import top.codestyle.admin.common.enums.DisEnableStatusEnum;
-import top.codestyle.admin.common.base.model.resp.BaseDetailResp;
+import top.codestyle.admin.system.enums.LogoutModeEnum;
+import top.codestyle.admin.system.enums.ReplacedRangeEnum;
 import top.continew.starter.excel.converter.ExcelBaseEnumConverter;
 import top.continew.starter.excel.converter.ExcelListConverter;
 
@@ -82,9 +84,37 @@ public class ClientResp extends BaseDetailResp {
     private Long timeout;
 
     /**
+     * 是否允许同一账号多地同时登录（true：允许；false：新登录挤掉旧登录）
+     */
+    @Schema(description = "是否允许同一账号多地同时登录", example = "true")
+    @ExcelProperty(value = "是否允许同一账号多地同时登录", order = 8)
+    private Boolean isConcurrent;
+
+    /**
+     * 顶人下线的范围
+     */
+    @Schema(description = "顶人下线的范围", example = "ALL_DEVICE_TYPE")
+    @ExcelProperty(value = "顶人下线的范围", converter = ExcelBaseEnumConverter.class, order = 9)
+    private ReplacedRangeEnum replacedRange;
+
+    /**
+     * 同一账号最大登录数量（-1：不限制，只有在 isConcurrent=true，isShare=false 时才有效）
+     */
+    @Schema(description = "同一账号最大登录数量", example = "-1")
+    @ExcelProperty(value = "同一账号最大登录数量", order = 10)
+    private Integer maxLoginCount;
+
+    /**
+     * 溢出人数的下线方式
+     */
+    @Schema(description = "溢出人数的下线方式", example = "KICKOUT")
+    @ExcelProperty(value = "溢出人数的下线方式", converter = ExcelBaseEnumConverter.class, order = 11)
+    private LogoutModeEnum overflowLogoutMode;
+
+    /**
      * 状态
      */
     @Schema(description = "状态", example = "1")
-    @ExcelProperty(value = "状态", converter = ExcelBaseEnumConverter.class, order = 8)
+    @ExcelProperty(value = "状态", converter = ExcelBaseEnumConverter.class, order = 12)
     private DisEnableStatusEnum status;
 }

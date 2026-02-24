@@ -11,17 +11,11 @@ server:
 --- ### 数据源配置
 spring.datasource:
   type: com.zaxxer.hikari.HikariDataSource
-  # 请务必提前创建好名为 continew_admin 的数据库，如果使用其他数据库名请注意同步修改 DB_NAME 配置
-  url: jdbc:mysql://${DB_HOST:127.0.0.1}:${DB_PORT:3306}/${DB_NAME:codestyle}?serverTimezone=Asia/Shanghai&useSSL=true&useUnicode=true&characterEncoding=utf8&rewriteBatchedStatements=true&autoReconnect=true&allowPublicKeyRetrieval=true&nullCatalogMeansCurrent=true
+  # 请务必提前创建好名为 codestyle_admin 的数据库，如果使用其他数据库名请注意同步修改 DB_NAME 配置
+  url: jdbc:p6spy:mysql://${DB_HOST:127.0.0.1}:${DB_PORT:3306}/${DB_NAME:codestyle_admin}?serverTimezone=Asia/Shanghai&useSSL=true&useUnicode=true&characterEncoding=utf8&rewriteBatchedStatements=true&autoReconnect=true&allowPublicKeyRetrieval=true&nullCatalogMeansCurrent=true
   username: ${DB_USER:root}
-  password: ${DB_PWD:root}
-  driver-class-name: com.mysql.cj.jdbc.Driver
-
-  #  # PostgreSQL 配置
-  #  url: jdbc:p6spy:postgresql://${DB_HOST:127.0.0.1}:${DB_PORT:5432}/${DB_NAME:continew_admin}?options=-c%20TimeZone=Asia/Shanghai&sslmode=prefer&channelBinding=prefer&stringtype=unspecified
-  #  username: ${DB_USER:postgres}
-  #  password: ${DB_PWD:123456}
-  #  driver-class-name: com.p6spy.engine.spy.P6SpyDriver
+  password: ${DB_PWD:051105}
+  driver-class-name: com.p6spy.engine.spy.P6SpyDriver
   # Hikari 连接池配置
   hikari:
     # 最大连接数量（默认 10，根据实际环境调整）
@@ -53,7 +47,7 @@ spring.data:
     # 密码（未设置密码时请注释掉）
 #    password: ${REDIS_PWD:123456}
     # 数据库索引
-    database: ${REDIS_DB:0}
+    database: ${REDIS_DB:6}
     # 连接超时时间
     timeout: 10s
     # 是否开启 SSL
@@ -115,23 +109,10 @@ continew-starter.log:
 ## 项目日志配置（配置重叠部分，优先级高于 logback-spring.xml 中的配置）
 logging:
   level:
-    # 项目业务代码日志级别
     top.codestyle.admin: DEBUG
-    # ContiNew Starter 框架日志级别
     top.continew.starter: DEBUG
   file:
-    # 日志文件存储路径
     path: ./logs
-
---- ### Elasticsearch 配置
-spring.elasticsearch:
-  uris: ${ES_HOST:127.0.0.1}:${ES_PORT:9200}
-  # 如果需要身份验证
-  # username: ${ES_USER:elastic}
-  # password: ${ES_PWD:changeme}
-spring.data.elasticsearch:
-  # 禁用自动创建索引，避免在 Elasticsearch 不可用时出错
-  repositories.enabled: true
 
 --- ### 加密配置：密码编码器配置
 continew-starter.encrypt.password-encoder:
@@ -188,26 +169,6 @@ captcha:
     # 过期时间
     expirationInMinutes: 5
 
---- ### Kafka配置
-spring.kafka:
-  bootstrap-servers: ${KAFKA_HOST:localhost}:${KAFKA_PORT:9094}
-  producer:
-    key-serializer: org.apache.kafka.common.serialization.StringSerializer
-    value-serializer: org.apache.kafka.common.serialization.StringSerializer
-    acks: 1
-    retries: 3
-    batch-size: 3
-  consumer:
-    group-id: ${KAFKA_GROUP_ID:codestyle-search}
-    key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-    value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-    auto-offset-reset: earliest
-    enable-auto-commit: false
-    max-poll-records: 100
-  retry:
-    topic:
-      attempts: 3
-
 --- ### 短信配置
 ## 提示：配置文件方式和 [系统管理/系统配置/短信配置] 功能可任选其一方式使用，也可共同使用，但实际开发时建议选择一种，注释或删除另一方
 sms:
@@ -247,31 +208,8 @@ continew-starter.messaging.websocket:
   # 配置允许跨域的域名
   allowed-origins: '*'
 
---- ### Sa-Token 扩展配置
-sa-token.extension:
-  # 安全配置：排除（放行）路径配置
-  security.excludes:
-    - /error
-    # 静态资源
-    - /*.html
-    - /*/*.html
-    - /*/*.css
-    - /*/*.js
-    - /websocket/**
-    # 接口文档相关资源
-    - /favicon.ico
-    - /doc.html
-    - /webjars/**
-    - /swagger-ui/**
-    - /swagger-resources/**
-    - /*/api-docs/**
-    # 本地存储资源
-    - /file/**
-    # 搜索接口
-    - /api/mcp/search
-
 --- ### Just Auth 配置
-justauth:
+continew-starter.justauth:
   enabled: true
   type:
     WECHAT_OPEN:
@@ -289,25 +227,37 @@ justauth:
   cache:
     type: REDIS
 
+--- ### Sa-Token 扩展配置
+sa-token.extension:
+  # 安全配置：排除（放行）路径配置
+  security.excludes:
+    - /error
+    # 静态资源
+    - /*.html
+    - /*/*.html
+    - /*/*.css
+    - /*/*.js
+    - /websocket/**
+    # 接口文档相关资源
+    - /favicon.ico
+    - /doc.html
+    - /nextdoc/**
+    - /webjars/**
+    - /swagger-ui/**
+    - /swagger-resources/**
+    - /*/api-docs/**
+    # 本地存储资源
+    - /file/**
+
 --- ### Snail Job 配置
 snail-job:
   enabled: false
-  # 客户端地址（默认自动获取本机 IP）
-  #host: 127.0.0.1
-  # 客户端端口（默认：1789）
-  port: 1789
-  # 命名空间 ID
-  namespace: ${SCHEDULE_NAMESPACE:764d604ec6fc45f68cd92514c40e9e1a}
-  # 分组名
-  group: ${SCHEDULE_GROUP:continew-admin}
-  # 令牌
-  token: ${SCHEDULE_TOKEN:SJ_Wyz3dmsdbDOkDujOTSSoBjGQP1BMsVnj}
   ## 服务端配置（任务调度中心）
   server:
-    # 服务端地址，若服务端集群部署则此处配置域名
+    # 服务端地址
     host: ${SCHEDULE_HOST:127.0.0.1}
-    # Netty 端口号
-    port: ${SCHEDULE_PORT:1788}
+    # 服务端通讯端口
+    port: ${SCHEDULE_PORT:17888}
     # API 配置
     api:
       # URL
@@ -316,3 +266,18 @@ snail-job:
       username: ${SCHEDULE_USERNAME:admin}
       # 密码
       password: ${SCHEDULE_PASSWORD:admin}
+  ## OpenAPI 配置
+  openapi:
+    # 服务端 Web 端口（默认：8080，如果你部署的服务端改动了端口，这里也需要对应改动）
+    # continew-extension/continew-extension-schedule-server
+    port: 8001
+  # 客户端地址（默认：自动推断。必须确保服务端可以访问到，在服务端无法调度客户端时需要手动配置）
+  #host: 127.0.0.1
+  # 客户端端口（默认：17889）
+  port: 17889
+  # 命名空间
+  namespace: ${SCHEDULE_NAMESPACE:764d604ec6fc45f68cd92514c40e9e1a}
+  # 接入组名
+  group: ${SCHEDULE_GROUP:codestyle-admin}
+  # 接入组 token
+  token: ${SCHEDULE_TOKEN:SJ_Wyz3dmsdbDOkDujOTSSoBjGQP1BMsVnj}

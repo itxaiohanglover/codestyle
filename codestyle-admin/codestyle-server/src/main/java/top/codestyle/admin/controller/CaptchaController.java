@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-present Charles7c Authors. All Rights Reserved.
+ * Copyright (c) 2022-present CodeStyle Authors. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -214,7 +214,7 @@ public class CaptchaController {
         // 获取短信配置
         SmsConfigDO smsConfig = smsConfigService.getDefaultConfig();
         SmsBlend smsBlend = smsConfig != null
-            ? SmsFactory.getBySupplier(smsConfig.getSupplier())
+            ? SmsFactory.getSmsBlend(smsConfig.getId().toString())
             : SmsFactory.getSmsBlend();
         Map<String, String> messageMap = MapUtil.newHashMap(2, true);
         messageMap.put(captchaSms.getCodeKey(), captcha);

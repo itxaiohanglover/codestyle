@@ -4,7 +4,7 @@ import lombok.Data;
 
 import com.baomidou.mybatisplus.annotation.TableName;
 
-import top.codestyle.admin.common.base.model.entity.BaseDO;
+import top.continew.admin.common.base.model.entity.BaseDO;
 
 <#if imports??>
     <#list imports as className>

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-present Charles7c Authors. All Rights Reserved.
+ * Copyright (c) 2022-present CodeStyle Authors. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ public class TenantReq implements Serializable {
     /**
      * 域名
      */
-    @Schema(description = "域名", example = "https://T0sL6RWv0vFh.continew.top/")
+    @Schema(description = "域名", example = "https://T0sL6RWv0vFh.codestyle.top/")
     @Length(max = 255, message = "域名长度不能超过 {max} 个字符")
     @Pattern(regexp = RegexConstants.HTTP_HOST, message = "域名格式不正确")
     private String domain;

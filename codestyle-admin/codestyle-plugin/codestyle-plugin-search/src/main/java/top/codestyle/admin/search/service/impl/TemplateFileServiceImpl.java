@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-present Charles7c Authors. All Rights Reserved.
+ * Copyright (c) 2022-present CodeStyle Authors. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,14 +57,13 @@ public class TemplateFileServiceImpl implements TemplateFileService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public TemplateUploadResp uploadTemplate(
-            MultipartFile file,
-            String groupId,
-            String artifactId,
-            String version) throws IOException {
+    public TemplateUploadResp uploadTemplate(MultipartFile file,
+                                             String groupId,
+                                             String artifactId,
+                                             String version) throws IOException {
 
         Path tempDir = null;
-        
+
         // ✅ 在无登录状态下，手动设置系统用户上下文
         // 必须在调用 getContext() 之前设置，否则会抛出 NotLoginException
         UserContext originalContext = null;
@@ -104,20 +103,14 @@ public class TemplateFileServiceImpl implements TemplateFileService {
             FileUtil.del(tempZipFile);
 
             // 5. 验证模板结构
-            MetaJson metaJson = validateTemplateStructure(
-                tempDirFile, groupId, artifactId, version
-            );
+            MetaJson metaJson = validateTemplateStructure(tempDirFile, groupId, artifactId, version);
 
             // 6. 上传文件到存储系统（复用 FileService）
-            List<FileInfo> uploadedFiles = uploadFilesToStorage(
-                tempDirFile, groupId, artifactId, version
-            );
+            List<FileInfo> uploadedFiles = uploadFilesToStorage(tempDirFile, groupId, artifactId, version);
             log.info("文件上传完成，共 {} 个文件", uploadedFiles.size());
 
             // 7. 构建响应
-            return buildUploadResponse(
-                groupId, artifactId, version, metaJson, uploadedFiles
-            );
+            return buildUploadResponse(groupId, artifactId, version, metaJson, uploadedFiles);
 
         } finally {
             // 8. 清理临时文件
@@ -125,7 +118,7 @@ public class TemplateFileServiceImpl implements TemplateFileService {
                 FileUtil.del(tempDir.toFile());
                 log.debug("清理临时目录: {}", tempDir);
             }
-            
+
             // ✅ 恢复原始用户上下文
             if (originalContext == null) {
                 UserContextHolder.clearContext();
@@ -145,7 +138,7 @@ public class TemplateFileServiceImpl implements TemplateFileService {
                 // 规范化路径，移除可能的换行符和特殊字符
                 String entryName = zipEntry.getName().replace("\r", "").replace("\n", "");
                 File newFile = newFile(destDir, entryName);
-                
+
                 if (zipEntry.isDirectory()) {
                     if (!newFile.isDirectory() && !newFile.mkdirs()) {
                         throw new IOException("创建目录失败: " + newFile);
@@ -186,11 +179,7 @@ public class TemplateFileServiceImpl implements TemplateFileService {
     /**
      * 验证模板结构
      */
-    private MetaJson validateTemplateStructure(
-            File tempDir,
-            String groupId,
-            String artifactId,
-            String version) {
+    private MetaJson validateTemplateStructure(File tempDir, String groupId, String artifactId, String version) {
 
         // 检查 meta.json
         File metaJsonFile = new File(tempDir, "meta.json");
@@ -201,19 +190,15 @@ public class TemplateFileServiceImpl implements TemplateFileService {
         MetaJson metaJson = JSONUtil.toBean(metaJsonContent, MetaJson.class);
 
         // 验证参数匹配
-        CheckUtils.throwIf(!groupId.equals(metaJson.getGroupId()),
-            "meta.json 中的 groupId 与参数不一致");
-        CheckUtils.throwIf(!artifactId.equals(metaJson.getArtifactId()),
-            "meta.json 中的 artifactId 与参数不一致");
-        CheckUtils.throwIf(!version.equals(metaJson.getVersion()),
-            "meta.json 中的 version 与参数不一致");
+        CheckUtils.throwIf(!groupId.equals(metaJson.getGroupId()), "meta.json 中的 groupId 与参数不一致");
+        CheckUtils.throwIf(!artifactId.equals(metaJson.getArtifactId()), "meta.json 中的 artifactId 与参数不一致");
+        CheckUtils.throwIf(!version.equals(metaJson.getVersion()), "meta.json 中的 version 与参数不一致");
 
         // 验证模板文件存在
         for (MetaJson.FileInfo fileInfo : metaJson.getFiles()) {
             String filePath = fileInfo.getFilePath() + "/" + fileInfo.getFilename();
             File templateFile = new File(tempDir, filePath);
-            CheckUtils.throwIf(!templateFile.exists(),
-                "模板文件不存在: {}", filePath);
+            CheckUtils.throwIf(!templateFile.exists(), "模板文件不存在: {}", filePath);
         }
 
         return metaJson;
@@ -229,15 +214,13 @@ public class TemplateFileServiceImpl implements TemplateFileService {
      * - 自动生成 CDN URL
      * - 自动记录到数据库
      */
-    private List<FileInfo> uploadFilesToStorage(
-            File tempDir,
-            String groupId,
-            String artifactId,
-            String version) throws IOException {
+    private List<FileInfo> uploadFilesToStorage(File tempDir,
+                                                String groupId,
+                                                String artifactId,
+                                                String version) throws IOException {
 
         // 1. 构建父路径
-        String parentPath = String.format("/templates/%s/%s/%s",
-            groupId, artifactId, version);
+        String parentPath = String.format("/templates/%s/%s/%s", groupId, artifactId, version);
 
         // 2. 遍历解压的文件，逐个上传
         List<FileInfo> uploadedFiles = new ArrayList<>();
@@ -245,10 +228,7 @@ public class TemplateFileServiceImpl implements TemplateFileService {
 
         for (File extractedFile : extractedFiles) {
             // 计算相对路径
-            String relativePath = tempDir.toPath()
-                .relativize(extractedFile.toPath())
-                .toString()
-                .replace("\\", "/");
+            String relativePath = tempDir.toPath().relativize(extractedFile.toPath()).toString().replace("\\", "/");
 
             // 构建完整的父路径
             String fullParentPath = parentPath;
@@ -276,21 +256,18 @@ public class TemplateFileServiceImpl implements TemplateFileService {
     /**
      * 构建响应
      */
-    private TemplateUploadResp buildUploadResponse(
-            String groupId,
-            String artifactId,
-            String version,
-            MetaJson metaJson,
-            List<FileInfo> uploadedFiles) {
+    private TemplateUploadResp buildUploadResponse(String groupId,
+                                                   String artifactId,
+                                                   String version,
+                                                   MetaJson metaJson,
+                                                   List<FileInfo> uploadedFiles) {
 
         // 生成模板 ID
         String templateId = UUID.randomUUID().toString();
 
         // 构建下载 URL
-        String downloadUrl = String.format(
-            "/open-api/template/download?groupId=%s&artifactId=%s&version=%s",
-            groupId, artifactId, version
-        );
+        String downloadUrl = String
+            .format("/open-api/template/download?groupId=%s&artifactId=%s&version=%s", groupId, artifactId, version);
 
         // 构建文件信息列表
         List<TemplateUploadResp.TemplateFileInfo> fileInfoList = new ArrayList<>();
@@ -334,4 +311,3 @@ public class TemplateFileServiceImpl implements TemplateFileService {
         return null;
     }
 }
-

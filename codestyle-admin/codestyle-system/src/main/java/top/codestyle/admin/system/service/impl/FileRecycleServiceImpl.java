@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-present Charles7c Authors. All Rights Reserved.
+ * Copyright (c) 2022-present CodeStyle Authors. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,10 @@
 
 package top.codestyle.admin.system.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.plugins.IgnoreStrategy;
+import com.baomidou.mybatisplus.core.plugins.InterceptorIgnoreHelper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.RequiredArgsConstructor;
 import org.dromara.x.file.storage.core.FileInfo;
@@ -94,25 +97,33 @@ public class FileRecycleServiceImpl implements FileRecycleService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void clean() {
-        // 查询文件
+        // 查询回收站记录
         List<FileDO> list = fileMapper.selectListInRecycleBin();
-        // 删除记录
-        fileMapper.cleanRecycleBin(UserContextHolder.getUserId());
-        // 删除文件
-        // 批量获取存储配置
-        Map<Long, List<FileDO>> fileListGroup = list.stream().collect(Collectors.groupingBy(FileDO::getStorageId));
-        List<StorageDO> storageList = storageService.listByIds(fileListGroup.keySet());
-        Map<Long, StorageDO> storageGroup = storageList.stream()
-            .collect(Collectors.toMap(StorageDO::getId, Function.identity(), (existing, replacement) -> existing));
-        // 删除文件
-        for (Map.Entry<Long, List<FileDO>> entry : fileListGroup.entrySet()) {
-            StorageDO storage = storageGroup.get(entry.getKey());
-            // 清空回收站
-            FileInfo fileInfo = new FileInfo();
-            fileInfo.setPlatform(storage.getCode());
-            fileInfo.setBasePath(StringConstants.EMPTY);
-            fileInfo.setPath(storage.getRecycleBinPath());
-            fileStorageService.delete(fileInfo);
+        if (CollUtil.isEmpty(list)) {
+            return;
+        }
+        try {
+            InterceptorIgnoreHelper.handle(IgnoreStrategy.builder().blockAttack(true).build());
+            // 删除记录
+            fileMapper.cleanRecycleBin(UserContextHolder.getUserId());
+            // 删除文件
+            // 批量获取存储配置
+            Map<Long, List<FileDO>> fileListGroup = list.stream().collect(Collectors.groupingBy(FileDO::getStorageId));
+            List<StorageDO> storageList = storageService.listByIds(fileListGroup.keySet());
+            Map<Long, StorageDO> storageGroup = storageList.stream()
+                .collect(Collectors.toMap(StorageDO::getId, Function.identity(), (existing, replacement) -> existing));
+            // 删除文件
+            for (Map.Entry<Long, List<FileDO>> entry : fileListGroup.entrySet()) {
+                StorageDO storage = storageGroup.get(entry.getKey());
+                // 清空回收站
+                FileInfo fileInfo = new FileInfo();
+                fileInfo.setPlatform(storage.getCode());
+                fileInfo.setBasePath(StringConstants.EMPTY);
+                fileInfo.setPath(storage.getRecycleBinPath());
+                fileStorageService.delete(fileInfo);
+            }
+        } finally {
+            InterceptorIgnoreHelper.clearIgnoreStrategy();
         }
     }
 

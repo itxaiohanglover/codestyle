@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-present Charles7c Authors. All Rights Reserved.
+ * Copyright (c) 2022-present CodeStyle Authors. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,10 @@
  * limitations under the License.
  */
 
-package top.codestyle.admin;
+package top.codestyle.admin.template.mapper;
 
-import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
+import top.codestyle.admin.template.model.entity.TemplateDO;
+import top.continew.starter.data.mapper.BaseMapper;
 
-@SpringBootTest
-class ContiNewAdminApplicationTests {
-
-    @Test
-    void contextLoads() {
-    }
+public interface TemplateMapper extends BaseMapper<TemplateDO> {
 }

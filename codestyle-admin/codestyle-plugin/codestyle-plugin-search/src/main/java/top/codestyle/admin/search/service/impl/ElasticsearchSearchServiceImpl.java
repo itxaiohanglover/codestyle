@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-present Charles7c Authors. All Rights Reserved.
+ * Copyright (c) 2022-present CodeStyle Authors. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,13 +64,13 @@ public class ElasticsearchSearchServiceImpl implements ElasticsearchSearchServic
 
             // 1. 构建查询
             co.elastic.clients.elasticsearch.core.SearchRequest esRequest = buildSearchRequest(request);
-            
+
             // 2. 执行查询
             SearchResponse<Map> response = esClient.search(esRequest, Map.class);
 
             // 3. 转换结果
             List<SearchResult> results = convertResults(response);
-            
+
             log.debug("ES 检索完成，返回 {} 条结果", results.size());
             return results;
 
@@ -92,32 +92,20 @@ public class ElasticsearchSearchServiceImpl implements ElasticsearchSearchServic
      * - tags^1: 标签权重最低
      */
     private co.elastic.clients.elasticsearch.core.SearchRequest buildSearchRequest(SearchRequest request) {
-        return co.elastic.clients.elasticsearch.core.SearchRequest.of(s -> s
-            .index(properties.getElasticsearch().getIndex())
-            .query(q -> q
-                .multiMatch(m -> m
-                    .query(request.getQuery())
-                    .fields("title^3", "content^2", "tags^1")  // 字段加权
-                    .type(TextQueryType.BestFields)
-                )
-            )
+        return co.elastic.clients.elasticsearch.core.SearchRequest.of(s -> s.index(properties.getElasticsearch()
+            .getIndex())
+            .query(q -> q.multiMatch(m -> m.query(request.getQuery())
+                .fields("title^3", "content^2", "tags^1")  // 字段加权
+                .type(TextQueryType.BestFields)))
             .size(request.getTopK())
-            .highlight(h -> h
-                .fields("content", f -> f
-                    .numberOfFragments(1)
-                    .fragmentSize(200)
-                )
-            )
-        );
+            .highlight(h -> h.fields("content", f -> f.numberOfFragments(1).fragmentSize(200))));
     }
 
     /**
      * 转换 ES 结果为统一格式
      */
     private List<SearchResult> convertResults(SearchResponse<Map> response) {
-        return response.hits().hits().stream()
-            .map(this::convertHit)
-            .collect(Collectors.toList());
+        return response.hits().hits().stream().map(this::convertHit).collect(Collectors.toList());
     }
 
     /**

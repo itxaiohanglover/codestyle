@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-present Charles7c Authors. All Rights Reserved.
+ * Copyright (c) 2022-present CodeStyle Authors. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,7 +75,7 @@ public class SearchServiceImpl implements SearchService {
     public List<SearchResult> search(SearchRequest request) {
         // 1. 生成缓存 Key
         String cacheKey = CacheHelper.generateCacheKey(request);
-        
+
         // 2. 检查缓存
         List<SearchResult> cached = getCachedResults(cacheKey);
         if (cached != null) {
@@ -89,12 +89,12 @@ public class SearchServiceImpl implements SearchService {
 
         // 4. RRF 融合
         List<SearchResult> fused = FusionHelper.reciprocalRankFusion(allResults);
-        
+
         // 5. 写入缓存
         if (!fused.isEmpty()) {
             cacheResults(cacheKey, fused);
         }
-        
+
         log.info("混合检索完成，查询: {}, 返回 {} 条结果", request.getQuery(), fused.size());
         return fused;
     }
@@ -109,10 +109,8 @@ public class SearchServiceImpl implements SearchService {
         futures.add(CompletableFuture.supplyAsync(() -> {
             try {
                 log.debug("开始 ES 检索");
-                return FallbackHelper.executeWithFallback(
-                    () -> esSearchService.search(request),
-                    Collections.emptyList()
-                );
+                return FallbackHelper.executeWithFallback(() -> esSearchService.search(request), Collections
+                    .emptyList());
             } catch (Exception e) {
                 log.error("ES 检索失败", e);
                 return Collections.emptyList();
@@ -124,32 +122,27 @@ public class SearchServiceImpl implements SearchService {
             futures.add(CompletableFuture.supplyAsync(() -> {
                 try {
                     log.debug("开始 Milvus 检索");
-                    return FallbackHelper.executeWithFallback(
-                        () -> milvusSearchService.get().search(request),
-                        Collections.emptyList()
-                    );
-            } catch (Exception e) {
+                    return FallbackHelper.executeWithFallback(() -> milvusSearchService.get()
+                        .search(request), Collections.emptyList());
+                } catch (Exception e) {
                     log.error("Milvus 检索失败", e);
                     return Collections.emptyList();
-            }
+                }
             }));
         }
 
         // 等待所有检索完成（带超时）
-        return futures.stream()
-            .map(future -> {
-                try {
-                    return future.get(request.getTimeout(), TimeUnit.MILLISECONDS);
-                } catch (TimeoutException e) {
-                    log.warn("检索超时: {}ms", request.getTimeout());
-                    return Collections.<SearchResult>emptyList();
-                } catch (Exception e) {
-                    log.error("检索异常", e);
-                    return Collections.<SearchResult>emptyList();
-                }
-            })
-            .flatMap(List::stream)
-            .collect(Collectors.toList());
+        return futures.stream().map(future -> {
+            try {
+                return future.get(request.getTimeout(), TimeUnit.MILLISECONDS);
+            } catch (TimeoutException e) {
+                log.warn("检索超时: {}ms", request.getTimeout());
+                return Collections.<SearchResult>emptyList();
+            } catch (Exception e) {
+                log.error("检索异常", e);
+                return Collections.<SearchResult>emptyList();
+            }
+        }).flatMap(List::stream).collect(Collectors.toList());
     }
 
     /**
@@ -181,10 +174,10 @@ public class SearchServiceImpl implements SearchService {
     private void cacheResults(String key, List<SearchResult> results) {
         // 写入本地缓存
         localCache.put(key, results);
-        
+
         // 写入 Redis 缓存
         try {
-        CacheHelper.setToRedis(key, results);
+            CacheHelper.setToRedis(key, results);
             log.debug("写入缓存成功: {}", key);
         } catch (Exception e) {
             log.warn("写入 Redis 缓存失败", e);

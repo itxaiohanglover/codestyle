@@ -69,8 +69,9 @@ const filePreview = reactive<FilePreview>({
 })
 // 弹框标题
 const modalTitle = computed(() => {
-  const { fileName, fileType } = filePreview.fileInfo || {}
-  return fileName && fileType ? `${fileName}.${fileType}` : '文件预览'
+  const { fileName } = filePreview.fileInfo || {}
+  // fileName 已经包含扩展名，直接显示
+  return fileName || '文件预览'
 })
 
 // 预览
