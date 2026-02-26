@@ -16,8 +16,13 @@
 
 package top.codestyle.admin.template.mapper;
 
+import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Update;
 import top.codestyle.admin.template.model.entity.TemplateDO;
 import top.continew.starter.data.mapper.BaseMapper;
 
 public interface TemplateMapper extends BaseMapper<TemplateDO> {
+
+    @Update("UPDATE template SET download_count = download_count + 1 WHERE id = #{id} AND deleted = 0")
+    int incrementDownloadCount(@Param("id") Long id);
 }

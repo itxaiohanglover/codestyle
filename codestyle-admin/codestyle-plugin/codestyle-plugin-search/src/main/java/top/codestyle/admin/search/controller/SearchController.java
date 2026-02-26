@@ -25,7 +25,6 @@ import org.springframework.web.bind.annotation.*;
 import top.codestyle.admin.search.model.SearchRequest;
 import top.codestyle.admin.search.model.SearchResult;
 import top.codestyle.admin.search.service.SearchService;
-import top.continew.starter.web.model.R;
 
 import java.util.List;
 
@@ -49,21 +48,17 @@ public class SearchController {
      */
     @Operation(summary = "模板检索", description = "混合检索代码模板（ES + Milvus + RRF）")
     @PostMapping("/search/template")
-    public R<List<SearchResult>> searchTemplates(@Valid @RequestBody SearchRequest request) {
-        List<SearchResult> results = searchService.search(request);
-        return R.ok(results);
+    public List<SearchResult> searchTemplates(@Valid @RequestBody SearchRequest request) {
+        return searchService.search(request);
     }
 
     @Operation(summary = "快速检索", description = "简化的检索接口，支持 GET 请求")
     @GetMapping("/search/quick")
-    public R<List<SearchResult>> quickSearch(@RequestParam String query,
-                                             @RequestParam(defaultValue = "10") Integer topK) {
+    public List<SearchResult> quickSearch(@RequestParam String query, @RequestParam(defaultValue = "10") Integer topK) {
         SearchRequest request = new SearchRequest();
         request.setQuery(query);
         request.setTopK(topK);
-
-        List<SearchResult> results = searchService.search(request);
-        return R.ok(results);
+        return searchService.search(request);
     }
 
     /**
@@ -82,17 +77,11 @@ public class SearchController {
     @SaIgnore
     @Operation(summary = "Open API 检索", description = "基于 ContiNew Open API 签名认证的检索接口")
     @GetMapping("/open-api/search")
-    public R<List<SearchResult>> openApiSearch(@RequestParam String query,
-                                               @RequestParam(defaultValue = "10") Integer topK) {
-        // 1. 构建检索请求
+    public List<SearchResult> openApiSearch(@RequestParam String query,
+                                            @RequestParam(defaultValue = "10") Integer topK) {
         SearchRequest request = new SearchRequest();
         request.setQuery(query);
         request.setTopK(topK);
-
-        // 2. 执行检索
-        List<SearchResult> results = searchService.search(request);
-
-        // 3. 返回结果
-        return R.ok(results);
+        return searchService.search(request);
     }
 }

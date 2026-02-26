@@ -28,9 +28,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import top.codestyle.admin.common.context.UserContextHolder;
+import top.codestyle.admin.search.service.TemplateFileService;
 import top.codestyle.admin.template.mapper.*;
 import top.codestyle.admin.template.model.entity.*;
 import top.codestyle.admin.template.model.query.TemplateQuery;
+import top.codestyle.admin.template.model.req.TemplateReq;
 import top.codestyle.admin.template.model.resp.*;
 import top.codestyle.admin.template.service.TemplateService;
 import top.continew.starter.core.util.validation.CheckUtils;
@@ -51,10 +53,12 @@ public class TemplateServiceImpl implements TemplateService {
     private final TemplateFavoriteMapper templateFavoriteMapper;
     private final CodeSnippetMapper codeSnippetMapper;
     private final ObjectMapper objectMapper;
+    private final TemplateFileService templateFileService;
 
     @Override
     public PageResp<TemplateItemResp> listTemplates(TemplateQuery query, PageQuery pageQuery) {
         QueryWrapper<TemplateDO> queryWrapper = QueryWrapperHelper.build(query);
+        queryWrapper.inSql("id", "SELECT MAX(id) FROM template WHERE deleted = 0 GROUP BY group_id, artifact_id");
         queryWrapper.orderByDesc("update_time");
 
         Page<TemplateDO> page = new Page<>(pageQuery.getPage(), pageQuery.getSize());
@@ -74,6 +78,39 @@ public class TemplateServiceImpl implements TemplateService {
             TemplateItemResp resp = BeanUtil.copyProperties(t, TemplateItemResp.class);
             resp.setTags(tagMap.getOrDefault(t.getId(), Collections.emptyList()));
             resp.setIsFavorite(favoriteIds.contains(t.getId()));
+            return resp;
+        }).collect(Collectors.toList());
+
+        PageResp<TemplateItemResp> pageResp = new PageResp<>();
+        pageResp.setList(list);
+        pageResp.setTotal(result.getTotal());
+        return pageResp;
+    }
+
+    @Override
+    public PageResp<TemplateItemResp> listFavorites(TemplateQuery query, PageQuery pageQuery) {
+        Long userId = UserContextHolder.getUserId();
+        List<Long> favoriteIds = templateFavoriteMapper.selectFavoriteTemplateIds(userId);
+        if (favoriteIds.isEmpty()) {
+            PageResp<TemplateItemResp> empty = new PageResp<>();
+            empty.setList(Collections.emptyList());
+            empty.setTotal(0L);
+            return empty;
+        }
+        QueryWrapper<TemplateDO> queryWrapper = QueryWrapperHelper.build(query);
+        queryWrapper.in("id", favoriteIds);
+        queryWrapper.orderByDesc("update_time");
+
+        Page<TemplateDO> page = new Page<>(pageQuery.getPage(), pageQuery.getSize());
+        Page<TemplateDO> result = templateMapper.selectPage(page, queryWrapper);
+
+        List<Long> templateIds = result.getRecords().stream().map(TemplateDO::getId).collect(Collectors.toList());
+        Map<Long, List<TagItemResp>> tagMap = getTagsByTemplateIds(templateIds);
+
+        List<TemplateItemResp> list = result.getRecords().stream().map(t -> {
+            TemplateItemResp resp = BeanUtil.copyProperties(t, TemplateItemResp.class);
+            resp.setTags(tagMap.getOrDefault(t.getId(), Collections.emptyList()));
+            resp.setIsFavorite(true);
             return resp;
         }).collect(Collectors.toList());
 
@@ -126,9 +163,10 @@ public class TemplateServiceImpl implements TemplateService {
 
         Long count = templateFavoriteMapper.selectCount(wrapper);
         if (count > 0) {
-            templateFavoriteMapper.delete(wrapper);
+            templateFavoriteMapper.physicalDelete(templateId, userId);
             return false;
         } else {
+            templateFavoriteMapper.physicalDelete(templateId, userId);
             TemplateFavoriteDO fav = new TemplateFavoriteDO();
             fav.setTemplateId(templateId);
             fav.setUserId(userId);
@@ -139,10 +177,8 @@ public class TemplateServiceImpl implements TemplateService {
 
     @Override
     public void incrementDownloadCount(Long id) {
-        TemplateDO template = templateMapper.selectById(id);
-        CheckUtils.throwIfNull(template, "模板不存在: {}", id);
-        template.setDownloadCount(template.getDownloadCount() + 1);
-        templateMapper.updateById(template);
+        int rows = templateMapper.incrementDownloadCount(id);
+        CheckUtils.throwIf(rows == 0, "模板不存在: {}", id);
     }
 
     @Override
@@ -179,6 +215,110 @@ public class TemplateServiceImpl implements TemplateService {
         }
 
         return template.getId();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Long create(TemplateReq req) {
+        boolean exists = templateMapper.selectCount(new LambdaQueryWrapper<TemplateDO>().eq(TemplateDO::getGroupId, req
+            .getGroupId())
+            .eq(TemplateDO::getArtifactId, req.getArtifactId())
+            .eq(TemplateDO::getVersion, req.getVersion())) > 0;
+        CheckUtils.throwIf(exists, "模板 {}:{}:{} 已存在", req.getGroupId(), req.getArtifactId(), req.getVersion());
+        TemplateDO template = BeanUtil.copyProperties(req, TemplateDO.class);
+        template.setDownloadCount(0);
+        template.setRating(0.0);
+        templateMapper.insert(template);
+        saveTags(template.getId(), req.getTags());
+        return template.getId();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void update(Long id, TemplateReq req) {
+        TemplateDO template = templateMapper.selectById(id);
+        CheckUtils.throwIfNull(template, "模板不存在: {}", id);
+        CheckUtils.throwIf(template.getGroupId() != null && !template.getGroupId()
+            .equals(req.getGroupId()), "GroupId 不允许修改（原值: {}）", template.getGroupId());
+        CheckUtils.throwIf(template.getArtifactId() != null && !template.getArtifactId()
+            .equals(req.getArtifactId()), "ArtifactId 不允许修改（原值: {}）", template.getArtifactId());
+        boolean versionChanged = template.getVersion() != null && !template.getVersion().equals(req.getVersion());
+        if (versionChanged) {
+            boolean exists = templateMapper.selectCount(new LambdaQueryWrapper<TemplateDO>()
+                .eq(TemplateDO::getGroupId, req.getGroupId())
+                .eq(TemplateDO::getArtifactId, req.getArtifactId())
+                .eq(TemplateDO::getVersion, req.getVersion())) > 0;
+            CheckUtils.throwIf(exists, "版本 {} 已存在", req.getVersion());
+            TemplateDO newVersion = BeanUtil.copyProperties(req, TemplateDO.class);
+            newVersion.setId(null);
+            newVersion.setDownloadCount(0);
+            newVersion.setRating(0.0);
+            templateMapper.insert(newVersion);
+            saveTags(newVersion.getId(), req.getTags());
+        } else {
+            BeanUtil.copyProperties(req, template);
+            templateMapper.updateById(template);
+            templateTagMapper.delete(new LambdaQueryWrapper<TemplateTagDO>().eq(TemplateTagDO::getTemplateId, id));
+            saveTags(id, req.getTags());
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void delete(List<Long> ids) {
+        List<TemplateDO> templates = templateMapper.selectByIds(ids);
+        for (TemplateDO t : templates) {
+            if (StrUtil.isNotBlank(t.getGroupId()) && StrUtil.isNotBlank(t.getArtifactId()) && StrUtil.isNotBlank(t
+                .getVersion())) {
+                try {
+                    templateFileService.deleteTemplateFiles(t.getGroupId(), t.getArtifactId(), t.getVersion());
+                } catch (Exception e) {
+                    log.warn("删除模板文件失败: {}/{}/{}", t.getGroupId(), t.getArtifactId(), t.getVersion(), e);
+                }
+            }
+        }
+        templateMapper.deleteByIds(ids);
+        templateTagMapper.delete(new LambdaQueryWrapper<TemplateTagDO>().in(TemplateTagDO::getTemplateId, ids));
+        for (Long id : ids) {
+            templateFavoriteMapper.physicalDeleteByTemplateId(id);
+        }
+    }
+
+    @Override
+    public List<TemplateItemResp> listVersions(String groupId, String artifactId) {
+        List<TemplateDO> templates = templateMapper.selectList(new LambdaQueryWrapper<TemplateDO>()
+            .eq(TemplateDO::getGroupId, groupId)
+            .eq(TemplateDO::getArtifactId, artifactId)
+            .orderByDesc(TemplateDO::getVersion));
+        if (templates.isEmpty())
+            return Collections.emptyList();
+        List<Long> ids = templates.stream().map(TemplateDO::getId).collect(Collectors.toList());
+        Map<Long, List<TagItemResp>> tagsMap = getTagsByTemplateIds(ids);
+        Long userId = null;
+        try {
+            userId = UserContextHolder.getUserId();
+        } catch (Exception ignored) {
+        }
+        Set<Long> favoriteIds = userId != null ? getFavoriteTemplateIds(userId, ids) : Collections.emptySet();
+        return templates.stream().map(t -> {
+            TemplateItemResp resp = BeanUtil.copyProperties(t, TemplateItemResp.class);
+            resp.setTags(tagsMap.getOrDefault(t.getId(), Collections.emptyList()));
+            resp.setIsFavorite(favoriteIds.contains(t.getId()));
+            return resp;
+        }).collect(Collectors.toList());
+    }
+
+    private void saveTags(Long templateId, List<TagItemResp> tags) {
+        if (tags == null || tags.isEmpty()) {
+            return;
+        }
+        for (TagItemResp t : tags) {
+            TemplateTagDO tag = new TemplateTagDO();
+            tag.setTemplateId(templateId);
+            tag.setLabel(t.getLabel());
+            tag.setColor(t.getColor());
+            templateTagMapper.insert(tag);
+        }
     }
 
     private Map<Long, List<TagItemResp>> getTagsByTemplateIds(List<Long> templateIds) {

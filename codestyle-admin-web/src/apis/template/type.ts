@@ -9,6 +9,19 @@ export interface TemplateQuery {
 
 export interface TemplatePageQuery extends TemplateQuery, PageQuery {}
 
+export interface TemplateReq {
+  groupId?: string
+  artifactId?: string
+  name: string
+  icon?: string
+  author?: string
+  description?: string
+  version?: string
+  downloadUrl?: string
+  searchRefId?: string
+  tags?: TagItem[]
+}
+
 export interface TemplateItem {
   id: number
   groupId?: string
@@ -89,4 +102,31 @@ export interface ResearchStatus {
   status: string
   currentNode?: string
   error?: string
+}
+
+export interface TemplateUploadResp {
+  templateId: string
+  groupId: string
+  artifactId: string
+  version: string
+  name: string
+  description: string
+  downloadUrl: string
+  files: TemplateFileInfo[]
+  uploadTime: string
+}
+
+export interface TemplateFileInfo {
+  filename: string
+  filePath: string
+  description: string
+  fileUrl: string
+}
+
+export interface FileTreeNode {
+  name: string
+  path: string
+  isDir: boolean
+  size?: number
+  children?: FileTreeNode[]
 }

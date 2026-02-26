@@ -75,7 +75,12 @@
             >
               <div class="session-title">{{ session.title }}</div>
               <div class="session-preview">{{ session.preview }}</div>
-              <div class="session-time">{{ session.lastTime }}</div>
+              <div class="session-meta">
+                <span class="session-time">{{ session.lastTime }}</span>
+                <a-button type="text" size="mini" class="session-delete-btn" @click="handleDeleteSession(session.id, $event)">
+                  <template #icon><icon-delete /></template>
+                </a-button>
+              </div>
             </div>
           </template>
           <template v-else>
@@ -111,7 +116,7 @@
                 {{ msg.role === 'user' ? '我' : 'AI' }}
               </div>
               <div class="message-body">
-                <div class="message-text" v-html="msg.content"></div>
+                <div class="message-text" v-html="sanitizeHtml(msg.content)"></div>
                 <div class="message-time">{{ msg.createTime || '' }}</div>
               </div>
             </div>
@@ -345,10 +350,12 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref } from 'vue'
-import { Message } from '@arco-design/web-vue'
+import { Message, Modal } from '@arco-design/web-vue'
+import DOMPurify from 'dompurify'
 import type { ChatMessage, ChatSession, CodeSnippet, ResearchStartReq } from '@/apis/template/type'
 import {
   createSession as apiCreateSession,
+  deleteSession as apiDeleteSession,
   updateSnippet as apiUpdateSnippet,
   getSessionMessages,
   getSessionSnippets,
@@ -620,6 +627,39 @@ function handleClearChat(): void {
   chatMessages.value = [{ ...DEFAULT_AI_GREETING }]
 }
 
+/** 删除会话 */
+function handleDeleteSession(sessionId: number, event: Event): void {
+  event.stopPropagation()
+  Modal.warning({
+    title: '确认删除',
+    content: '删除后无法恢复，确定删除该会话？',
+    hideCancel: false,
+    onOk: async () => {
+      try {
+        await apiDeleteSession(sessionId)
+        chatSessions.value = chatSessions.value.filter((s) => s.id !== sessionId)
+        if (activeChatSessionId.value === sessionId) {
+          activeChatSessionId.value = chatSessions.value.length > 0 ? chatSessions.value[0].id : null
+          if (activeChatSessionId.value) {
+            await handleSwitchSession(activeChatSessionId.value)
+          } else {
+            chatMessages.value = [{ ...DEFAULT_AI_GREETING }]
+            codeSnippets.value = []
+          }
+        }
+        Message.success('已删除')
+      } catch {
+        Message.error('删除失败')
+      }
+    },
+  })
+}
+
+/** 净化 HTML 防止 XSS */
+function sanitizeHtml(html: string): string {
+  return DOMPurify.sanitize(html)
+}
+
 // ====================== 侧边栏方法 ======================
 
 /** 切换侧边栏展开/收起 */
@@ -868,6 +908,28 @@ $sidebar-width-collapsed: 52px;
 .session-time {
   font-size: 11px;
   color: var(--color-text-4);
+}
+
+.session-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.session-delete-btn {
+  opacity: 0;
+  transition: opacity 0.2s;
+  color: var(--color-text-4);
+  padding: 0;
+  height: 16px;
+
+  &:hover {
+    color: rgb(var(--danger-6));
+  }
+}
+
+.session-item:hover .session-delete-btn {
+  opacity: 1;
 }
 
 .session-dot {

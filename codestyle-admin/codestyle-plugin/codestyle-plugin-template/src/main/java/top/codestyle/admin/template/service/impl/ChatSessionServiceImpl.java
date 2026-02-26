@@ -119,6 +119,8 @@ public class ChatSessionServiceImpl implements ChatSessionService {
     @Transactional(rollbackFor = Exception.class)
     public void deleteSession(Long sessionId) {
         checkSessionOwnership(sessionId);
+        codeSnippetMapper.delete(new LambdaQueryWrapper<CodeSnippetDO>().eq(CodeSnippetDO::getSessionId, sessionId));
+        chatMessageMapper.delete(new LambdaQueryWrapper<ChatMessageDO>().eq(ChatMessageDO::getSessionId, sessionId));
         chatSessionMapper.deleteById(sessionId);
     }
 
@@ -158,14 +160,19 @@ public class ChatSessionServiceImpl implements ChatSessionService {
             }
 
             int startIdx = Math.max(0, history.size() - 20);
+            StringBuilder historyContext = new StringBuilder();
             for (int i = startIdx; i < history.size(); i++) {
                 ChatMessageDO msg = history.get(i);
-                systemPrompt.append("user".equals(msg.getRole()) ? "User: " : "Assistant: ");
-                systemPrompt.append(msg.getContent()).append("\n");
+                historyContext.append("user".equals(msg.getRole()) ? "User: " : "Assistant: ");
+                historyContext.append(msg.getContent()).append("\n");
             }
 
             ChatClient chatClient = chatClientBuilder.build();
-            aiReplyText = chatClient.prompt().system(systemPrompt.toString()).user(req.getMessage()).call().content();
+            aiReplyText = chatClient.prompt()
+                .system(systemPrompt.toString())
+                .user(historyContext + "User: " + req.getMessage())
+                .call()
+                .content();
 
         } catch (Exception e) {
             log.error("AI调用失败", e);
@@ -274,6 +281,7 @@ public class ChatSessionServiceImpl implements ChatSessionService {
     public CodeSnippetResp updateSnippet(Long snippetId, String code) {
         CodeSnippetDO snippet = codeSnippetMapper.selectById(snippetId);
         CheckUtils.throwIfNull(snippet, "代码片段不存在: {}", snippetId);
+        checkSessionOwnership(snippet.getSessionId());
         snippet.setCode(code);
         snippet.setLanguage(code.contains("<template>") ? "vue" : snippet.getLanguage());
         codeSnippetMapper.updateById(snippet);

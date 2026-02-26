@@ -17,6 +17,7 @@
 package top.codestyle.admin.template.service;
 
 import top.codestyle.admin.template.model.query.TemplateQuery;
+import top.codestyle.admin.template.model.req.TemplateReq;
 import top.codestyle.admin.template.model.resp.TemplateDetailResp;
 import top.codestyle.admin.template.model.resp.TemplateItemResp;
 import top.continew.starter.extension.crud.model.query.PageQuery;
@@ -28,6 +29,8 @@ public interface TemplateService {
 
     PageResp<TemplateItemResp> listTemplates(TemplateQuery query, PageQuery pageQuery);
 
+    PageResp<TemplateItemResp> listFavorites(TemplateQuery query, PageQuery pageQuery);
+
     TemplateDetailResp getTemplateDetail(Long id);
 
     Boolean toggleFavorite(Long templateId);
@@ -35,4 +38,12 @@ public interface TemplateService {
     void incrementDownloadCount(Long id);
 
     Long saveSnippetToLibrary(Long snippetId, String name, String description, List<?> tags);
+
+    Long create(TemplateReq req);
+
+    void update(Long id, TemplateReq req);
+
+    void delete(List<Long> ids);
+
+    List<TemplateItemResp> listVersions(String groupId, String artifactId);
 }

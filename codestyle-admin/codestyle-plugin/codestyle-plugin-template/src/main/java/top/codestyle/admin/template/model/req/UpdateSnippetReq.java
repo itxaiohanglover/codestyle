@@ -17,6 +17,7 @@
 package top.codestyle.admin.template.model.req;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 import java.io.Serial;
@@ -28,6 +29,7 @@ public class UpdateSnippetReq implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
 
+    @NotBlank(message = "代码内容不能为空")
     @Schema(description = "代码内容")
     private String code;
 }

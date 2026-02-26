@@ -61,9 +61,7 @@ public class NoticePublishJob {
         @Scheduled(cron = "0 * * * * ?")
         @Transactional(rollbackFor = Exception.class)
         public void publishNoticeWithSchedule() {
-            log.info("定时任务 [公告发布] 开始执行。");
             publishNotice();
-            log.info("定时任务 [公告发布] 执行结束。");
         }
     }
 
@@ -97,6 +95,7 @@ public class NoticePublishJob {
         if (CollUtil.isEmpty(list)) {
             return;
         }
+        log.info("定时任务 [公告发布] 发现 {} 条待发布公告。", list.size());
         // 筛选需要发送消息的公告并发送
         List<NoticeDO> needSendMessageList = list.stream()
             .filter(notice -> CollUtil.isNotEmpty(notice.getNoticeMethods()))

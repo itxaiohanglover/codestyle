@@ -16,8 +16,22 @@
 
 package top.codestyle.admin.template.mapper;
 
+import org.apache.ibatis.annotations.Delete;
+import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
 import top.codestyle.admin.template.model.entity.TemplateFavoriteDO;
 import top.continew.starter.data.mapper.BaseMapper;
 
+import java.util.List;
+
 public interface TemplateFavoriteMapper extends BaseMapper<TemplateFavoriteDO> {
+
+    @Delete("DELETE FROM template_favorite WHERE template_id = #{templateId} AND user_id = #{userId}")
+    int physicalDelete(@Param("templateId") Long templateId, @Param("userId") Long userId);
+
+    @Delete("DELETE FROM template_favorite WHERE template_id = #{templateId}")
+    int physicalDeleteByTemplateId(@Param("templateId") Long templateId);
+
+    @Select("SELECT template_id FROM template_favorite WHERE user_id = #{userId} AND deleted = 0")
+    List<Long> selectFavoriteTemplateIds(@Param("userId") Long userId);
 }

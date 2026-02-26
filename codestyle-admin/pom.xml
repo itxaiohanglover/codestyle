@@ -150,6 +150,20 @@
                 <artifactId>flexmark-all</artifactId>
                 <version>0.64.8</version>
             </dependency>
+
+            <!-- Apache Commons Compress -->
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-compress</artifactId>
+                <version>1.27.1</version>
+            </dependency>
+
+            <!-- XZ (7z 解压所需) -->
+            <dependency>
+                <groupId>org.tukaani</groupId>
+                <artifactId>xz</artifactId>
+                <version>1.10</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 

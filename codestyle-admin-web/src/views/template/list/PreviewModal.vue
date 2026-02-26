@@ -9,7 +9,7 @@
     <div class="preview-content">
       <a-layout :has-sider="true">
         <!-- 项目信息侧边栏 -->
-        <a-layout-sider :width="340" :resize-directions="['right']" style="min-width: 260px; max-width: 500px">
+        <a-layout-sider :width="420" :resize-directions="['right']" style="min-width: 300px; max-width: 560px">
           <a-scrollbar style="height: 700px; overflow: auto">
             <div class="project-info">
               <!-- 项目标题 -->
@@ -25,7 +25,7 @@
               <!-- 项目简介 -->
               <div class="info-section">
                 <div class="section-title">项目简介</div>
-                <div class="section-text">{{ templateData?.description }}</div>
+                <div class="section-text md-preview" v-html="renderedDescription"></div>
               </div>
 
               <!-- 统计数据 -->
@@ -44,8 +44,11 @@
 
               <!-- 版本信息 -->
               <div class="version-section">
-                <span class="version-label">当前版本</span>
-                <span class="version-number">{{ templateData?.version || '-' }}</span>
+                <span class="version-label">版本</span>
+                <a-select v-if="versionList.length > 1" v-model="currentVersionId" size="small" style="width: 140px" @change="onVersionChange">
+                  <a-option v-for="v in versionList" :key="v.id" :value="v.id" :label="v.version" />
+                </a-select>
+                <span v-else class="version-number">{{ templateData?.version || '-' }}</span>
               </div>
 
               <!-- 元数据 -->
@@ -90,21 +93,47 @@
           </a-scrollbar>
         </a-layout-sider>
 
-        <!-- 模板描述区 -->
+        <!-- 文件树 + 预览区 -->
         <a-layout-content>
           <a-card :bordered="false">
             <template #title>
-              <a-typography-title :heading="6" ellipsis>模板详情</a-typography-title>
-            </template>
-            <template #extra>
-              <a-link @click="onCopy">
-                <template #icon><icon-copy /></template>
-                复制下载链接
-              </a-link>
+              <div class="content-header">
+                <a-typography-title :heading="6" style="margin: 0">
+                  {{ filePreviewContent ? filePreviewName : '模板文件' }}
+                </a-typography-title>
+                <div class="content-actions">
+                  <a-button v-if="filePreviewContent" type="text" size="small" @click="filePreviewContent = ''">
+                    <icon-arrow-left /> 返回文件树
+                  </a-button>
+                  <a-link @click="onCopy">
+                    <template #icon><icon-copy /></template>
+                    复制下载链接
+                  </a-link>
+                </div>
+              </div>
             </template>
             <a-scrollbar style="height: 650px; overflow: auto">
-              <div class="template-description">
-                <p>{{ templateData?.description }}</p>
+              <div v-if="filePreviewContent" class="file-preview-area">
+                <pre class="preview-code"><code>{{ filePreviewContent }}</code></pre>
+              </div>
+              <div v-else-if="fileTreeData.length > 0" class="file-tree-area">
+                <div
+                  v-for="node in visibleFlatTree"
+                  :key="node.path"
+                  class="tree-row"
+                  :class="{ 'tree-row-dir': node.isDir, 'tree-row-file': !node.isDir }"
+                  :style="{ paddingLeft: `${node.depth * 20 + 12}px` }"
+                  @click="node.isDir ? toggleDir(node.path) : onFileClick(node.path, node.name)"
+                >
+                  <span v-if="node.isDir" class="tree-row-icon">{{ collapsedDirs.has(node.path) ? '📁' : '📂' }}</span>
+                  <span v-else class="tree-row-icon">📄</span>
+                  <span class="tree-row-name">{{ node.name }}</span>
+                  <span v-if="!node.isDir && node.size != null" class="tree-row-size">{{ formatSize(node.size) }}</span>
+                </div>
+              </div>
+              <div v-else class="template-description">
+                <a-spin v-if="fileTreeLoading" />
+                <p v-else>{{ templateData?.description }}</p>
               </div>
             </a-scrollbar>
           </a-card>
@@ -115,18 +144,31 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { Message } from '@arco-design/web-vue'
 import { useClipboard } from '@vueuse/core'
-import type { TemplateDetail, TemplateItem } from '@/apis/template'
-import { getTemplateDetail, recordDownload } from '@/apis/template'
+import { marked } from 'marked'
+import type { FileTreeNode, TemplateDetail, TemplateItem } from '@/apis/template'
+import { getTemplateDetail, listTemplateFiles, listVersions, readTemplateFileContent, recordDownload } from '@/apis/template'
 
 const { copy, copied } = useClipboard()
 
 const visible = ref(false)
 const templateData = ref<TemplateDetail>()
+
+const renderedDescription = computed(() => {
+  if (!templateData.value?.description) return ''
+  return marked.parse(templateData.value.description) as string
+})
 const iconStyle = ref<Record<string, string>>({})
 const detailLoading = ref(false)
+const fileTreeData = ref<FileTreeNode[]>([])
+const fileTreeLoading = ref(false)
+const filePreviewContent = ref('')
+const filePreviewName = ref('')
+const collapsedDirs = ref(new Set<string>())
+const versionList = ref<TemplateItem[]>([])
+const currentVersionId = ref<number>()
 
 // 图标渐变色
 const iconGradients = [
@@ -140,7 +182,8 @@ const iconGradients = [
 
 const onCopy = () => {
   if (templateData.value?.downloadUrl) {
-    copy(templateData.value.downloadUrl)
+    const base = import.meta.env.VITE_API_BASE_URL || window.location.origin
+    copy(`${base}${templateData.value.downloadUrl}`)
   }
 }
 
@@ -155,7 +198,8 @@ const onDownload = async () => {
   try {
     await recordDownload(templateData.value.id)
     if (templateData.value.downloadUrl) {
-      window.open(templateData.value.downloadUrl, '_blank')
+      const base = import.meta.env.VITE_API_BASE_URL || ''
+      window.open(`${base}${templateData.value.downloadUrl}`, '_blank')
     }
     Message.success('下载成功')
   } catch {
@@ -163,9 +207,45 @@ const onDownload = async () => {
   }
 }
 
+const loadFileTree = async () => {
+  const d = templateData.value
+  if (!d?.groupId || !d?.artifactId || !d?.version) return
+  fileTreeLoading.value = true
+  try {
+    const res = await listTemplateFiles(d.groupId, d.artifactId, d.version)
+    fileTreeData.value = res.data
+  } catch {
+    fileTreeData.value = []
+  } finally {
+    fileTreeLoading.value = false
+  }
+}
+
+const loadVersions = async () => {
+  const d = templateData.value
+  if (!d?.groupId || !d?.artifactId) return
+  try {
+    const res = await listVersions(d.groupId, d.artifactId)
+    versionList.value = res.data
+  } catch {
+    versionList.value = []
+  }
+}
+
+const onVersionChange = async (id: number) => {
+  try {
+    const res = await getTemplateDetail(id)
+    templateData.value = res.data
+    filePreviewContent.value = ''
+    collapsedDirs.value = new Set()
+    loadFileTree()
+  } catch {
+    Message.error('加载版本详情失败')
+  }
+}
+
 const onOpen = async (item: TemplateItem) => {
   templateData.value = item as TemplateDetail
-  // 计算图标样式
   let hash = 0
   for (let i = 0; i < item.icon.length; i++) {
     hash = item.icon.charCodeAt(i) + ((hash << 5) - hash)
@@ -179,11 +259,60 @@ const onOpen = async (item: TemplateItem) => {
   try {
     const res = await getTemplateDetail(item.id)
     templateData.value = res.data
+    currentVersionId.value = item.id
+    loadFileTree()
+    loadVersions()
   } catch {
     Message.error('获取模板详情失败')
   } finally {
     detailLoading.value = false
   }
+}
+
+const onFileClick = async (path: string, name: string) => {
+  const d = templateData.value
+  if (!d?.groupId || !d?.artifactId || !d?.version) return
+  try {
+    const res = await readTemplateFileContent(d.groupId, d.artifactId, d.version, path)
+    filePreviewContent.value = res.data
+    filePreviewName.value = name
+  } catch {
+    Message.error('无法预览该文件')
+  }
+}
+
+interface FlatNode {
+  name: string
+  path: string
+  isDir: boolean
+  size?: number
+  depth: number
+}
+
+function flattenTree(nodes: FileTreeNode[], depth: number, collapsed: Set<string>): FlatNode[] {
+  const result: FlatNode[] = []
+  for (const n of nodes) {
+    result.push({ name: n.name, path: n.path, isDir: n.isDir, size: n.size, depth })
+    if (n.isDir && n.children && !collapsed.has(n.path)) {
+      result.push(...flattenTree(n.children, depth + 1, collapsed))
+    }
+  }
+  return result
+}
+
+const visibleFlatTree = computed(() => flattenTree(fileTreeData.value, 0, collapsedDirs.value))
+
+const toggleDir = (path: string) => {
+  const s = new Set(collapsedDirs.value)
+  if (s.has(path)) s.delete(path)
+  else s.add(path)
+  collapsedDirs.value = s
+}
+
+function formatSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
 defineExpose({ onOpen })
@@ -213,6 +342,10 @@ defineExpose({ onOpen })
   :deep(.arco-layout-sider) {
     min-width: 200px;
     white-space: nowrap;
+    border-right: 1px solid var(--color-border);
+  }
+  :deep(.arco-layout-content) {
+    border-left: none;
   }
 }
 
@@ -260,6 +393,37 @@ defineExpose({ onOpen })
   font-size: 13px;
   line-height: 1.8;
   color: var(--color-text-2);
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+.md-preview {
+  white-space: normal;
+  :deep(h1), :deep(h2), :deep(h3) {
+    margin: 8px 0 4px;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  :deep(p) {
+    margin: 4px 0;
+  }
+  :deep(ul), :deep(ol) {
+    padding-left: 18px;
+    margin: 4px 0;
+  }
+  :deep(code) {
+    padding: 1px 4px;
+    background: var(--color-fill-2);
+    border-radius: 3px;
+    font-size: 12px;
+  }
+  :deep(pre) {
+    padding: 8px;
+    background: var(--color-fill-1);
+    border-radius: 4px;
+    overflow-x: auto;
+    margin: 4px 0;
+  }
 }
 
 .stats-grid {
@@ -374,5 +538,76 @@ defineExpose({ onOpen })
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.content-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.content-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.file-tree-area {
+  padding: 8px 0;
+}
+
+.tree-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+  user-select: none;
+
+  &:hover {
+    background: var(--color-fill-2);
+  }
+}
+
+.tree-row-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.tree-row-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tree-row-size {
+  font-size: 11px;
+  color: var(--color-text-4);
+  flex-shrink: 0;
+}
+
+.file-preview-area {
+  padding: 0;
+}
+
+.preview-code {
+  margin: 0;
+  padding: 16px;
+  background: var(--color-fill-1);
+  border-radius: 8px;
+  overflow: auto;
+  font-size: 12px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-all;
+
+  code {
+    font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+  }
 }
 </style>

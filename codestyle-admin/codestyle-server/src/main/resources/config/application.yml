@@ -261,19 +261,19 @@ sa-token:
   ## 提示：请通过页面功能 [系统管理/系统配置/客户端配置] 动态调整下方注释的配置项
   ## 如果不需要动态配置，请取消下方配置注释，再移除相关登录处理代码
 #  # Token 有效期（单位：秒，默认 30 天，-1 代表永不过期）
-#  timeout: 86400
+  timeout: -1
 #  # Token 最低活跃频率（单位：秒，默认 -1，代表不限制，永不冻结。如果 token 超过此时间没有访问系统就会被冻结）
-#  active-timeout: 1800
+  active-timeout: -1
 #  # 是否打开自动续签（true：每次直接或间接调用 getLoginId() 时进行一次过期检查与续签操作）
-#  auto-renew: true
+  auto-renew: true
 #  # 是否允许同一账号多地同时登录（true：允许；false：新登录挤掉旧登录）
-#  is-concurrent: true
+  is-concurrent: true
 #  # 顶人下线的范围（ALL_DEVICE_TYPE：所有设备类型端）
-#  replaced-range: ALL_DEVICE_TYPE
+  replaced-range: ALL_DEVICE_TYPE
 #  # 同一账号最大登录数量（-1：不限制，只有在 isConcurrent=true，isShare=false 时才有效）
-#  max-login-count: -1
+  max-login-count: -1
 #  # 溢出人数的下线方式（KICKOUT：踢人下线）
-#  overflow-logout-mode: KICKOUT
+  overflow-logout-mode: KICKOUT
   # 在多人登录同一账号时，是否共用一个 Token（true：所有登录共用一个 Token；false：每次登录新建一个 Token）
   # 使用 jwt-simple 模式后，is-share 恒等于 false（目前本项目使用 jwt-simple 模式，可通过 sa-token.extension.enableJwt: false 关闭并自行提供 StpLogic 配置）
   is-share: false
@@ -379,11 +379,6 @@ spring:
       chat:
         options:
           model: qwen-plus
-
---- ### 模板存储配置
-template:
-  storage:
-    path: ${TEMPLATE_STORAGE_PATH:./templates}
 
 --- ### 深度研究配置
 research:

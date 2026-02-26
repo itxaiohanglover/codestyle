@@ -19,7 +19,6 @@ package top.codestyle.admin.search.controller;
 import cn.dev33.satoken.annotation.SaIgnore;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.IoUtil;
-import cn.hutool.core.util.ZipUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -27,7 +26,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -36,18 +34,20 @@ import top.codestyle.admin.search.service.TemplateFileService;
 import top.continew.starter.core.util.validation.CheckUtils;
 import top.continew.starter.core.util.validation.ValidationUtils;
 import top.continew.starter.log.annotation.Log;
-import top.continew.starter.web.model.R;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.util.List;
+import java.util.Map;
 
 /**
  * 模板文件 API
+ * <p>
+ * 提供模板压缩包上传解压、文件树查询、文件内容预览及打包下载功能。
+ * 所有模板文件通过系统 FileService 统一存储管理。
+ * </p>
  *
  * @author CodeStyle Team
  * @since 1.0.0
@@ -59,30 +59,87 @@ import java.nio.file.Paths;
 @RequiredArgsConstructor
 public class TemplateFileController {
 
-    /**
-     * 模板存储根目录
-     * 从配置文件读取，默认为 ./templates
-     */
-    @Value("${template.storage.path:./templates}")
-    private String templateBasePath;
-
     private final TemplateFileService templateFileService;
 
     /**
-     * 下载模板文件
+     * 上传模板
      * <p>
-     * 根据 groupId/artifactId/version 定位模板目录，打包为 ZIP 并返回
+     * 接收 ZIP/TAR.GZ/7Z 格式压缩包，自动解压并将模板文件逐个存入文件管理系统。
+     * 支持从 meta.json 自动解析 groupId/artifactId/version 参数。
      * </p>
-     *
-     * @param groupId    组ID（如：top.codestyle）
-     * @param artifactId 项目ID（如：crud-template）
-     * @param version    版本号（如：1.0.0）
-     * @param response   HTTP 响应
-     * @throws IOException IO 异常
      */
     @Log(ignore = true)
     @SaIgnore
-    @Operation(summary = "下载模板", description = "根据 groupId/artifactId/version 下载模板 ZIP 包")
+    @Operation(summary = "上传模板", description = "上传模板压缩包，自动解压并存入文件管理系统")
+    @Parameter(name = "file", description = "模板压缩包（ZIP/TAR.GZ/7Z）", required = true)
+    @Parameter(name = "groupId", description = "组ID（可选，优先于 meta.json）", example = "top.codestyle", in = ParameterIn.QUERY)
+    @Parameter(name = "artifactId", description = "项目ID（可选，优先于 meta.json）", example = "crud-template", in = ParameterIn.QUERY)
+    @Parameter(name = "version", description = "版本号（可选，优先于 meta.json）", example = "1.0.0", in = ParameterIn.QUERY)
+    @PostMapping("/open-api/template/upload")
+    public TemplateUploadResp upload(@RequestPart MultipartFile file,
+                                     @RequestParam(required = false) String groupId,
+                                     @RequestParam(required = false) String artifactId,
+                                     @RequestParam(required = false) String version) throws IOException {
+        // 参数校验
+        ValidationUtils.throwIf(file::isEmpty, "文件不能为空");
+        String filename = file.getOriginalFilename();
+        CheckUtils.throwIf(filename == null, "文件名不能为空");
+        String lowerName = filename.toLowerCase();
+        CheckUtils.throwIf(!(lowerName.endsWith(".zip") || lowerName.endsWith(".tar.gz") || lowerName
+            .endsWith(".tgz") || lowerName.endsWith(".7z")), "只支持 ZIP、TAR.GZ、7Z 格式的压缩包");
+
+        return templateFileService.uploadTemplate(file, groupId, artifactId, version);
+    }
+
+    /**
+     * 获取模板文件树
+     * <p>
+     * 从文件管理系统中查询指定模板版本下的所有文件，返回树形结构。
+     * </p>
+     */
+    @Log(ignore = true)
+    @SaIgnore
+    @Operation(summary = "获取模板文件树", description = "返回模板目录下的文件树结构")
+    @Parameter(name = "groupId", description = "组ID", example = "top.codestyle", in = ParameterIn.QUERY)
+    @Parameter(name = "artifactId", description = "项目ID", example = "crud-template", in = ParameterIn.QUERY)
+    @Parameter(name = "version", description = "版本号", example = "1.0.0", in = ParameterIn.QUERY)
+    @GetMapping("/open-api/template/files")
+    public List<Map<String, Object>> listFiles(@RequestParam String groupId,
+                                               @RequestParam String artifactId,
+                                               @RequestParam String version) {
+        return templateFileService.listFiles(groupId, artifactId, version);
+    }
+
+    /**
+     * 预览模板文件内容
+     * <p>
+     * 从存储系统中读取指定模板文件的文本内容，文件大小不超过 512KB。
+     * </p>
+     */
+    @Log(ignore = true)
+    @SaIgnore
+    @Operation(summary = "预览模板文件内容", description = "读取模板目录下指定文件的文本内容")
+    @Parameter(name = "groupId", description = "组ID", example = "top.codestyle", in = ParameterIn.QUERY)
+    @Parameter(name = "artifactId", description = "项目ID", example = "crud-template", in = ParameterIn.QUERY)
+    @Parameter(name = "version", description = "版本号", example = "1.0.0", in = ParameterIn.QUERY)
+    @Parameter(name = "filePath", description = "模板内相对路径", example = "src/main/java/Entity.java.ftl", in = ParameterIn.QUERY)
+    @GetMapping("/open-api/template/file-content")
+    public String readFileContent(@RequestParam String groupId,
+                                  @RequestParam String artifactId,
+                                  @RequestParam String version,
+                                  @RequestParam String filePath) throws IOException {
+        return templateFileService.readFileContent(groupId, artifactId, version, filePath);
+    }
+
+    /**
+     * 下载模板
+     * <p>
+     * 从存储系统中读取指定模板版本的所有文件，按原始目录结构打包为 ZIP 并返回。
+     * </p>
+     */
+    @Log(ignore = true)
+    @SaIgnore
+    @Operation(summary = "下载模板", description = "将模板文件打包为 ZIP 下载")
     @Parameter(name = "groupId", description = "组ID", example = "top.codestyle", in = ParameterIn.QUERY)
     @Parameter(name = "artifactId", description = "项目ID", example = "crud-template", in = ParameterIn.QUERY)
     @Parameter(name = "version", description = "版本号", example = "1.0.0", in = ParameterIn.QUERY)
@@ -91,95 +148,27 @@ public class TemplateFileController {
                          @RequestParam String artifactId,
                          @RequestParam String version,
                          HttpServletResponse response) throws IOException {
-
-        log.info("开始下载模板: groupId={}, artifactId={}, version={}", groupId, artifactId, version);
-
-        // 1. 构建模板目录路径
-        Path templatePath = Paths.get(templateBasePath, groupId, artifactId, version);
-        File templateDir = templatePath.toFile();
-
-        // 2. 验证目录是否存在
-        CheckUtils.throwIf(!templateDir.exists(), "模板不存在: {}/{}/{}", groupId, artifactId, version);
-        CheckUtils.throwIf(!templateDir.isDirectory(), "路径不是目录: {}", templatePath);
-
-        // 3. 创建临时 ZIP 文件
         File zipFile = null;
         try {
-            zipFile = Files.createTempFile("template-", ".zip").toFile();
-            log.info("创建临时 ZIP 文件: {}", zipFile.getAbsolutePath());
+            // 从存储系统中打包模板文件为 ZIP
+            zipFile = templateFileService.createTemplateZip(groupId, artifactId, version);
 
-            // 4. 打包目录为 ZIP
-            ZipUtil.zip(zipFile, false, templateDir);
-            log.info("模板打包完成，ZIP 大小: {} bytes", zipFile.length());
-
-            // 5. 设置响应头
+            // 设置响应头
             String fileName = String.format("%s-%s-%s.zip", groupId, artifactId, version);
             response.setContentType("application/zip");
             response.setHeader("Content-Disposition", "attachment; filename=\"" + fileName + "\"");
             response.setContentLengthLong(zipFile.length());
 
-            // 6. 写入响应流
+            // 写入响应流
             try (FileInputStream fis = new FileInputStream(zipFile); OutputStream os = response.getOutputStream()) {
                 IoUtil.copy(fis, os);
                 os.flush();
             }
-
-            log.info("模板下载完成: {}", fileName);
-
-        } catch (Exception e) {
-            log.error("模板下载失败: groupId={}, artifactId={}, version={}", groupId, artifactId, version, e);
-            throw new IOException("模板下载失败: " + e.getMessage(), e);
         } finally {
-            // 7. 清理临时文件
+            // 清理临时 ZIP 文件
             if (zipFile != null && zipFile.exists()) {
                 FileUtil.del(zipFile);
-                log.debug("清理临时 ZIP 文件: {}", zipFile.getAbsolutePath());
             }
         }
-    }
-
-    /**
-     * 上传模板
-     * <p>
-     * 接收 ZIP 文件，自动解压并上传到存储系统
-     * </p>
-     *
-     * @param file       模板 ZIP 文件
-     * @param groupId    组ID（如：top.codestyle）
-     * @param artifactId 项目ID（如：crud-template）
-     * @param version    版本号（如：1.0.0）
-     * @return 模板上传响应
-     * @throws IOException IO 异常
-     */
-    @Log(ignore = true)
-    @SaIgnore
-    @Operation(summary = "上传模板", description = "上传模板 ZIP 包，自动解压并索引")
-    @Parameter(name = "file", description = "模板 ZIP 文件", required = true)
-    @Parameter(name = "groupId", description = "组ID", example = "top.codestyle", in = ParameterIn.QUERY)
-    @Parameter(name = "artifactId", description = "项目ID", example = "crud-template", in = ParameterIn.QUERY)
-    @Parameter(name = "version", description = "版本号", example = "1.0.0", in = ParameterIn.QUERY)
-    @PostMapping("/open-api/template/upload")
-    public R<TemplateUploadResp> upload(@RequestPart MultipartFile file,
-                                        @RequestParam String groupId,
-                                        @RequestParam String artifactId,
-                                        @RequestParam String version) throws IOException {
-
-        log.info("开始上传模板: groupId={}, artifactId={}, version={}", groupId, artifactId, version);
-
-        // 1. 参数校验
-        ValidationUtils.throwIf(file::isEmpty, "文件不能为空");
-        ValidationUtils.throwIfBlank(groupId, "groupId 不能为空");
-        ValidationUtils.throwIfBlank(artifactId, "artifactId 不能为空");
-        ValidationUtils.throwIfBlank(version, "version 不能为空");
-
-        // 2. 验证文件类型
-        String filename = file.getOriginalFilename();
-        CheckUtils.throwIf(filename == null || !filename.endsWith(".zip"), "只支持 ZIP 文件");
-
-        // 3. 上传并解压（复用 FileService）
-        TemplateUploadResp resp = templateFileService.uploadTemplate(file, groupId, artifactId, version);
-
-        log.info("模板上传成功: templateId={}", resp.getTemplateId());
-        return R.ok(resp);
     }
 }

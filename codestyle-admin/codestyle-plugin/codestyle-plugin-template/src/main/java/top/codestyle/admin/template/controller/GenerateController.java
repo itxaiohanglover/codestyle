@@ -16,6 +16,7 @@
 
 package top.codestyle.admin.template.controller;
 
+import cn.dev33.satoken.annotation.SaCheckPermission;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -52,42 +53,49 @@ public class GenerateController {
     private final ResearchService researchService;
 
     @Operation(summary = "发送对话消息")
+    @SaCheckPermission("template:generate:chat")
     @PostMapping("/chat")
     public ChatResponseResp chat(@Valid @RequestBody ChatMessageReq req) {
         return chatSessionService.chat(req);
     }
 
     @Operation(summary = "创建新会话")
+    @SaCheckPermission("template:generate:session")
     @PostMapping("/session")
     public ChatSessionResp createSession() {
         return chatSessionService.createSession();
     }
 
     @Operation(summary = "获取会话列表")
+    @SaCheckPermission("template:generate:session")
     @GetMapping("/session/list")
     public List<ChatSessionResp> listSessions() {
         return chatSessionService.listSessions();
     }
 
     @Operation(summary = "获取会话消息历史")
+    @SaCheckPermission("template:generate:session")
     @GetMapping("/session/{sessionId}/messages")
     public List<ChatMessageResp> getSessionMessages(@Parameter(description = "会话ID") @PathVariable Long sessionId) {
         return chatSessionService.getSessionMessages(sessionId);
     }
 
     @Operation(summary = "删除会话")
+    @SaCheckPermission("template:generate:session")
     @DeleteMapping("/session/{sessionId}")
     public void deleteSession(@Parameter(description = "会话ID") @PathVariable Long sessionId) {
         chatSessionService.deleteSession(sessionId);
     }
 
     @Operation(summary = "获取会话代码片段列表")
+    @SaCheckPermission("template:generate:snippet")
     @GetMapping("/session/{sessionId}/snippets")
     public List<CodeSnippetResp> getSessionSnippets(@Parameter(description = "会话ID") @PathVariable Long sessionId) {
         return chatSessionService.getSessionSnippets(sessionId);
     }
 
     @Operation(summary = "更新代码片段")
+    @SaCheckPermission("template:generate:snippet")
     @PutMapping("/snippet/{snippetId}")
     public CodeSnippetResp updateSnippet(@Parameter(description = "片段ID") @PathVariable Long snippetId,
                                          @Valid @RequestBody UpdateSnippetReq req) {
@@ -95,27 +103,32 @@ public class GenerateController {
     }
 
     @Operation(summary = "保存代码片段到模板库")
+    @SaCheckPermission("template:generate:snippet")
     @PostMapping("/snippet/{snippetId}/save-to-library")
     public Long saveSnippetToLibrary(@Parameter(description = "片段ID") @PathVariable Long snippetId,
                                      @RequestBody(required = false) SaveToLibraryReq req) {
-        return templateService.saveSnippetToLibrary(snippetId, req != null ? req.getName() : null, req != null
-            ? req.getDescription()
-            : null, req != null ? req.getTags() : null);
+        String reqName = req != null ? req.getName() : null;
+        String reqDesc = req != null ? req.getDescription() : null;
+        List<?> reqTags = req != null ? req.getTags() : null;
+        return templateService.saveSnippetToLibrary(snippetId, reqName, reqDesc, reqTags);
     }
 
     @Operation(summary = "启动深度研究任务 (委托 research 模块)")
+    @SaCheckPermission("template:generate:research")
     @PostMapping("/research/start")
     public ResearchStatusResp startResearch(@Valid @RequestBody ResearchStartReq req) {
         return researchService.startResearch(req);
     }
 
     @Operation(summary = "订阅研究任务进度 (SSE)")
+    @SaCheckPermission("template:generate:research")
     @GetMapping("/research/{taskId}/progress")
     public SseEmitter getResearchProgress(@Parameter(description = "任务ID") @PathVariable String taskId) {
         return researchService.subscribeProgress(taskId);
     }
 
     @Operation(summary = "取消研究任务")
+    @SaCheckPermission("template:generate:research")
     @DeleteMapping("/research/{taskId}")
     public void cancelResearch(@Parameter(description = "任务ID") @PathVariable String taskId) {
         researchService.cancelTask(taskId);

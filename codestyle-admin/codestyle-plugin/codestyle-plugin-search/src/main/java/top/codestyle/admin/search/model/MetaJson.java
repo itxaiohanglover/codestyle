@@ -16,6 +16,7 @@
 
 package top.codestyle.admin.search.model;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import lombok.Data;
 
 import java.util.List;
@@ -105,16 +106,19 @@ public class MetaJson {
         /**
          * 变量名
          */
+        @JsonAlias("variableName")
         private String name;
 
         /**
          * 变量类型
          */
+        @JsonAlias("variableType")
         private String type;
 
         /**
          * 变量注释
          */
+        @JsonAlias("variableComment")
         private String comment;
 
         /**

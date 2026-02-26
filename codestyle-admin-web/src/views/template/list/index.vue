@@ -3,13 +3,25 @@
     <div class="gi_page template-list">
       <!-- 搜索区 -->
       <div class="search-section">
+        <a-radio-group v-model="activeTab" type="button" @change="onTabChange">
+          <a-radio value="all">全部模板</a-radio>
+          <a-radio value="favorites">我的收藏</a-radio>
+        </a-radio-group>
         <a-input-search
           v-model="queryForm.keyword"
           placeholder="搜索模板名称、描述、作者..."
-          style="max-width: 600px"
+          style="max-width: 600px; flex: 1"
           allow-clear
           @search="getDataList"
         />
+        <a-button v-permission="['template:create']" type="primary" @click="onAdd">
+          <template #icon><icon-plus /></template>
+          新增模板
+        </a-button>
+        <a-button v-permission="['template:delete']" :disabled="!selectedIds.length" type="text" status="danger" @click="onBatchDelete">
+          <template #icon><icon-delete /></template>
+          批量删除 {{ selectedIds.length ? `(${selectedIds.length})` : '' }}
+        </a-button>
       </div>
 
       <!-- 模板网格 -->
@@ -19,8 +31,16 @@
             v-for="item in dataList"
             :key="item.id"
             class="template-card"
+            :class="{ selected: selectedIds.includes(item.id) }"
             @click="onPreview(item)"
           >
+            <a-checkbox
+              v-permission="['template:delete']"
+              class="card-checkbox"
+              :model-value="selectedIds.includes(item.id)"
+              @click.stop
+              @change="(v: boolean) => onToggleSelect(item.id, v)"
+            />
             <div class="template-header">
               <div class="template-icon" :style="getIconStyle(item.icon)">
                 {{ item.icon || item.name?.substring(0, 2) }}
@@ -47,14 +67,40 @@
                   {{ item.rating }}
                 </span>
               </div>
-              <a-button
-                type="text"
-                class="favorite-btn" :class="[{ active: item.isFavorite }]"
-                @click.stop="onToggleFavorite(item)"
-              >
-                <icon-star-fill v-if="item.isFavorite" />
-                <icon-star v-else />
-              </a-button>
+              <div class="template-actions">
+                <a-button
+                  v-permission="['template:update']"
+                  type="text"
+                  size="small"
+                  @click.stop="onEdit(item)"
+                >
+                  <icon-edit />
+                </a-button>
+                <a-popconfirm
+                  content="确定删除该模板吗？"
+                  type="warning"
+                  @ok="onDelete(item)"
+                >
+                  <a-button
+                    v-permission="['template:delete']"
+                    type="text"
+                    size="small"
+                    status="danger"
+                    @click.stop
+                  >
+                    <icon-delete />
+                  </a-button>
+                </a-popconfirm>
+                <a-button
+                  v-permission="['template:favorite']"
+                  type="text"
+                  class="favorite-btn" :class="[{ active: item.isFavorite }]"
+                  @click.stop="onToggleFavorite(item)"
+                >
+                  <icon-star-fill v-if="item.isFavorite" />
+                  <icon-star v-else />
+                </a-button>
+              </div>
             </div>
           </div>
         </div>
@@ -72,6 +118,8 @@
 
     <!-- 预览弹窗 -->
     <PreviewModal ref="PreviewModalRef" />
+    <!-- 新增/修改弹窗 -->
+    <AddModal ref="AddModalRef" @save-success="getDataList" />
   </GiPageLayout>
 </template>
 
@@ -79,15 +127,17 @@
 import { onMounted, reactive, ref } from 'vue'
 import { Message } from '@arco-design/web-vue'
 import PreviewModal from './PreviewModal.vue'
+import AddModal from './AddModal.vue'
 import { usePagination } from '@/hooks'
-import { type TemplateItem, type TemplateQuery, listTemplate, toggleFavorite } from '@/apis/template'
+import { type TemplateItem, type TemplateQuery, deleteTemplate, listFavoriteTemplates, listTemplate, toggleFavorite } from '@/apis/template'
 
 defineOptions({ name: 'TemplateList' })
 
+const activeTab = ref('all')
 const queryForm = reactive<TemplateQuery>({})
 const loading = ref(false)
 const dataList = ref<TemplateItem[]>([])
-
+const selectedIds = ref<number[]>([])
 // 图标渐变色列表
 const iconGradients = [
   'linear-gradient(135deg, #0891B2 0%, #22D3EE 100%)',
@@ -112,11 +162,17 @@ const getIconStyle = (icon: string) => {
 
 const { pagination, setTotal } = usePagination(() => getDataList())
 
-// 查询列表
+const onTabChange = () => {
+  pagination.current = 1
+  selectedIds.value = []
+  getDataList()
+}
+
 async function getDataList() {
   try {
     loading.value = true
-    const res = await listTemplate({
+    const apiFn = activeTab.value === 'favorites' ? listFavoriteTemplates : listTemplate
+    const res = await apiFn({
       ...queryForm,
       page: pagination.current,
       size: pagination.pageSize,
@@ -134,6 +190,9 @@ const onToggleFavorite = async (item: TemplateItem) => {
     const res = await toggleFavorite(item.id)
     item.isFavorite = res.data
     Message.success(item.isFavorite ? '已收藏' : '已取消收藏')
+    if (!item.isFavorite && activeTab.value === 'favorites') {
+      getDataList()
+    }
   } catch {
     Message.error('操作失败')
   }
@@ -143,6 +202,44 @@ const onToggleFavorite = async (item: TemplateItem) => {
 const PreviewModalRef = ref<InstanceType<typeof PreviewModal>>()
 const onPreview = (item: TemplateItem) => {
   PreviewModalRef.value?.onOpen(item)
+}
+
+const AddModalRef = ref<InstanceType<typeof AddModal>>()
+const onAdd = () => {
+  AddModalRef.value?.onAdd()
+}
+const onEdit = (item: TemplateItem) => {
+  AddModalRef.value?.onUpdate(item.id)
+}
+const onDelete = async (item: TemplateItem) => {
+  try {
+    await deleteTemplate(item.id)
+    Message.success('删除成功')
+    selectedIds.value = selectedIds.value.filter((id) => id !== item.id)
+    getDataList()
+  } catch {
+    Message.error('删除失败')
+  }
+}
+
+const onToggleSelect = (id: number, checked: boolean) => {
+  if (checked) {
+    selectedIds.value.push(id)
+  } else {
+    selectedIds.value = selectedIds.value.filter((i) => i !== id)
+  }
+}
+
+const onBatchDelete = async () => {
+  if (!selectedIds.value.length) return
+  try {
+    await deleteTemplate(selectedIds.value)
+    Message.success(`已删除 ${selectedIds.value.length} 个模板`)
+    selectedIds.value = []
+    getDataList()
+  } catch {
+    Message.error('批量删除失败')
+  }
 }
 
 onMounted(() => {
@@ -157,11 +254,9 @@ onMounted(() => {
 
 .search-section {
   display: flex;
-  justify-content: center;
+  align-items: center;
+  gap: 16px;
   margin-bottom: 24px;
-  max-width: 800px;
-  margin-left: auto;
-  margin-right: auto;
 }
 
 .templates-grid {
@@ -185,6 +280,18 @@ onMounted(() => {
     box-shadow: 0 4px 12px rgba(var(--primary-6), 0.1);
     transform: translateY(-2px);
   }
+
+  &.selected {
+    border-color: rgb(var(--primary-6));
+    background: rgba(var(--primary-1), 0.04);
+  }
+}
+
+.card-checkbox {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 1;
 }
 
 .template-header {
@@ -252,6 +359,12 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+.template-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
 }
 
 .template-stats {
