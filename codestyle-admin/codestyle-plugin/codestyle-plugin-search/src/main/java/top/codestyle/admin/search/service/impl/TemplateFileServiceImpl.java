@@ -85,7 +85,8 @@ public class TemplateFileServiceImpl implements TemplateFileService {
     public TemplateUploadResp uploadTemplate(MultipartFile file,
                                              String groupIdParam,
                                              String artifactIdParam,
-                                             String versionParam) throws IOException {
+                                             String versionParam,
+                                             Boolean overwrite) throws IOException {
         Path tempDir = null;
         File tempArchiveFile = null;
 
@@ -121,11 +122,19 @@ public class TemplateFileServiceImpl implements TemplateFileService {
             CheckUtils.throwIfBlank(version, "version 不能为空，请在 meta.json 中指定");
             validateTemplateFiles(templateRoot, metaJson);
 
-            // 6. 删除旧版本文件（如有）
-            deleteOldVersionFiles(groupId, artifactId, version);
+            // 6. 检查是否已存在同版本文件
+            String templatePrefix = buildTemplatePrefix(groupId, artifactId, version);
+            boolean exists = fileMapper.lambdaQuery().likeRight(FileDO::getParentPath, templatePrefix).exists();
+            if (exists) {
+                if (Boolean.TRUE.equals(overwrite)) {
+                    deleteOldVersionFiles(groupId, artifactId, version);
+                } else {
+                    CheckUtils.throwIf(true, "模板 %s:%s:%s 已存在，如需覆盖请设置 overwrite=true"
+                        .formatted(groupId, artifactId, version));
+                }
+            }
 
             // 7. 逐个文件上传到 FileService
-            String templatePrefix = buildTemplatePrefix(groupId, artifactId, version);
             uploadExtractedFiles(templateRoot, templateRoot, templatePrefix);
 
             // 8. 若 meta.json 没有 description，尝试从 README 中提取

@@ -20,6 +20,7 @@ export interface TemplateReq {
   downloadUrl?: string
   searchRefId?: string
   tags?: TagItem[]
+  visibility?: number
 }
 
 export interface TemplateItem {
@@ -35,6 +36,7 @@ export interface TemplateItem {
   rating: number
   isFavorite: boolean
   version?: string
+  visibility?: number
   createTime: string
   updateTime: string
 }

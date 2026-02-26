@@ -63,4 +63,7 @@ public class TemplateItemResp extends BaseDetailResp {
 
     @Schema(description = "版本号")
     private String version;
+
+    @Schema(description = "可见性（0：私有；1：公开）")
+    private Integer visibility;
 }

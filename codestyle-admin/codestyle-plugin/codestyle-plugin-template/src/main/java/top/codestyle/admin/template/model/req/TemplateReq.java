@@ -74,4 +74,7 @@ public class TemplateReq implements Serializable {
 
     @Schema(description = "标签列表")
     private List<TagItemResp> tags;
+
+    @Schema(description = "可见性（0：私有；1：公开，默认公开）")
+    private Integer visibility;
 }

@@ -39,4 +39,5 @@ public class TemplateDO extends BaseDO {
     private Double rating;
     private String downloadUrl;
     private String searchRefId;
+    private Integer visibility;
 }

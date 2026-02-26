@@ -53,7 +53,8 @@ public interface TemplateFileService {
     TemplateUploadResp uploadTemplate(MultipartFile file,
                                       String groupId,
                                       String artifactId,
-                                      String version) throws IOException;
+                                      String version,
+                                      Boolean overwrite) throws IOException;
 
     /**
      * 获取模板文件树

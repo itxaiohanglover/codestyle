@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS `template` (
     `rating`         decimal(3,1) DEFAULT 0.0             COMMENT '评分',
     `download_url`   varchar(500) DEFAULT NULL            COMMENT '下载地址',
     `search_ref_id`  varchar(100) DEFAULT NULL            COMMENT 'search模块模板ID',
+    `visibility`     tinyint      NOT NULL DEFAULT 1      COMMENT '可见性（0：私有；1：公开）',
     `create_user`    bigint       NOT NULL                COMMENT '创建人',
     `create_time`    datetime     NOT NULL                COMMENT '创建时间',
     `update_user`    bigint       DEFAULT NULL            COMMENT '修改人',
@@ -122,3 +123,16 @@ INSERT IGNORE INTO `sys_role_menu` (`role_id`, `menu_id`) VALUES
 (1, 4015), (1, 4016), (1, 4017), (1, 4018), (1, 4020), (1, 4021),
 (1, 4022), (1, 4023), (1, 4024);
 
+-- changeset codestyle:3
+INSERT INTO `sys_menu`
+(`id`, `title`, `parent_id`, `type`, `path`, `name`, `component`, `redirect`, `icon`, `is_external`, `is_cache`, `is_hidden`, `permission`, `sort`, `status`, `create_user`, `create_time`)
+VALUES
+(4030, '我的模板', 4000, 2, '/template/mine', 'TemplateMine', 'template/mine/index', NULL, 'user', b'0', b'0', b'0', NULL, 3, 1, 1, NOW()),
+(4031, '列表', 4030, 3, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'template:mine:list', 1, 1, 1, NOW()),
+(4032, '公开/取消公开', 4030, 3, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'template:mine:publish', 2, 1, 1, NOW()),
+(4033, '新增', 4030, 3, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'template:mine:create', 3, 1, 1, NOW()),
+(4034, '修改', 4030, 3, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'template:mine:update', 4, 1, 1, NOW()),
+(4035, '删除', 4030, 3, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'template:mine:delete', 5, 1, 1, NOW());
+
+INSERT IGNORE INTO `sys_role_menu` (`role_id`, `menu_id`) VALUES
+(1, 4030), (1, 4031), (1, 4032), (1, 4033), (1, 4034), (1, 4035);

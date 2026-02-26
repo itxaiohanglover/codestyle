@@ -31,6 +31,10 @@ public interface TemplateService {
 
     PageResp<TemplateItemResp> listFavorites(TemplateQuery query, PageQuery pageQuery);
 
+    PageResp<TemplateItemResp> listMyTemplates(TemplateQuery query, PageQuery pageQuery);
+
+    void toggleVisibility(Long id);
+
     TemplateDetailResp getTemplateDetail(Long id);
 
     Boolean toggleFavorite(Long templateId);

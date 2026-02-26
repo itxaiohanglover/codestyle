@@ -1,26 +1,28 @@
 <template>
   <GiPageLayout :margin="false" :body-style="{ padding: 0 }">
-    <div class="gi_page template-list">
-      <!-- 搜索区 -->
+    <div class="gi_page template-mine">
       <div class="search-section">
+        <a-radio-group v-model="activeTab" type="button" @change="onTabChange">
+          <a-radio value="mine">我的模板</a-radio>
+          <a-radio value="favorites">我的收藏</a-radio>
+        </a-radio-group>
         <a-input-search
           v-model="queryForm.keyword"
-          placeholder="搜索模板名称、描述、作者..."
+          placeholder="搜索模板名称、描述..."
           style="max-width: 600px; flex: 1"
           allow-clear
           @search="getDataList"
         />
-        <a-button v-permission="['template:create']" type="primary" @click="onAdd">
+        <a-button v-if="activeTab === 'mine'" v-permission="['template:mine:create']" type="primary" @click="onAdd">
           <template #icon><icon-plus /></template>
           新增模板
         </a-button>
-        <a-button v-permission="['template:delete']" :disabled="!selectedIds.length" type="text" status="danger" @click="onBatchDelete">
+        <a-button v-if="activeTab === 'mine'" v-permission="['template:mine:delete']" :disabled="!selectedIds.length" type="text" status="danger" @click="onBatchDelete">
           <template #icon><icon-delete /></template>
           批量删除 {{ selectedIds.length ? `(${selectedIds.length})` : '' }}
         </a-button>
       </div>
 
-      <!-- 模板网格 -->
       <a-spin :loading="loading" style="width: 100%">
         <div class="templates-grid">
           <div
@@ -31,12 +33,15 @@
             @click="onPreview(item)"
           >
             <a-checkbox
-              v-permission="['template:delete']"
+              v-permission="['template:mine:delete']"
               class="card-checkbox"
               :model-value="selectedIds.includes(item.id)"
               @click.stop
               @change="(v: boolean) => onToggleSelect(item.id, v)"
             />
+            <div v-if="activeTab === 'mine'" class="visibility-badge" :class="item.visibility === 1 ? 'public' : 'private'">
+              {{ item.visibility === 1 ? '公开' : '私有' }}
+            </div>
             <div class="template-header">
               <div class="template-icon" :style="getIconStyle(item.icon)">
                 {{ item.icon || item.name?.substring(0, 2) }}
@@ -64,8 +69,21 @@
                 </span>
               </div>
               <div class="template-actions">
+                <a-tooltip v-if="activeTab === 'mine'" :content="item.visibility === 1 ? '设为私有' : '公开到模板库'">
+                  <a-button
+                    v-permission="['template:mine:publish']"
+                    type="text"
+                    size="small"
+                    :status="item.visibility === 1 ? 'warning' : 'success'"
+                    @click.stop="onToggleVisibility(item)"
+                  >
+                    <icon-eye v-if="item.visibility === 1" />
+                    <icon-eye-invisible v-else />
+                  </a-button>
+                </a-tooltip>
                 <a-button
-                  v-permission="['template:update']"
+                  v-if="activeTab === 'mine'"
+                  v-permission="['template:mine:update']"
                   type="text"
                   size="small"
                   @click.stop="onEdit(item)"
@@ -73,12 +91,13 @@
                   <icon-edit />
                 </a-button>
                 <a-popconfirm
+                  v-if="activeTab === 'mine'"
                   content="确定删除该模板吗？"
                   type="warning"
                   @ok="onDelete(item)"
                 >
                   <a-button
-                    v-permission="['template:delete']"
+                    v-permission="['template:mine:delete']"
                     type="text"
                     size="small"
                     status="danger"
@@ -88,33 +107,27 @@
                   </a-button>
                 </a-popconfirm>
                 <a-button
-                  v-permission="['template:favorite']"
+                  v-if="activeTab === 'favorites'"
                   type="text"
-                  class="favorite-btn" :class="[{ active: item.isFavorite }]"
+                  class="favorite-btn active"
                   @click.stop="onToggleFavorite(item)"
                 >
-                  <icon-star-fill v-if="item.isFavorite" />
-                  <icon-star v-else />
+                  <icon-star-fill />
                 </a-button>
               </div>
             </div>
           </div>
         </div>
 
-        <a-empty v-if="!loading && dataList.length === 0" />
+        <a-empty v-if="!loading && dataList.length === 0" description="暂无模板，点击「新增模板」开始创建" />
       </a-spin>
 
-      <!-- 分页 -->
       <div v-if="dataList.length > 0" class="pagination-wrapper">
-        <a-pagination
-          v-bind="pagination"
-        />
+        <a-pagination v-bind="pagination" />
       </div>
     </div>
 
-    <!-- 预览弹窗 -->
     <PreviewModal ref="PreviewModalRef" />
-    <!-- 新增/修改弹窗 -->
     <AddModal ref="AddModalRef" @save-success="getDataList" />
   </GiPageLayout>
 </template>
@@ -122,18 +135,19 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
 import { Message } from '@arco-design/web-vue'
-import PreviewModal from './PreviewModal.vue'
-import AddModal from './AddModal.vue'
+import PreviewModal from '../list/PreviewModal.vue'
+import AddModal from '../list/AddModal.vue'
 import { usePagination } from '@/hooks'
-import { type TemplateItem, type TemplateQuery, deleteTemplate, listTemplate, toggleFavorite } from '@/apis/template'
+import { type TemplateItem, type TemplateQuery, deleteTemplate, listFavoriteTemplates, listMyTemplates, toggleFavorite, toggleVisibility } from '@/apis/template'
 
-defineOptions({ name: 'TemplateList' })
+defineOptions({ name: 'TemplateMine' })
 
+const activeTab = ref('mine')
 const queryForm = reactive<TemplateQuery>({})
 const loading = ref(false)
 const dataList = ref<TemplateItem[]>([])
 const selectedIds = ref<number[]>([])
-// 图标渐变色列表
+
 const iconGradients = [
   'linear-gradient(135deg, #0891B2 0%, #22D3EE 100%)',
   'linear-gradient(135deg, #7C3AED 0%, #A78BFA 100%)',
@@ -157,10 +171,17 @@ const getIconStyle = (icon: string) => {
 
 const { pagination, setTotal } = usePagination(() => getDataList())
 
+const onTabChange = () => {
+  pagination.current = 1
+  selectedIds.value = []
+  getDataList()
+}
+
 async function getDataList() {
   try {
     loading.value = true
-    const res = await listTemplate({
+    const apiFn = activeTab.value === 'favorites' ? listFavoriteTemplates : listMyTemplates
+    const res = await apiFn({
       ...queryForm,
       page: pagination.current,
       size: pagination.pageSize,
@@ -172,18 +193,26 @@ async function getDataList() {
   }
 }
 
-// 切换收藏
-const onToggleFavorite = async (item: TemplateItem) => {
+const onToggleVisibility = async (item: TemplateItem) => {
   try {
-    const res = await toggleFavorite(item.id)
-    item.isFavorite = res.data
-    Message.success(item.isFavorite ? '已收藏' : '已取消收藏')
+    await toggleVisibility(item.id)
+    item.visibility = item.visibility === 1 ? 0 : 1
+    Message.success(item.visibility === 1 ? '已公开到模板库' : '已设为私有')
   } catch {
     Message.error('操作失败')
   }
 }
 
-// 预览
+const onToggleFavorite = async (item: TemplateItem) => {
+  try {
+    await toggleFavorite(item.id)
+    Message.success('已取消收藏')
+    getDataList()
+  } catch {
+    Message.error('操作失败')
+  }
+}
+
 const PreviewModalRef = ref<InstanceType<typeof PreviewModal>>()
 const onPreview = (item: TemplateItem) => {
   PreviewModalRef.value?.onOpen(item)
@@ -233,7 +262,7 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-.template-list {
+.template-mine {
   padding: 20px;
 }
 
@@ -277,6 +306,26 @@ onMounted(() => {
   top: 10px;
   right: 10px;
   z-index: 1;
+}
+
+.visibility-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+
+  &.public {
+    background: rgba(var(--green-1), 0.8);
+    color: rgb(var(--green-6));
+  }
+
+  &.private {
+    background: rgba(var(--orange-1), 0.8);
+    color: rgb(var(--orange-6));
+  }
 }
 
 .template-header {
@@ -352,6 +401,16 @@ onMounted(() => {
   gap: 2px;
 }
 
+.favorite-btn {
+  color: var(--color-text-4);
+  font-size: 18px;
+  padding: 4px;
+
+  &.active {
+    color: rgb(var(--warning-6));
+  }
+}
+
 .template-stats {
   display: flex;
   align-items: center;
@@ -365,20 +424,6 @@ onMounted(() => {
   font-size: 13px;
   color: var(--color-text-3);
   font-weight: 500;
-}
-
-.favorite-btn {
-  color: var(--color-text-4);
-  font-size: 18px;
-  padding: 4px;
-
-  &.active {
-    color: rgb(var(--warning-6));
-  }
-
-  &:hover {
-    color: rgb(var(--warning-6));
-  }
 }
 
 .pagination-wrapper {

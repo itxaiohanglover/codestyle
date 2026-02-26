@@ -16,7 +16,6 @@
 
 package top.codestyle.admin.search.controller;
 
-import cn.dev33.satoken.annotation.SaIgnore;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.IoUtil;
 import io.swagger.v3.oas.annotations.Operation;
@@ -69,7 +68,6 @@ public class TemplateFileController {
      * </p>
      */
     @Log(ignore = true)
-    @SaIgnore
     @Operation(summary = "上传模板", description = "上传模板压缩包，自动解压并存入文件管理系统")
     @Parameter(name = "file", description = "模板压缩包（ZIP/TAR.GZ/7Z）", required = true)
     @Parameter(name = "groupId", description = "组ID（可选，优先于 meta.json）", example = "top.codestyle", in = ParameterIn.QUERY)
@@ -79,7 +77,8 @@ public class TemplateFileController {
     public TemplateUploadResp upload(@RequestPart MultipartFile file,
                                      @RequestParam(required = false) String groupId,
                                      @RequestParam(required = false) String artifactId,
-                                     @RequestParam(required = false) String version) throws IOException {
+                                     @RequestParam(required = false) String version,
+                                     @RequestParam(required = false, defaultValue = "false") Boolean overwrite) throws IOException {
         // 参数校验
         ValidationUtils.throwIf(file::isEmpty, "文件不能为空");
         String filename = file.getOriginalFilename();
@@ -88,7 +87,7 @@ public class TemplateFileController {
         CheckUtils.throwIf(!(lowerName.endsWith(".zip") || lowerName.endsWith(".tar.gz") || lowerName
             .endsWith(".tgz") || lowerName.endsWith(".7z")), "只支持 ZIP、TAR.GZ、7Z 格式的压缩包");
 
-        return templateFileService.uploadTemplate(file, groupId, artifactId, version);
+        return templateFileService.uploadTemplate(file, groupId, artifactId, version, overwrite);
     }
 
     /**
@@ -98,7 +97,6 @@ public class TemplateFileController {
      * </p>
      */
     @Log(ignore = true)
-    @SaIgnore
     @Operation(summary = "获取模板文件树", description = "返回模板目录下的文件树结构")
     @Parameter(name = "groupId", description = "组ID", example = "top.codestyle", in = ParameterIn.QUERY)
     @Parameter(name = "artifactId", description = "项目ID", example = "crud-template", in = ParameterIn.QUERY)
@@ -117,7 +115,6 @@ public class TemplateFileController {
      * </p>
      */
     @Log(ignore = true)
-    @SaIgnore
     @Operation(summary = "预览模板文件内容", description = "读取模板目录下指定文件的文本内容")
     @Parameter(name = "groupId", description = "组ID", example = "top.codestyle", in = ParameterIn.QUERY)
     @Parameter(name = "artifactId", description = "项目ID", example = "crud-template", in = ParameterIn.QUERY)
@@ -138,7 +135,6 @@ public class TemplateFileController {
      * </p>
      */
     @Log(ignore = true)
-    @SaIgnore
     @Operation(summary = "下载模板", description = "将模板文件打包为 ZIP 下载")
     @Parameter(name = "groupId", description = "组ID", example = "top.codestyle", in = ParameterIn.QUERY)
     @Parameter(name = "artifactId", description = "项目ID", example = "crud-template", in = ParameterIn.QUERY)
@@ -170,5 +166,12 @@ public class TemplateFileController {
                 FileUtil.del(zipFile);
             }
         }
+    }
+
+    @Log(ignore = true)
+    @Operation(summary = "删除模板", description = "删除指定版本的模板文件")
+    @PostMapping("/open-api/template/delete")
+    public void delete(@RequestParam String groupId, @RequestParam String artifactId, @RequestParam String version) {
+        templateFileService.deleteTemplateFiles(groupId, artifactId, version);
     }
 }

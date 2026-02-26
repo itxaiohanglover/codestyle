@@ -16,7 +16,6 @@
 
 package top.codestyle.admin.search.controller;
 
-import cn.dev33.satoken.annotation.SaIgnore;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -74,7 +73,6 @@ public class SearchController {
      * @param topK  返回结果数量
      * @return 检索结果列表
      */
-    @SaIgnore
     @Operation(summary = "Open API 检索", description = "基于 ContiNew Open API 签名认证的检索接口")
     @GetMapping("/open-api/search")
     public List<SearchResult> openApiSearch(@RequestParam String query,

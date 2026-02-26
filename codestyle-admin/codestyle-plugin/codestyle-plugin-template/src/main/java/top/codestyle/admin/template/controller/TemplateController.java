@@ -63,6 +63,20 @@ public class TemplateController {
         return templateService.listFavorites(query, pageQuery);
     }
 
+    @Operation(summary = "我的模板列表")
+    @SaCheckPermission("template:mine:list")
+    @GetMapping("/mine")
+    public PageResp<TemplateItemResp> mine(TemplateQuery query, PageQuery pageQuery) {
+        return templateService.listMyTemplates(query, pageQuery);
+    }
+
+    @Operation(summary = "切换模板可见性")
+    @SaCheckPermission("template:mine:publish")
+    @PutMapping("/{id}/visibility")
+    public void toggleVisibility(@Parameter(description = "模板ID") @PathVariable Long id) {
+        templateService.toggleVisibility(id);
+    }
+
     @Operation(summary = "获取模板详情")
     @SaCheckPermission("template:library:get")
     @GetMapping("/{id}")

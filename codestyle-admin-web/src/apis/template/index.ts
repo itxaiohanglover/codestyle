@@ -13,6 +13,14 @@ export function listFavoriteTemplates(query: T.TemplatePageQuery) {
   return http.get<PageRes<T.TemplateItem[]>>(`${BASE_URL}/favorites`, query)
 }
 
+export function listMyTemplates(query: T.TemplatePageQuery) {
+  return http.get<PageRes<T.TemplateItem[]>>(`${BASE_URL}/mine`, query)
+}
+
+export function toggleVisibility(id: number) {
+  return http.put(`${BASE_URL}/${id}/visibility`)
+}
+
 export function toggleFavorite(id: number) {
   return http.put<boolean>(`${BASE_URL}/${id}/favorite`)
 }

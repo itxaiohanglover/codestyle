@@ -58,7 +58,9 @@ public class TemplateServiceImpl implements TemplateService {
     @Override
     public PageResp<TemplateItemResp> listTemplates(TemplateQuery query, PageQuery pageQuery) {
         QueryWrapper<TemplateDO> queryWrapper = QueryWrapperHelper.build(query);
-        queryWrapper.inSql("id", "SELECT MAX(id) FROM template WHERE deleted = 0 GROUP BY group_id, artifact_id");
+        queryWrapper.eq("visibility", 1);
+        queryWrapper
+            .inSql("id", "SELECT MAX(id) FROM template WHERE deleted = 0 AND visibility = 1 GROUP BY group_id, artifact_id");
         queryWrapper.orderByDesc("update_time");
 
         Page<TemplateDO> page = new Page<>(pageQuery.getPage(), pageQuery.getSize());
@@ -118,6 +120,47 @@ public class TemplateServiceImpl implements TemplateService {
         pageResp.setList(list);
         pageResp.setTotal(result.getTotal());
         return pageResp;
+    }
+
+    @Override
+    public PageResp<TemplateItemResp> listMyTemplates(TemplateQuery query, PageQuery pageQuery) {
+        Long userId = UserContextHolder.getUserId();
+        QueryWrapper<TemplateDO> queryWrapper = QueryWrapperHelper.build(query);
+        queryWrapper.eq("create_user", userId);
+        queryWrapper
+            .inSql("id", "SELECT MAX(id) FROM template WHERE deleted = 0 AND create_user = " + userId + " GROUP BY group_id, artifact_id");
+        queryWrapper.orderByDesc("update_time");
+
+        Page<TemplateDO> page = new Page<>(pageQuery.getPage(), pageQuery.getSize());
+        Page<TemplateDO> result = templateMapper.selectPage(page, queryWrapper);
+
+        List<Long> templateIds = result.getRecords().stream().map(TemplateDO::getId).collect(Collectors.toList());
+        Map<Long, List<TagItemResp>> tagMap = getTagsByTemplateIds(templateIds);
+        Set<Long> favoriteIds = getFavoriteTemplateIds(userId, templateIds);
+
+        List<TemplateItemResp> list = result.getRecords().stream().map(t -> {
+            TemplateItemResp resp = BeanUtil.copyProperties(t, TemplateItemResp.class);
+            resp.setTags(tagMap.getOrDefault(t.getId(), Collections.emptyList()));
+            resp.setIsFavorite(favoriteIds.contains(t.getId()));
+            resp.setVisibility(t.getVisibility());
+            return resp;
+        }).collect(Collectors.toList());
+
+        PageResp<TemplateItemResp> pageResp = new PageResp<>();
+        pageResp.setList(list);
+        pageResp.setTotal(result.getTotal());
+        return pageResp;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void toggleVisibility(Long id) {
+        TemplateDO template = templateMapper.selectById(id);
+        CheckUtils.throwIfNull(template, "模板不存在: {}", id);
+        Long userId = UserContextHolder.getUserId();
+        CheckUtils.throwIf(!template.getCreateUser().equals(userId), "只能操作自己创建的模板");
+        template.setVisibility(template.getVisibility() == 1 ? 0 : 1);
+        templateMapper.updateById(template);
     }
 
     @Override
