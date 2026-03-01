@@ -19,6 +19,8 @@ package top.codestyle.admin.search.service.impl;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import com.github.benmanes.caffeine.cache.Cache;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.archivers.ArchiveEntry;
@@ -33,6 +35,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import top.codestyle.admin.common.context.UserContext;
 import top.codestyle.admin.common.context.UserContextHolder;
+import top.codestyle.admin.search.config.SearchProperties;
+import top.codestyle.admin.search.helper.CacheHelper;
 import top.codestyle.admin.search.model.MetaJson;
 import top.codestyle.admin.search.model.resp.TemplateUploadResp;
 import top.codestyle.admin.search.service.TemplateFileService;
@@ -77,6 +81,9 @@ public class TemplateFileServiceImpl implements TemplateFileService {
     private final FileStorageService fileStorageService;
     private final StorageService storageService;
     private final FileMapper fileMapper;
+    private final ElasticsearchClient esClient;
+    private final SearchProperties searchProperties;
+    private final Cache<String, List<top.codestyle.admin.search.model.SearchResult>> localCache;
 
     // ==================== 公开接口实现 ====================
 
@@ -137,12 +144,18 @@ public class TemplateFileServiceImpl implements TemplateFileService {
             // 7. 逐个文件上传到 FileService
             uploadExtractedFiles(templateRoot, templateRoot, templatePrefix);
 
-            // 8. 若 meta.json 没有 description，尝试从 README 中提取
+            // 8. 索引到 Elasticsearch
+            indexToElasticsearch(groupId, artifactId, version, templatePrefix, metaJson);
+
+            // 9. 若 meta.json 没有 description，尝试从 README 中提取
             if (StrUtil.isBlank(metaJson.getDescription())) {
                 metaJson.setDescription(readReadmeContent(templateRoot));
             }
 
-            // 9. 构建响应
+            // 10. 清除搜索缓存（因为新增了索引）
+            CacheHelper.evictAllCache();
+
+            // 11. 构建响应
             String downloadUrl = String
                 .format("/open-api/template/download?groupId=%s&artifactId=%s&version=%s", groupId, artifactId, version);
             return buildUploadResponse(groupId, artifactId, version, metaJson, downloadUrl);
@@ -250,7 +263,32 @@ public class TemplateFileServiceImpl implements TemplateFileService {
 
     @Override
     public void deleteTemplateFiles(String groupId, String artifactId, String version) {
+        // 1. 删除数据库和存储文件
         deleteOldVersionFiles(groupId, artifactId, version);
+
+        // 2. 删除 ES 索引
+        deleteFromElasticsearch(groupId, artifactId, version);
+
+        // 3. 清除搜索缓存（L1 + L2）
+        localCache.invalidateAll();  // 清除 L1 Caffeine 本地缓存
+        CacheHelper.evictAllCache(); // 清除 L2 Redis 缓存
+    }
+
+    /**
+     * 从 Elasticsearch 删除模板索引
+     */
+    private void deleteFromElasticsearch(String groupId, String artifactId, String version) {
+        try {
+            // 直接删除（按模板维度，1个模板1条文档）
+            String docId = groupId + ":" + artifactId + ":" + version;
+
+            esClient.delete(d -> d.index(searchProperties.getElasticsearch().getIndex()).id(docId));
+
+            log.info("Deleted ES index for {}/{}/{}", groupId, artifactId, version);
+        } catch (Exception e) {
+            log.error("Failed to delete ES index for {}/{}/{}, error: {}", groupId, artifactId, version, e
+                .getMessage(), e);
+        }
     }
 
     // ==================== 压缩包解压 ====================
@@ -618,5 +656,97 @@ public class TemplateFileServiceImpl implements TemplateFileService {
         if (originalContext == null) {
             UserContextHolder.clearContext();
         }
+    }
+
+    /**
+     * 索引模板到 Elasticsearch（按模板维度，每个模板1条文档）
+     */
+    private void indexToElasticsearch(String groupId,
+                                      String artifactId,
+                                      String version,
+                                      String templatePrefix,
+                                      MetaJson metaJson) {
+        try {
+            // 查询刚上传的所有文件
+            List<FileDO> files = fileMapper.lambdaQuery()
+                .likeRight(FileDO::getParentPath, templatePrefix)
+                .ne(FileDO::getType, FileTypeEnum.DIR)
+                .list();
+
+            if (files.isEmpty()) {
+                log.warn("No files found to index for {}/{}/{}", groupId, artifactId, version);
+                return;
+            }
+
+            // 合并所有文件内容为一个大文档（按模板维度）
+            StringBuilder contentBuilder = new StringBuilder();
+            StorageDO storage = storageService.getDefaultStorage();
+
+            for (FileDO file : files) {
+                try {
+                    if (file.getSize() != null && file.getSize() < 512 * 1024) {
+                        FileInfo fileInfo = file.toFileInfo(storage);
+                        byte[] bytes = fileStorageService.download(fileInfo).bytes();
+                        contentBuilder.append(file.getOriginalName())
+                            .append("\n")
+                            .append(new String(bytes, StandardCharsets.UTF_8))
+                            .append("\n\n");
+                    }
+                } catch (Exception e) {
+                    log.warn("Failed to read file content: {}/{}, error: {}", file.getParentPath(), file
+                        .getOriginalName(), e.getMessage());
+                }
+            }
+
+            // 构建 ES 文档（按模板维度：1个模板 = 1条文档）
+            Map<String, Object> doc = new HashMap<>();
+            doc.put("title", artifactId);  // 标题用 artifactId
+            doc.put("content", contentBuilder.toString());
+            doc.put("groupId", groupId);
+            doc.put("artifactId", artifactId);
+            doc.put("version", version);
+            doc.put("tags", metaJson.getTags());
+            doc.put("description", metaJson.getDescription());
+
+            // 使用 groupId:artifactId:version 作为文档 ID（1个模板1条）
+            String docId = groupId + ":" + artifactId + ":" + version;
+
+            // 直接写入1条文档
+            esClient.index(i -> i.index(searchProperties.getElasticsearch().getIndex()).id(docId).document(doc));
+
+            log.info("Successfully indexed template to ES: {}/{}/{}", groupId, artifactId, version);
+
+        } catch (Exception e) {
+            log.error("Failed to index to Elasticsearch: {}/{}/{}, error: {}", groupId, artifactId, version, e
+                .getMessage(), e);
+        }
+    }
+
+    private String getFileType(String filename) {
+        if (filename == null) {
+            return "unknown";
+        }
+        String lowerName = filename.toLowerCase();
+        if (lowerName.endsWith(".java"))
+            return "java";
+        if (lowerName.endsWith(".ftl"))
+            return "ftl";
+        if (lowerName.endsWith(".vue"))
+            return "vue";
+        if (lowerName.endsWith(".js"))
+            return "js";
+        if (lowerName.endsWith(".ts"))
+            return "ts";
+        if (lowerName.endsWith(".sql"))
+            return "sql";
+        if (lowerName.endsWith(".xml"))
+            return "xml";
+        if (lowerName.endsWith(".json"))
+            return "json";
+        if (lowerName.endsWith(".yaml") || lowerName.endsWith(".yml"))
+            return "yaml";
+        if (lowerName.endsWith(".md"))
+            return "md";
+        return "other";
     }
 }
