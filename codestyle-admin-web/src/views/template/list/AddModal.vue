@@ -20,6 +20,7 @@
           tip="上传包含 meta.json 的模板压缩包（ZIP、TAR.GZ、7Z）"
           @change="handleFileChange"
         />
+        <a-progress v-if="uploadProgress > 0 && uploadProgress < 100" :percent="uploadProgress / 100" size="small" style="margin-top: 8px" />
         <div v-else class="upload-success-hint">
           <icon-check-circle-fill style="color: rgb(var(--success-6)); font-size: 20px" />
           <span>{{ uploadedFileName }}</span>
@@ -102,11 +103,16 @@
         </div>
         <div v-if="previewContent" class="file-preview">
           <div class="file-preview-name">{{ previewFileName }}</div>
-          <pre class="file-preview-code"><code>{{ previewContent }}</code></pre>
+          <GiCodeView :type="getLangType(previewFileName)" :code-json="previewContent" />
         </div>
         <div v-else-if="fileTree.length > 0" class="file-tree">
+          <div style="padding: 0 8px 8px;">
+            <a-input v-model="treeSearchKey" placeholder="搜索文件..." allow-clear size="small">
+              <template #prefix><icon-search /></template>
+            </a-input>
+          </div>
           <FileTreeItem
-            v-for="treeNode in fileTree"
+            v-for="treeNode in filteredFileTree"
             :key="treeNode.path"
             :node="treeNode"
             :depth="0"
@@ -124,6 +130,7 @@ import { computed, defineComponent, h, reactive, ref } from 'vue'
 import { Message } from '@arco-design/web-vue'
 import { useWindowSize } from '@vueuse/core'
 import { marked } from 'marked'
+import GiCodeView from '@/components/GiCodeView/index.vue'
 import {
   addTemplate,
   getTemplateDetail,
@@ -152,6 +159,48 @@ const pendingFile = ref<File | null>(null)
 const fileTree = ref<FileTreeNode[]>([])
 const previewContent = ref('')
 const previewFileName = ref('')
+const treeSearchKey = ref('')
+const uploadProgress = ref(0)
+
+const EXT_LANG_MAP: Record<string, string> = {
+  '.java': 'java',
+  '.xml': 'xml',
+  '.pom': 'xml',
+  '.json': 'json',
+  '.yml': 'yaml',
+  '.yaml': 'yaml',
+  '.sql': 'sql',
+  '.html': 'html',
+  '.htm': 'html',
+  '.css': 'css',
+  '.scss': 'css',
+  '.less': 'css',
+  '.py': 'python',
+  '.md': 'markdown',
+  '.vue': 'vue',
+  '.js': 'javascript',
+  '.jsx': 'javascript',
+  '.ts': 'typescript',
+  '.tsx': 'typescript',
+}
+function getLangType(name: string): string {
+  const ext = name.includes('.') ? `.${name.split('.').pop()!.toLowerCase()}` : ''
+  return EXT_LANG_MAP[ext] || 'text'
+}
+
+function filterTree(nodes: FileTreeNode[], key: string): FileTreeNode[] {
+  if (!key) return nodes
+  return nodes.reduce<FileTreeNode[]>((acc, n) => {
+    if (n.isDir) {
+      const children = filterTree(n.children || [], key)
+      if (children.length) acc.push({ ...n, children })
+    } else if (n.name.toLowerCase().includes(key)) {
+      acc.push(n)
+    }
+    return acc
+  }, [])
+}
+const filteredFileTree = computed(() => filterTree(fileTree.value, treeSearchKey.value.trim().toLowerCase()))
 
 interface TagItem {
   label: string
@@ -210,8 +259,11 @@ const loadFileTree = async () => {
 
 const doUpload = async () => {
   if (!pendingFile.value) return
+  uploadProgress.value = 0
   try {
-    const res = await uploadTemplateZip(pendingFile.value)
+    const res = await uploadTemplateZip(pendingFile.value, undefined, undefined, undefined, (p: ProgressEvent) => {
+      if (p.total) uploadProgress.value = Math.round((p.loaded * 100) / p.total)
+    })
     const data = res.data
     form.groupId = data.groupId || form.groupId || ''
     form.artifactId = data.artifactId || form.artifactId || ''
@@ -220,6 +272,7 @@ const doUpload = async () => {
     form.description = data.description || form.description || ''
     form.downloadUrl = data.downloadUrl || ''
     uploaded.value = true
+    uploadProgress.value = 100
     Message.success('ZIP 解析成功')
     await loadFileTree()
   } catch (e: any) {
@@ -248,6 +301,7 @@ const onPreviewFile = async (path: string, name: string) => {
 const resetUpload = () => {
   uploaded.value = false
   uploadedFileName.value = ''
+  uploadProgress.value = 0
   pendingFile.value = null
   fileTree.value = []
   previewContent.value = ''

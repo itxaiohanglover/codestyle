@@ -46,3 +46,11 @@ export function subscribeResearchProgress(taskId: string): EventSource {
 export function cancelResearch(taskId: string) {
   return http.del(`${BASE_URL}/research/${taskId}`)
 }
+
+export function submitResearchFeedback(taskId: string, feedback: string) {
+  return http.post(`${BASE_URL}/research/${taskId}/feedback`, { feedback })
+}
+
+export function confirmResearch(taskId: string) {
+  return http.post(`${BASE_URL}/research/${taskId}/confirm`)
+}

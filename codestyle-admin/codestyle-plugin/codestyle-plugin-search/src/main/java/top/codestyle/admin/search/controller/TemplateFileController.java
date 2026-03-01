@@ -38,6 +38,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -171,7 +173,15 @@ public class TemplateFileController {
     @Log(ignore = true)
     @Operation(summary = "删除模板", description = "删除指定版本的模板文件")
     @PostMapping("/open-api/template/delete")
-    public void delete(@RequestParam String groupId, @RequestParam String artifactId, @RequestParam String version) {
+    public Map<String, Object> delete(@RequestParam String groupId,
+                                      @RequestParam String artifactId,
+                                      @RequestParam String version) {
         templateFileService.deleteTemplateFiles(groupId, artifactId, version);
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("groupId", groupId);
+        data.put("artifactId", artifactId);
+        data.put("version", version);
+        data.put("deleteTime", LocalDateTime.now().toString());
+        return data;
     }
 }

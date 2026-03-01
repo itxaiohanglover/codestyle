@@ -124,6 +124,20 @@
         </div>
 
         <!-- 输入区 -->
+        <div v-if="researchTaskId && researchStatus && researchStatus !== 'COMPLETED'" class="research-panel">
+          <div class="research-header">
+            <a-tag color="blue"><icon-loading /> 深度研究中: {{ researchStatus }}</a-tag>
+            <a-button size="mini" type="text" status="danger" @click="handleCancelResearch">取消</a-button>
+          </div>
+          <div v-if="researchStatus === 'WAITING_FEEDBACK'" class="research-feedback">
+            <a-input v-model="researchFeedbackInput" placeholder="输入反馈意见..." allow-clear @keypress.enter="handleSubmitFeedback" />
+            <a-button type="primary" size="small" @click="handleSubmitFeedback">提交反馈</a-button>
+          </div>
+          <div v-if="researchStatus === 'WAITING_CONFIRM'" class="research-confirm">
+            <span>研究已准备好，是否确认继续？</span>
+            <a-button type="primary" size="small" @click="handleConfirmResearch">确认继续</a-button>
+          </div>
+        </div>
         <div class="chat-input-area">
           <div class="chat-input-options">
             <a-checkbox v-model="isDeepResearch">深度研究模式</a-checkbox>
@@ -331,20 +345,16 @@
                   <GiCodeView :type="codeViewType" :code-json="codeCurrentContent" />
                 </template>
                 <!-- 编辑态 -->
-                <div v-else class="editor-wrapper">
-                  <textarea
-                    v-model="codeEditText"
-                    class="editor-textarea code-editor-textarea"
-                    spellcheck="false"
-                    placeholder="编辑代码..."
-                  ></textarea>
-                </div>
+                <template v-else>
+                  <GiCodeView :type="codeViewType" :code-json="codeEditText" editable @update:code-json="codeEditText = $event" />
+                </template>
               </a-scrollbar>
             </a-card>
           </a-layout-content>
         </a-layout>
       </div>
     </a-modal>
+    <SaveToLibraryModal ref="saveToLibraryRef" />
   </div>
 </template>
 
@@ -352,17 +362,20 @@
 import { computed, nextTick, onMounted, ref } from 'vue'
 import { Message, Modal } from '@arco-design/web-vue'
 import DOMPurify from 'dompurify'
+import SaveToLibraryModal from './SaveToLibraryModal.vue'
 import type { ChatMessage, ChatSession, CodeSnippet, ResearchStartReq } from '@/apis/template/type'
 import {
   createSession as apiCreateSession,
   deleteSession as apiDeleteSession,
   updateSnippet as apiUpdateSnippet,
+  cancelResearch,
+  confirmResearch,
   getSessionMessages,
   getSessionSnippets,
   listSessions,
-  saveSnippetToLibrary,
   sendChatMessage,
   startResearch,
+  submitResearchFeedback,
   subscribeResearchProgress,
 } from '@/apis/template/generate'
 
@@ -460,10 +473,12 @@ const codeCurrentContent = computed(() => {
 })
 
 /** 代码预览组件的类型标识 */
-const codeViewType = computed<'javascript' | 'vue'>(() => {
+const codeViewType = computed(() => {
   if (!codeCurrentSnippetId.value) return 'javascript'
   const snippet = codeSnippets.value.find((s) => s.id === codeCurrentSnippetId.value)
-  return snippet?.language === 'vue' ? 'vue' : 'javascript'
+  const lang = snippet?.language?.toLowerCase() || 'javascript'
+  const supported = ['javascript', 'typescript', 'vue', 'java', 'xml', 'json', 'yaml', 'yml', 'sql', 'html', 'css', 'python', 'markdown', 'md']
+  return supported.includes(lang) ? lang : 'javascript'
 })
 
 // ====================== 工具函数 ======================
@@ -549,14 +564,10 @@ function resetCodeEdit(): void {
 }
 
 /** 保存到模板库 */
-async function handleSaveToTemplateLib(): Promise<void> {
+const saveToLibraryRef = ref<InstanceType<typeof SaveToLibraryModal>>()
+function handleSaveToTemplateLib(): void {
   if (!codeCurrentSnippetId.value) return
-  try {
-    await saveSnippetToLibrary(codeCurrentSnippetId.value)
-    Message.success('已保存到模板库')
-  } catch {
-    Message.error('保存失败')
-  }
+  saveToLibraryRef.value?.open(codeCurrentSnippetId.value)
 }
 
 // ====================== 数据源研究方法 ======================
@@ -601,6 +612,43 @@ function handleParseRepository(): void {
 
 function handleParseWebsite(): void {
   handleStartResearch('URL', websiteUrl.value)
+}
+
+const researchFeedbackInput = ref('')
+
+async function handleCancelResearch(): Promise<void> {
+  if (!researchTaskId.value) return
+  try {
+    await cancelResearch(researchTaskId.value)
+    researchEventSource.value?.close()
+    researchEventSource.value = null
+    researchTaskId.value = null
+    researchStatus.value = ''
+    Message.success('已取消研究')
+  } catch {
+    Message.error('取消失败')
+  }
+}
+
+async function handleSubmitFeedback(): Promise<void> {
+  if (!researchTaskId.value || !researchFeedbackInput.value.trim()) return
+  try {
+    await submitResearchFeedback(researchTaskId.value, researchFeedbackInput.value.trim())
+    researchFeedbackInput.value = ''
+    Message.success('反馈已提交')
+  } catch {
+    Message.error('提交反馈失败')
+  }
+}
+
+async function handleConfirmResearch(): Promise<void> {
+  if (!researchTaskId.value) return
+  try {
+    await confirmResearch(researchTaskId.value)
+    Message.success('已确认继续')
+  } catch {
+    Message.error('确认失败')
+  }
 }
 
 function handleFileChange(fileListArg: any[]): void {
@@ -1251,31 +1299,28 @@ $sidebar-width-collapsed: 52px;
   }
 }
 
-/* ===================== 编辑器 ===================== */
-.editor-wrapper {
-  height: 100%;
+/* ===================== 研究进度面板 ===================== */
+.research-panel {
+  padding: 12px 16px;
+  border-top: 1px solid var(--color-border);
+  background: rgba(var(--primary-1), 0.04);
+}
+
+.research-header {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
 }
 
-.editor-textarea {
-  width: 100%;
-  height: 100%;
-  border: none;
-  outline: none;
-  resize: none;
-  padding: 24px 32px;
-  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-  font-size: 14px;
-  line-height: 1.6;
-  background: var(--color-bg-1);
-  color: var(--color-text-1);
-  box-sizing: border-box;
+.research-feedback,
+.research-confirm {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.code-editor-textarea {
-  tab-size: 2;
-}
+/* ===================== 编辑器 ===================== */
 </style>
 
 <!-- 弹窗全局样式 (非 scoped) -->

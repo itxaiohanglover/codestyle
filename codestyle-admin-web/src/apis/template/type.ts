@@ -7,7 +7,9 @@ export interface TemplateQuery {
   keyword?: string
 }
 
-export interface TemplatePageQuery extends TemplateQuery, PageQuery {}
+export interface TemplatePageQuery extends TemplateQuery, PageQuery {
+  sort?: string
+}
 
 export interface TemplateReq {
   groupId?: string

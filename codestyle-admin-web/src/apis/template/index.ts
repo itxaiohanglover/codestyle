@@ -51,7 +51,7 @@ export function listVersions(groupId: string, artifactId: string) {
 
 const FILE_URL = '/open-api/template'
 
-export function uploadTemplateZip(file: File, groupId?: string, artifactId?: string, version?: string) {
+export function uploadTemplateZip(file: File, groupId?: string, artifactId?: string, version?: string, onUploadProgress?: (e: ProgressEvent) => void) {
   const formData = new FormData()
   formData.append('file', file)
   const params = new URLSearchParams()
@@ -59,7 +59,7 @@ export function uploadTemplateZip(file: File, groupId?: string, artifactId?: str
   if (artifactId) params.append('artifactId', artifactId)
   if (version) params.append('version', version)
   const qs = params.toString()
-  return http.post<T.TemplateUploadResp>(`${FILE_URL}/upload${qs ? `?${qs}` : ''}`, formData)
+  return http.post<T.TemplateUploadResp>(`${FILE_URL}/upload${qs ? `?${qs}` : ''}`, formData, onUploadProgress ? { onUploadProgress } : undefined)
 }
 
 export function listTemplateFiles(groupId: string, artifactId: string, version: string) {
@@ -68,4 +68,12 @@ export function listTemplateFiles(groupId: string, artifactId: string, version: 
 
 export function readTemplateFileContent(groupId: string, artifactId: string, version: string, filePath: string) {
   return http.get<string>(`${FILE_URL}/file-content`, { groupId, artifactId, version, filePath })
+}
+
+export function searchTemplateQuick(keyword: string) {
+  return http.get<T.TemplateItem[]>('/search/quick', { keyword })
+}
+
+export function downloadTemplate(groupId: string, artifactId: string, version: string) {
+  return http.download(`${FILE_URL}/download`, { groupId, artifactId, version })
 }

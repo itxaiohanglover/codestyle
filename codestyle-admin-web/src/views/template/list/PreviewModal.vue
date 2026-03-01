@@ -114,9 +114,14 @@
             </template>
             <a-scrollbar style="height: 650px; overflow: auto">
               <div v-if="filePreviewContent" class="file-preview-area">
-                <pre class="preview-code"><code>{{ filePreviewContent }}</code></pre>
+                <GiCodeView :type="getLangType(filePreviewName)" :code-json="filePreviewContent" />
               </div>
               <div v-else-if="fileTreeData.length > 0" class="file-tree-area">
+                <div class="tree-search-bar" style="padding: 8px 12px;">
+                  <a-input v-model="treeSearchKey" placeholder="搜索文件..." allow-clear size="small">
+                    <template #prefix><icon-search /></template>
+                  </a-input>
+                </div>
                 <div
                   v-for="node in visibleFlatTree"
                   :key="node.path"
@@ -148,8 +153,9 @@ import { computed, ref, watch } from 'vue'
 import { Message } from '@arco-design/web-vue'
 import { useClipboard } from '@vueuse/core'
 import { marked } from 'marked'
+import GiCodeView from '@/components/GiCodeView/index.vue'
 import type { FileTreeNode, TemplateDetail, TemplateItem } from '@/apis/template'
-import { getTemplateDetail, listTemplateFiles, listVersions, readTemplateFileContent, recordDownload } from '@/apis/template'
+import { downloadTemplate, getTemplateDetail, listTemplateFiles, listVersions, readTemplateFileContent, recordDownload } from '@/apis/template'
 
 const { copy, copied } = useClipboard()
 
@@ -169,6 +175,33 @@ const filePreviewName = ref('')
 const collapsedDirs = ref(new Set<string>())
 const versionList = ref<TemplateItem[]>([])
 const currentVersionId = ref<number>()
+const treeSearchKey = ref('')
+
+const EXT_LANG_MAP: Record<string, string> = {
+  '.java': 'java',
+  '.xml': 'xml',
+  '.pom': 'xml',
+  '.json': 'json',
+  '.yml': 'yaml',
+  '.yaml': 'yaml',
+  '.sql': 'sql',
+  '.html': 'html',
+  '.htm': 'html',
+  '.css': 'css',
+  '.scss': 'css',
+  '.less': 'css',
+  '.py': 'python',
+  '.md': 'markdown',
+  '.vue': 'vue',
+  '.js': 'javascript',
+  '.jsx': 'javascript',
+  '.ts': 'typescript',
+  '.tsx': 'typescript',
+}
+function getLangType(name: string): string {
+  const ext = name.includes('.') ? `.${name.split('.').pop()!.toLowerCase()}` : ''
+  return EXT_LANG_MAP[ext] || 'text'
+}
 
 // 图标渐变色
 const iconGradients = [
@@ -194,12 +227,21 @@ watch(copied, () => {
 })
 
 const onDownload = async () => {
-  if (!templateData.value) return
+  const d = templateData.value
+  if (!d) return
   try {
-    await recordDownload(templateData.value.id)
-    if (templateData.value.downloadUrl) {
+    await recordDownload(d.id)
+    if (d.groupId && d.artifactId && d.version) {
+      const res = await downloadTemplate(d.groupId, d.artifactId, d.version)
+      const url = URL.createObjectURL(new Blob([res.data]))
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${d.artifactId}-${d.version}.zip`
+      a.click()
+      URL.revokeObjectURL(url)
+    } else if (d.downloadUrl) {
       const base = import.meta.env.VITE_API_BASE_URL || ''
-      window.open(`${base}${templateData.value.downloadUrl}`, '_blank')
+      window.open(`${base}${d.downloadUrl}`, '_blank')
     }
     Message.success('下载成功')
   } catch {
@@ -300,7 +342,23 @@ function flattenTree(nodes: FileTreeNode[], depth: number, collapsed: Set<string
   return result
 }
 
-const visibleFlatTree = computed(() => flattenTree(fileTreeData.value, 0, collapsedDirs.value))
+const visibleFlatTree = computed(() => {
+  const list = flattenTree(fileTreeData.value, 0, collapsedDirs.value)
+  const key = treeSearchKey.value.trim().toLowerCase()
+  if (!key) return list
+  const matchPaths = new Set<string>()
+  for (const n of list) {
+    if (!n.isDir && n.name.toLowerCase().includes(key)) {
+      matchPaths.add(n.path)
+      let parent = n.path.substring(0, n.path.lastIndexOf('/'))
+      while (parent) {
+        matchPaths.add(parent)
+        parent = parent.substring(0, parent.lastIndexOf('/'))
+      }
+    }
+  }
+  return list.filter((n) => matchPaths.has(n.path))
+})
 
 const toggleDir = (path: string) => {
   const s = new Set(collapsedDirs.value)

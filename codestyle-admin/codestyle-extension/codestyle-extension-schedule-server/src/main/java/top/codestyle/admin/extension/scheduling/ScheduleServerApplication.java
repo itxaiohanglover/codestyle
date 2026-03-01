@@ -20,6 +20,7 @@ import cn.hutool.core.net.NetUtil;
 import cn.hutool.core.util.URLUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import com.aizuda.snailjob.common.core.util.SnailJobVersion;
+import com.aizuda.snailjob.server.SnailJobServerApplication;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
@@ -38,7 +39,7 @@ import org.springframework.boot.autoconfigure.web.ServerProperties;
 @Slf4j
 @SpringBootApplication
 @RequiredArgsConstructor
-public class ScheduleServerApplication extends com.aizuda.snailjob.server.SnailJobServerApplication implements ApplicationRunner {
+public class ScheduleServerApplication extends SnailJobServerApplication implements ApplicationRunner {
 
     private final ServerProperties serverProperties;
 

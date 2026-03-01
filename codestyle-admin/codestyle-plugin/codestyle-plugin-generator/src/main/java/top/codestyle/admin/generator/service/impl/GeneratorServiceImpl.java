@@ -246,7 +246,7 @@ public class GeneratorServiceImpl implements GeneratorService {
             });
             // 打包下载
             File tempDirFile = new File(tempDir, applicationProperties.getId());
-            String zipFilePath = tempDirFile.getPath() + jodd.io.ZipUtil.ZIP_EXT;
+            String zipFilePath = tempDirFile.getPath() + ".zip";
             ZipUtil.zip(tempDirFile.getPath(), zipFilePath);
             FileUploadUtils.download(response, new File(zipFilePath));
         } catch (Exception e) {

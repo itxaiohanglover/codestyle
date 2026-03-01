@@ -18,6 +18,7 @@ package top.codestyle.admin.search.service.impl;
 
 import io.milvus.client.MilvusServiceClient;
 import io.milvus.grpc.SearchResults;
+import io.milvus.param.MetricType;
 import io.milvus.param.R;
 import io.milvus.param.dml.SearchParam;
 import lombok.RequiredArgsConstructor;
@@ -65,7 +66,7 @@ public class MilvusSearchServiceImpl implements MilvusSearchService {
             // 2. 构建 Milvus 检索参数
             SearchParam searchParam = SearchParam.newBuilder()
                 .withCollectionName(collection)
-                .withMetricType(io.milvus.param.MetricType.L2)
+                .withMetricType(MetricType.L2)
                 .withOutFields(List.of("id", "title", "content"))
                 .withTopK(request.getTopK())
                 .withVectors(List.of(queryVector))
