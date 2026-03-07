@@ -24,7 +24,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.dromara.x.file.storage.core.FileInfo;
-import top.codestyle.admin.common.base.model.entity.BaseDO;
+import top.codestyle.admin.common.base.model.entity.TenantBaseDO;
 import top.codestyle.admin.system.enums.FileTypeEnum;
 import top.continew.starter.core.constant.StringConstants;
 
@@ -40,7 +40,7 @@ import java.util.Map;
 @Data
 @NoArgsConstructor
 @TableName("sys_file")
-public class FileDO extends BaseDO {
+public class FileDO extends TenantBaseDO {
 
     @Serial
     private static final long serialVersionUID = 1L;

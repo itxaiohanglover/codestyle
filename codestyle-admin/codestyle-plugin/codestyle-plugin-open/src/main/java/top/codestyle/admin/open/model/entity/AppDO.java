@@ -18,7 +18,7 @@ package top.codestyle.admin.open.model.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
-import top.codestyle.admin.common.base.model.entity.BaseDO;
+import top.codestyle.admin.common.base.model.entity.TenantBaseDO;
 import top.codestyle.admin.common.enums.DisEnableStatusEnum;
 import top.continew.starter.encrypt.field.annotation.FieldEncrypt;
 
@@ -34,7 +34,7 @@ import java.time.LocalDateTime;
  */
 @Data
 @TableName("sys_app")
-public class AppDO extends BaseDO {
+public class AppDO extends TenantBaseDO {
 
     @Serial
     private static final long serialVersionUID = 1L;

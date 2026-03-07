@@ -19,7 +19,9 @@ package top.codestyle.admin.open.sign;
 import cn.dev33.satoken.secure.SaSecureUtil;
 import cn.dev33.satoken.sign.template.SaSignTemplate;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import top.codestyle.admin.common.context.ApiTenantContextHolder;
 import top.codestyle.admin.common.enums.DisEnableStatusEnum;
 import top.codestyle.admin.open.model.entity.AppDO;
 import top.codestyle.admin.open.service.AppService;
@@ -35,6 +37,7 @@ import java.util.Map;
  * @since 2024/10/17 16:03
  */
 @Component
+@Slf4j
 @RequiredArgsConstructor
 public class OpenApiSignTemplate extends SaSignTemplate {
 
@@ -58,12 +61,22 @@ public class OpenApiSignTemplate extends SaSignTemplate {
         ValidationUtils.throwIfNull(app, "accessKey无效");
         ValidationUtils.throwIfEqual(DisEnableStatusEnum.DISABLE, app.getStatus(), "应用已被禁用, 请联系管理员");
         ValidationUtils.throwIf(app.isExpired(), "应用已过期, 请联系管理员");
+        log.info("OpenAPI 验签开始: accessKey={}, dbTenantId={}", accessKeyValue, app.getTenantId());
+        if (app.getTenantId() == null) {
+            app.setTenantId(0L);
+            log.info("OpenAPI 验签租户兜底后: accessKey={}, effectiveTenantId={}", accessKeyValue, app.getTenantId());
+        }
 
         // 依次校验三个参数
         super.checkTimestamp(Long.parseLong(timestampValue));
         super.checkNonce(nonceValue);
         paramMap.put(key, app.getSecretKey());
         super.checkSign(paramMap, signValue);
+
+        // 记录 API 请求租户上下文（基于 AK/SK 绑定的应用）
+        ApiTenantContextHolder.setTenantId(app.getTenantId());
+        log.info("OpenAPI 验签完成并写入 ApiTenantContextHolder: accessKey={}, tenantId={}", accessKeyValue, app
+            .getTenantId());
     }
 
     @Override

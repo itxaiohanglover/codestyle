@@ -19,8 +19,10 @@ package top.codestyle.admin.open.service.impl;
 import cn.hutool.core.codec.Base64;
 import cn.hutool.core.util.IdUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import top.codestyle.admin.common.base.service.BaseServiceImpl;
+import top.codestyle.admin.common.context.UserContextHolder;
 import top.codestyle.admin.open.mapper.AppMapper;
 import top.codestyle.admin.open.model.entity.AppDO;
 import top.codestyle.admin.open.model.query.AppQuery;
@@ -39,6 +41,7 @@ import top.continew.starter.core.constant.StringConstants;
  * @since 2024/10/17 16:03
  */
 @Service
+@Slf4j
 public class AppServiceImpl extends BaseServiceImpl<AppMapper, AppDO, AppResp, AppDetailResp, AppQuery, AppReq> implements AppService {
 
     @Override
@@ -48,6 +51,13 @@ public class AppServiceImpl extends BaseServiceImpl<AppMapper, AppDO, AppResp, A
             .replace(StringConstants.PLUS, StringConstants.EMPTY)
             .substring(0, 30));
         req.setSecretKey(this.generateSecret());
+        Long tenantId = UserContextHolder.getContext().getTenantId();
+        log.info("创建 App 前获取当前用户租户: tenantId={}", tenantId);
+        if (tenantId == null) {
+            tenantId = 0L;
+        }
+        req.setTenantId(tenantId);
+        log.info("创建 App 写入 tenantId: tenantId={}, accessKey={}", tenantId, req.getAccessKey());
     }
 
     @Override

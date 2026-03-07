@@ -17,6 +17,7 @@
 package top.codestyle.admin.search.service.impl;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.query_dsl.Operator;
 import co.elastic.clients.elasticsearch._types.query_dsl.TextQueryType;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
@@ -29,8 +30,8 @@ import top.codestyle.admin.search.model.SearchRequest;
 import top.codestyle.admin.search.model.SearchResult;
 import top.codestyle.admin.search.model.SearchSourceType;
 import top.codestyle.admin.search.service.ElasticsearchSearchService;
+import top.codestyle.admin.search.util.SearchTenantUtils;
 import top.continew.starter.core.exception.BusinessException;
-
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -60,10 +61,13 @@ public class ElasticsearchSearchServiceImpl implements ElasticsearchSearchServic
     @Override
     public List<SearchResult> search(SearchRequest request) {
         try {
-            log.debug("开始 ES 检索，查询: {}, topK: {}", request.getQuery(), request.getTopK());
+            log.info("开始 ES 检索，查询: {}, topK: {}, requestTenantId={}", request.getQuery(), request.getTopK(), request
+                .getTenantId());
 
             // 1. 构建查询
             co.elastic.clients.elasticsearch.core.SearchRequest esRequest = buildSearchRequest(request);
+            log.info("ES 检索请求已构建: index={}, tenantFilter={}, query={}", properties.getElasticsearch()
+                .getIndex(), request.getTenantId() != null ? request.getTenantId() : 0L, request.getQuery());
 
             // 2. 执行查询
             SearchResponse<Map> response = esClient.search(esRequest, Map.class);
@@ -71,7 +75,7 @@ public class ElasticsearchSearchServiceImpl implements ElasticsearchSearchServic
             // 3. 转换结果
             List<SearchResult> results = convertResults(response);
 
-            log.debug("ES 检索完成，返回 {} 条结果", results.size());
+            log.info("ES 检索完成，返回 {} 条结果", results.size());
             return results;
 
         } catch (IOException e) {
@@ -86,19 +90,22 @@ public class ElasticsearchSearchServiceImpl implements ElasticsearchSearchServic
     /**
      * 构建 ES 查询请求
      * <p>
-     * 多字段加权检索：
-     * - title^3: 标题权重最高
-     * - content^2: 内容权重次之
-     * - tags^1: 标签权重最低
+     * 模板级元数据检索：
+     * - name/artifactId: 标题和模板标识
+     * - description/summary: 模板描述摘要
+     * - tags.text: 中文标签检索
      */
     private co.elastic.clients.elasticsearch.core.SearchRequest buildSearchRequest(SearchRequest request) {
+        Long tenantId = SearchTenantUtils.resolveSearchTenantId(request);
         return co.elastic.clients.elasticsearch.core.SearchRequest.of(s -> s.index(properties.getElasticsearch()
             .getIndex())
-            .query(q -> q.multiMatch(m -> m.query(request.getQuery())
-                .fields("title^3", "content^2", "tags^1")  // 字段加权
-                .type(TextQueryType.BestFields)))
+            .query(q -> q.bool(b -> b.must(m -> m.multiMatch(mm -> mm.query(request.getQuery())
+                .fields("name^4", "artifactId.text^3", "description^3", "summary^2", "tags.text^3")
+                .type(TextQueryType.BestFields)
+                .operator(Operator.Or))).filter(f -> f.term(t -> t.field("tenantId").value(String.valueOf(tenantId))))))
             .size(request.getTopK())
-            .highlight(h -> h.fields("content", f -> f.numberOfFragments(1).fragmentSize(200))));
+            .highlight(h -> h.fields("description", f -> f.numberOfFragments(1).fragmentSize(160))
+                .fields("summary", f -> f.numberOfFragments(1).fragmentSize(160))));
     }
 
     /**
@@ -118,32 +125,43 @@ public class ElasticsearchSearchServiceImpl implements ElasticsearchSearchServic
             .id(hit.id())
             .sourceType(SearchSourceType.ELASTICSEARCH)
             .title(getStringValue(source, "title"))
-            .content(getStringValue(source, "content"))
-            .snippet(getStringValue(source, "snippet"))
+            .content(getStringValue(source, "description"))
+            .snippet(extractSnippet(hit, source))
             .score(hit.score())
             .highlight(extractHighlight(hit))
-            .metadata(source)  // 完整的 metadata，包含所有字段（包括非索引字段）
-            // MCP 必要字段（从 ES 索引中提取）
+            .metadata(source)
             .groupId(getStringValue(source, "groupId"))
             .artifactId(getStringValue(source, "artifactId"))
             .version(getStringValue(source, "version"))
             .fileType(getStringValue(source, "fileType"))
             .build();
-        // 注意：filePath, filename, sha256 等非索引字段
-        // 已经包含在 metadata 中，通过 SearchResult 的 getter 方法访问
     }
 
     /**
      * 提取高亮片段
      */
     private String extractHighlight(Hit<Map> hit) {
-        if (hit.highlight() != null && hit.highlight().containsKey("content")) {
-            List<String> fragments = hit.highlight().get("content");
-            if (!fragments.isEmpty()) {
-                return fragments.get(0);
+        if (hit.highlight() != null) {
+            if (hit.highlight().containsKey("description") && !hit.highlight().get("description").isEmpty()) {
+                return hit.highlight().get("description").get(0);
+            }
+            if (hit.highlight().containsKey("summary") && !hit.highlight().get("summary").isEmpty()) {
+                return hit.highlight().get("summary").get(0);
             }
         }
         return null;
+    }
+
+    private String extractSnippet(Hit<Map> hit, Map<String, Object> source) {
+        String highlight = extractHighlight(hit);
+        if (highlight != null) {
+            return highlight;
+        }
+        String summary = getStringValue(source, "summary");
+        if (summary != null) {
+            return summary;
+        }
+        return getStringValue(source, "description");
     }
 
     /**

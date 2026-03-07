@@ -20,10 +20,12 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import top.codestyle.admin.search.model.SearchRequest;
 import top.codestyle.admin.search.model.SearchResult;
 import top.codestyle.admin.search.service.SearchService;
+import top.codestyle.admin.search.util.SearchTenantUtils;
 
 import java.util.List;
 
@@ -33,6 +35,7 @@ import java.util.List;
  * @author CodeStyle Team
  * @since 1.0.0
  */
+@Slf4j
 @Tag(name = "检索 API")
 @RestController
 @RequiredArgsConstructor
@@ -80,6 +83,9 @@ public class SearchController {
         SearchRequest request = new SearchRequest();
         request.setQuery(query);
         request.setTopK(topK);
+        Long tenantId = SearchTenantUtils.resolveCurrentTenantId();
+        request.setTenantId(tenantId);
+        log.info("OpenAPI 搜索请求写入 tenantId: query={}, topK={}, tenantId={}", query, topK, tenantId);
         return searchService.search(request);
     }
 }

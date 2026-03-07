@@ -80,4 +80,10 @@ public class AppReq implements Serializable {
      */
     @Schema(hidden = true)
     private String secretKey;
+
+    /**
+     * 租户 ID
+     */
+    @Schema(hidden = true)
+    private Long tenantId;
 }
