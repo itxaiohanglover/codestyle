@@ -19,8 +19,6 @@ package top.codestyle.admin.search.service.impl;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import com.github.benmanes.caffeine.cache.Cache;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.archivers.ArchiveEntry;
@@ -36,17 +34,21 @@ import org.springframework.web.multipart.MultipartFile;
 import top.codestyle.admin.common.context.UserContext;
 import top.codestyle.admin.common.context.UserContextHolder;
 import top.codestyle.admin.search.config.SearchProperties;
-import top.codestyle.admin.search.helper.CacheHelper;
 import top.codestyle.admin.search.model.MetaJson;
 import top.codestyle.admin.search.model.resp.TemplateUploadResp;
 import top.codestyle.admin.search.service.TemplateFileService;
+import top.codestyle.admin.search.util.SearchTenantUtils;
 import top.codestyle.admin.system.enums.FileTypeEnum;
 import top.codestyle.admin.system.mapper.FileMapper;
 import top.codestyle.admin.system.model.entity.FileDO;
 import top.codestyle.admin.system.model.entity.StorageDO;
 import top.codestyle.admin.system.service.FileService;
 import top.codestyle.admin.system.service.StorageService;
+import top.continew.starter.cache.redisson.util.RedisLockUtils;
+import top.continew.starter.core.exception.BusinessException;
 import top.continew.starter.core.util.validation.CheckUtils;
+
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -83,7 +85,6 @@ public class TemplateFileServiceImpl implements TemplateFileService {
     private final FileMapper fileMapper;
     private final ElasticsearchClient esClient;
     private final SearchProperties searchProperties;
-    private final Cache<String, List<top.codestyle.admin.search.model.SearchResult>> localCache;
 
     // ==================== 公开接口实现 ====================
 
@@ -96,9 +97,10 @@ public class TemplateFileServiceImpl implements TemplateFileService {
                                              Boolean overwrite) throws IOException {
         Path tempDir = null;
         File tempArchiveFile = null;
+        Long tenantId = SearchTenantUtils.resolveCurrentTenantId();
 
         // 确保有用户上下文（开放 API 可能无登录状态）
-        UserContext originalContext = ensureUserContext();
+        UserContext originalContext = ensureUserContext(tenantId);
 
         try {
             // 1. 创建临时目录
@@ -129,33 +131,41 @@ public class TemplateFileServiceImpl implements TemplateFileService {
             CheckUtils.throwIfBlank(version, "version 不能为空，请在 meta.json 中指定");
             validateTemplateFiles(templateRoot, metaJson);
 
-            // 6. 检查是否已存在同版本文件
-            String templatePrefix = buildTemplatePrefix(groupId, artifactId, version);
-            boolean exists = fileMapper.lambdaQuery().likeRight(FileDO::getParentPath, templatePrefix).exists();
-            if (exists) {
-                if (Boolean.TRUE.equals(overwrite)) {
-                    deleteOldVersionFiles(groupId, artifactId, version);
-                } else {
-                    CheckUtils.throwIf(true, "模板 %s:%s:%s 已存在，如需覆盖请设置 overwrite=true"
-                        .formatted(groupId, artifactId, version));
+            // 6. 上传幂等控制
+            String lockKey = String.format("lock:template:upload:%s:%s:%s", groupId, artifactId, version);
+            log.info("模板上传开始: groupId={}, artifactId={}, version={}, lockKey={}", groupId, artifactId, version, lockKey);
+            try (RedisLockUtils lock = RedisLockUtils.tryLock(lockKey, 30, 60)) {
+                if (!lock.isLocked()) {
+                    throw new BusinessException("模板上传处理中，请勿重复提交");
                 }
+                log.info("模板上传获取分布式锁成功: lockKey={}", lockKey);
+
+                // 6.1 检查是否已存在同版本文件
+                String templatePrefix = buildTemplatePrefix(groupId, artifactId, version);
+                boolean exists = fileMapper.lambdaQuery().likeRight(FileDO::getParentPath, templatePrefix).exists();
+                if (exists) {
+                    if (Boolean.TRUE.equals(overwrite)) {
+                        deleteOldVersionFiles(groupId, artifactId, version);
+                        deleteFromElasticsearch(tenantId, groupId, artifactId, version);
+                    } else {
+                        CheckUtils.throwIf(true, "模板 %s:%s:%s 已存在，如需覆盖请设置 overwrite=true"
+                            .formatted(groupId, artifactId, version));
+                    }
+                }
+
+                // 7. 逐个文件上传到 FileService
+                uploadExtractedFiles(templateRoot, templateRoot, templatePrefix);
+
+                // 8. 若 meta.json 没有 description，尝试从 README 中提取
+                if (StrUtil.isBlank(metaJson.getDescription())) {
+                    metaJson.setDescription(readReadmeContent(templateRoot));
+                }
+
+                // 9. 写入 ES 索引（租户隔离）
+                indexToElasticsearch(tenantId, groupId, artifactId, version, templatePrefix, metaJson);
             }
 
-            // 7. 逐个文件上传到 FileService
-            uploadExtractedFiles(templateRoot, templateRoot, templatePrefix);
-
-            // 8. 索引到 Elasticsearch
-            indexToElasticsearch(groupId, artifactId, version, templatePrefix, metaJson);
-
-            // 9. 若 meta.json 没有 description，尝试从 README 中提取
-            if (StrUtil.isBlank(metaJson.getDescription())) {
-                metaJson.setDescription(readReadmeContent(templateRoot));
-            }
-
-            // 10. 清除搜索缓存（因为新增了索引）
-            CacheHelper.evictAllCache();
-
-            // 11. 构建响应
+            // 10. 构建响应
             String downloadUrl = String
                 .format("/open-api/template/download?groupId=%s&artifactId=%s&version=%s", groupId, artifactId, version);
             return buildUploadResponse(groupId, artifactId, version, metaJson, downloadUrl);
@@ -263,31 +273,16 @@ public class TemplateFileServiceImpl implements TemplateFileService {
 
     @Override
     public void deleteTemplateFiles(String groupId, String artifactId, String version) {
-        // 1. 删除数据库和存储文件
-        deleteOldVersionFiles(groupId, artifactId, version);
-
-        // 2. 删除 ES 索引
-        deleteFromElasticsearch(groupId, artifactId, version);
-
-        // 3. 清除搜索缓存（L1 + L2）
-        localCache.invalidateAll();  // 清除 L1 Caffeine 本地缓存
-        CacheHelper.evictAllCache(); // 清除 L2 Redis 缓存
-    }
-
-    /**
-     * 从 Elasticsearch 删除模板索引
-     */
-    private void deleteFromElasticsearch(String groupId, String artifactId, String version) {
-        try {
-            // 直接删除（按模板维度，1个模板1条文档）
-            String docId = groupId + ":" + artifactId + ":" + version;
-
-            esClient.delete(d -> d.index(searchProperties.getElasticsearch().getIndex()).id(docId));
-
-            log.info("Deleted ES index for {}/{}/{}", groupId, artifactId, version);
-        } catch (Exception e) {
-            log.error("Failed to delete ES index for {}/{}/{}, error: {}", groupId, artifactId, version, e
-                .getMessage(), e);
+        Long tenantId = SearchTenantUtils.resolveCurrentTenantId();
+        String lockKey = String.format("lock:template:delete:%s:%s:%s", groupId, artifactId, version);
+        log.info("模板删除开始: groupId={}, artifactId={}, version={}, lockKey={}", groupId, artifactId, version, lockKey);
+        try (RedisLockUtils lock = RedisLockUtils.tryLock(lockKey, 30, 60)) {
+            if (!lock.isLocked()) {
+                throw new BusinessException("模板删除处理中，请勿重复提交");
+            }
+            log.info("模板删除获取分布式锁成功: lockKey={}", lockKey);
+            deleteOldVersionFiles(groupId, artifactId, version);
+            deleteFromElasticsearch(tenantId, groupId, artifactId, version);
         }
     }
 
@@ -639,13 +634,14 @@ public class TemplateFileServiceImpl implements TemplateFileService {
      *
      * @return 原始上下文（若为 null 说明是新创建的系统上下文，需要在 finally 中清除）
      */
-    private UserContext ensureUserContext() {
+    private UserContext ensureUserContext(Long tenantId) {
         try {
             return UserContextHolder.getContext();
         } catch (Exception e) {
             UserContext systemContext = new UserContext();
             systemContext.setId(1L);
             systemContext.setUsername("system");
+            systemContext.setTenantId(tenantId);
             UserContextHolder.setContext(systemContext, false);
             return null;
         }
@@ -658,95 +654,98 @@ public class TemplateFileServiceImpl implements TemplateFileService {
         }
     }
 
-    /**
-     * 索引模板到 Elasticsearch（按模板维度，每个模板1条文档）
-     */
-    private void indexToElasticsearch(String groupId,
+    private void indexToElasticsearch(Long tenantId,
+                                      String groupId,
                                       String artifactId,
                                       String version,
                                       String templatePrefix,
                                       MetaJson metaJson) {
         try {
-            // 查询刚上传的所有文件
             List<FileDO> files = fileMapper.lambdaQuery()
                 .likeRight(FileDO::getParentPath, templatePrefix)
                 .ne(FileDO::getType, FileTypeEnum.DIR)
                 .list();
-
             if (files.isEmpty()) {
-                log.warn("No files found to index for {}/{}/{}", groupId, artifactId, version);
                 return;
             }
+            String docId = buildEsDocId(tenantId, groupId, artifactId, version);
+            log.info("ES 索引模板: index={}, docId={}, tenantId={}, groupId={}, artifactId={}, version={}", searchProperties
+                .getElasticsearch()
+                .getIndex(), docId, tenantId, groupId, artifactId, version);
 
-            // 合并所有文件内容为一个大文档（按模板维度）
-            StringBuilder contentBuilder = new StringBuilder();
-            StorageDO storage = storageService.getDefaultStorage();
-
-            for (FileDO file : files) {
-                try {
-                    if (file.getSize() != null && file.getSize() < 512 * 1024) {
-                        FileInfo fileInfo = file.toFileInfo(storage);
-                        byte[] bytes = fileStorageService.download(fileInfo).bytes();
-                        contentBuilder.append(file.getOriginalName())
-                            .append("\n")
-                            .append(new String(bytes, StandardCharsets.UTF_8))
-                            .append("\n\n");
-                    }
-                } catch (Exception e) {
-                    log.warn("Failed to read file content: {}/{}, error: {}", file.getParentPath(), file
-                        .getOriginalName(), e.getMessage());
-                }
-            }
-
-            // 构建 ES 文档（按模板维度：1个模板 = 1条文档）
             Map<String, Object> doc = new HashMap<>();
-            doc.put("title", artifactId);  // 标题用 artifactId
-            doc.put("content", contentBuilder.toString());
+            doc.put("tenantId", tenantId);
+            doc.put("id", docId);
+            doc.put("title", artifactId);
+            doc.put("name", metaJson.getName());
+            doc.put("summary", buildSummary(metaJson, files.size()));
             doc.put("groupId", groupId);
             doc.put("artifactId", artifactId);
             doc.put("version", version);
             doc.put("tags", metaJson.getTags());
             doc.put("description", metaJson.getDescription());
+            doc.put("fileCount", files.size());
+            doc.put("keywords", buildKeywords(metaJson, groupId, artifactId));
+            doc.put("createTime", files.get(0).getCreateTime() != null
+                ? files.get(0).getCreateTime().toString()
+                : null);
 
-            // 使用 groupId:artifactId:version 作为文档 ID（1个模板1条）
-            String docId = groupId + ":" + artifactId + ":" + version;
-
-            // 直接写入1条文档
             esClient.index(i -> i.index(searchProperties.getElasticsearch().getIndex()).id(docId).document(doc));
-
-            log.info("Successfully indexed template to ES: {}/{}/{}", groupId, artifactId, version);
-
+            log.info("ES 索引写入成功: docId={}", docId);
         } catch (Exception e) {
-            log.error("Failed to index to Elasticsearch: {}/{}/{}, error: {}", groupId, artifactId, version, e
-                .getMessage(), e);
+            log.error("ES 索引写入失败: groupId={}, artifactId={}, version={}", groupId, artifactId, version, e);
+            throw new BusinessException("模板索引失败");
         }
     }
 
-    private String getFileType(String filename) {
-        if (filename == null) {
-            return "unknown";
+    private void deleteFromElasticsearch(Long tenantId, String groupId, String artifactId, String version) {
+        try {
+            String docId = buildEsDocId(tenantId, groupId, artifactId, version);
+            log.info("ES 删除模板: index={}, docId={}, tenantId={}, groupId={}, artifactId={}, version={}", searchProperties
+                .getElasticsearch()
+                .getIndex(), docId, tenantId, groupId, artifactId, version);
+            esClient.delete(d -> d.index(searchProperties.getElasticsearch().getIndex()).id(docId));
+            log.info("ES 删除成功: docId={}", docId);
+        } catch (Exception e) {
+            log.warn("删除 ES 索引失败: {}/{}/{}", groupId, artifactId, version, e);
         }
-        String lowerName = filename.toLowerCase();
-        if (lowerName.endsWith(".java"))
-            return "java";
-        if (lowerName.endsWith(".ftl"))
-            return "ftl";
-        if (lowerName.endsWith(".vue"))
-            return "vue";
-        if (lowerName.endsWith(".js"))
-            return "js";
-        if (lowerName.endsWith(".ts"))
-            return "ts";
-        if (lowerName.endsWith(".sql"))
-            return "sql";
-        if (lowerName.endsWith(".xml"))
-            return "xml";
-        if (lowerName.endsWith(".json"))
-            return "json";
-        if (lowerName.endsWith(".yaml") || lowerName.endsWith(".yml"))
-            return "yaml";
-        if (lowerName.endsWith(".md"))
-            return "md";
-        return "other";
     }
+
+    private String buildEsDocId(Long tenantId, String groupId, String artifactId, String version) {
+        return tenantId + ":" + groupId + ":" + artifactId + ":" + version;
+    }
+
+    private String buildSummary(MetaJson metaJson, int fileCount) {
+        String description = StrUtil.blankToDefault(metaJson.getDescription(), StrUtil.blankToDefault(metaJson
+            .getName(), ""));
+        String summary = description;
+        if (summary.length() > 300) {
+            summary = summary.substring(0, 300);
+        }
+        return summary + " | fileCount=" + fileCount;
+    }
+
+    private List<String> buildKeywords(MetaJson metaJson, String groupId, String artifactId) {
+        Set<String> keywords = new LinkedHashSet<>();
+        keywords.add(groupId);
+        keywords.add(artifactId);
+        if (StrUtil.isNotBlank(metaJson.getName())) {
+            keywords.add(metaJson.getName());
+        }
+        if (metaJson.getTags() != null) {
+            keywords.addAll(metaJson.getTags());
+        }
+        if (metaJson.getFiles() != null) {
+            metaJson.getFiles().stream().limit(20).forEach(file -> {
+                if (StrUtil.isNotBlank(file.getFilename())) {
+                    keywords.add(file.getFilename());
+                }
+                if (StrUtil.isNotBlank(file.getFilePath())) {
+                    keywords.add(file.getFilePath());
+                }
+            });
+        }
+        return new ArrayList<>(keywords);
+    }
+
 }

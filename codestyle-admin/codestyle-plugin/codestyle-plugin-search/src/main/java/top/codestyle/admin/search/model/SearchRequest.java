@@ -56,4 +56,7 @@ public class SearchRequest {
 
     @Schema(description = "关键词检索权重（混合检索时，0-1之间）", example = "0.4")
     private Double keywordWeight = 0.4;
+
+    @Schema(hidden = true)
+    private Long tenantId;
 }

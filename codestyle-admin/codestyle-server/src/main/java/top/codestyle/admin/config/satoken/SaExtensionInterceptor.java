@@ -24,6 +24,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.lang.Nullable;
+import top.codestyle.admin.common.context.ApiTenantContextHolder;
 import top.codestyle.admin.common.context.UserContext;
 import top.codestyle.admin.common.context.UserContextHolder;
 import top.continew.starter.core.util.ServletUtils;
@@ -80,6 +81,7 @@ public class SaExtensionInterceptor extends SaInterceptor {
         try {
             super.afterCompletion(request, response, handler, e);
         } finally {
+            ApiTenantContextHolder.clear();
             UserContextHolder.clearContext();
         }
     }
