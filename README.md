@@ -256,33 +256,32 @@
 
 1. **克隆项目**
    ```bash
-   git clone https://github.com/codestyle-team/codestyle.git
+   git clone https://github.com/itxaiohanglover/codestyle
    cd codestyle
    ```
 
 2. **配置数据库**
    ```bash
    # 创建数据库
-   mysql -u root -p
-   CREATE DATABASE codestyle DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+     mysql -u root -p你的密码 -e "CREATE DATABASE codestyle_admin DEFAULT CHARACTER SET utf8mb4 COLLATE
+     utf8mb4_unicode_ci;"
    
-   # 导入初始化脚本
-   mysql -u root -p codestyle < docs/sql/init.sql
-   ```
-
+     # 导入表结构和数据
+     mysql -u root -p你的密码 codestyle_admin < main_table.sql
+     mysql -u root -p你的密码 codestyle_admin < main_data.sql
+```
+   
 3. **配置应用**
    ```bash
-   # 修改后端配置
-   cd codestyle-admin/codestyle-server/src/main/resources
-   cp application-dev.yml.example application-dev.yml
-   # 编辑 application-dev.yml，配置数据库、Redis、ES 连接信息
+   编辑 application-dev.yml，将数据库密码改为 你的密码：
+     password: ${DB_PWD:你的密码}
    ```
-
+   
 4. **启动后端**
    ```bash
    cd codestyle-admin
-   mvn clean package -DskipTests
-   java -jar codestyle-server/target/codestyle-server.jar
+   mvn clean package -DskipTests -Pfat-jar
+   java -jar codestyle-server/target/codestyle-admin.jar
    ```
 
 5. **启动前端**
@@ -294,7 +293,8 @@
 
 6. **访问应用**
    - 前端地址：http://localhost:5173
-   - 后端地址：http://localhost:8080
+   - 后端地址：http://localhost:8000
+   - API文档：http://localhost:8000/doc.html
    - 默认账号：admin / admin123
 
 ### Docker 部署

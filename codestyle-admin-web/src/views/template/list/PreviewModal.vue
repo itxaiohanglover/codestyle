@@ -150,6 +150,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import axios from 'axios'
 import { Message } from '@arco-design/web-vue'
 import { useClipboard } from '@vueuse/core'
 import { marked } from 'marked'
@@ -228,24 +229,56 @@ watch(copied, () => {
 
 const onDownload = async () => {
   const d = templateData.value
-  if (!d) return
+  if (!d) {
+    console.log('[Download] templateData is null')
+    return
+  }
+  console.log('[Download] Starting download:', JSON.parse(JSON.stringify(d)))
   try {
+    console.log('[Download] Step 1: Recording download count for id:', d.id)
     await recordDownload(d.id)
+    console.log('[Download] Step 2: Download recorded, checking params - groupId:', d.groupId, 'artifactId:', d.artifactId, 'version:', d.version)
     if (d.groupId && d.artifactId && d.version) {
-      const res = await downloadTemplate(d.groupId, d.artifactId, d.version)
+      console.log('[Download] Step 3: Calling downloadTemplate API with params:', d.groupId, d.artifactId, d.version)
+      // 直接用 axios 测试，不通过封装
+      const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+      const token = localStorage.getItem('token')
+      console.log('[Download] Token exists:', !!token, 'Token:', token ? token.substring(0, 20) + '...' : null)
+      const res = await axios.get(`${baseURL}/open-api/template/download`, {
+        params: { groupId: d.groupId, artifactId: d.artifactId, version: d.version },
+        responseType: 'blob',
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      })
+      console.log('[Download] Step 4: API response status:', res.status, res.statusText)
+      console.log('[Download] Step 5: Creating blob and download link')
       const url = URL.createObjectURL(new Blob([res.data]))
       const a = document.createElement('a')
       a.href = url
-      a.download = `${d.artifactId}-${d.version}.zip`
+      a.download = `${d.name || d.artifactId}-${d.version}.zip`
       a.click()
       URL.revokeObjectURL(url)
+      console.log('[Download] Step 6: Download completed')
     } else if (d.downloadUrl) {
+      console.log('[Download] Using downloadUrl fallback:', d.downloadUrl)
       const base = import.meta.env.VITE_API_BASE_URL || ''
       window.open(`${base}${d.downloadUrl}`, '_blank')
     }
     Message.success('下载成功')
-  } catch {
-    Message.error('下载失败')
+  } catch (err: any) {
+    console.error('[Download] Error:', err)
+    console.error('[Download] Error status:', err?.response?.status)
+    console.error('[Download] Error statusText:', err?.response?.statusText)
+    console.error('[Download] Error data:', err?.response?.data)
+    // 尝试读取 blob 错误信息
+    if (err?.response?.data instanceof Blob) {
+      const text = await err.response.data.text()
+      console.error('[Download] Blob error text:', text)
+      try {
+        const json = JSON.parse(text)
+        console.error('[Download] Blob error JSON:', json)
+      } catch {}
+    }
+    Message.error('下载失败: ' + (err?.response?.statusText || err?.message || '未知错误'))
   }
 }
 

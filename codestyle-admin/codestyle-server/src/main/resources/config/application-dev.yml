@@ -14,7 +14,7 @@ spring.datasource:
   # 请务必提前创建好名为 codestyle_admin 的数据库，如果使用其他数据库名请注意同步修改 DB_NAME 配置
   url: jdbc:p6spy:mysql://${DB_HOST:127.0.0.1}:${DB_PORT:3306}/${DB_NAME:codestyle_admin}?serverTimezone=Asia/Shanghai&useSSL=true&useUnicode=true&characterEncoding=utf8&rewriteBatchedStatements=true&autoReconnect=true&allowPublicKeyRetrieval=true&nullCatalogMeansCurrent=true
   username: ${DB_USER:root}
-  password: ${DB_PWD:051105}
+  password: ${DB_PWD:admin123}
   driver-class-name: com.p6spy.engine.spy.P6SpyDriver
   # Hikari 连接池配置
   hikari:
